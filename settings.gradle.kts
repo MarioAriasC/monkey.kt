@@ -1,2 +1,2 @@
-rootProject.name = "monkey.kt"
+rootProject.name = "monkey"
 
