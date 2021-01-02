@@ -1,5 +1,7 @@
 package org.marioarias.monkey.repl
 
+import org.marioarias.monkey.evaluator.Environment
+import org.marioarias.monkey.evaluator.Evaluator
 import org.marioarias.monkey.lexer.Lexer
 import org.marioarias.monkey.parser.Parser
 import java.io.InputStream
@@ -8,7 +10,7 @@ import java.util.*
 
 const val MONKEY_FACE = """            __,__
    .--.  .-"     "-.  .--.
-  / .. \/  .-. .-.  \/ .. \
+  / .. \/  .-. .-.  \/ .. \                             '
  | |  '|  /   Y   \  |'  | |
  | \   \  \ 0 | 0 /  /   / |
   \ '- ,\.-""${'"'}${'"'}${'"'}${'"'}${'"'}-./, -' /
@@ -19,9 +21,14 @@ const val MONKEY_FACE = """            __,__
            '-----'
 """
 
+const val PROMPT = ">>>"
+
 fun start(`in`: InputStream, out: PrintStream) {
     val scanner = Scanner(`in`)
+    out.print("$PROMPT ")
+    val env = Environment.newEnvironment()
     while (scanner.hasNext()) {
+
         val code = scanner.nextLine()
         val lexer = Lexer(code)
         val parser = Parser(lexer)
@@ -32,7 +39,13 @@ fun start(`in`: InputStream, out: PrintStream) {
             continue
         }
 
-        out.println(program.toString())
+        val evaluated = Evaluator.eval(program, env)
+
+        if (evaluated != null) {
+            out.println(evaluated.inspect())
+        }
+
+        out.print("$PROMPT ")
     }
 }
 

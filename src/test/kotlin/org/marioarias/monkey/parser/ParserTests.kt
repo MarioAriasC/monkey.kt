@@ -1,6 +1,8 @@
 package org.marioarias.monkey.parser
 
 import org.marioarias.monkey.ast.*
+import org.marioarias.monkey.checkType
+import org.marioarias.monkey.isType
 import org.marioarias.monkey.lexer.Lexer
 import org.testng.Assert
 import org.testng.annotations.Test
@@ -477,31 +479,6 @@ class ParserTests {
             }
         }
     }
-
-
-    private inline fun <reified T> checkType(value: Any?, body: (T) -> Unit) {
-        when (value) {
-            is T -> {
-                body(value)
-            }
-            else -> {
-                Assert.fail("$value is not ${T::class.java}. got=${value!!::class.java}")
-            }
-        }
-    }
-
-    private inline fun <reified T> isType(value: Any?, body: (T) -> Boolean): Boolean {
-        return when (value) {
-            is T -> {
-                body(value)
-            }
-            else -> {
-                Assert.fail("$value is not ${T::class.java}. got=${value!!::class.java}")
-                false
-            }
-        }
-    }
-
 
     private fun <T> testLiteralExpression(value: Expression?, expectedValue: T): Boolean {
         return when (expectedValue) {
