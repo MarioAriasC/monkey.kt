@@ -5,7 +5,7 @@ import org.marioarias.monkey.ast.Identifier
 import org.marioarias.monkey.evaluator.Environment
 
 enum class ObjectType {
-    INTEGER, BOOLEAN, NULL, RETURN, ERROR, FUNCTION, STRING
+    INTEGER, BOOLEAN, NULL, RETURN, ERROR, FUNCTION, STRING, BUILTIN
 }
 
 interface MObject {
@@ -61,6 +61,12 @@ class MInteger(override val value: Long) : MValue<Long> {
     override fun hashCode(): Int {
         return value.hashCode()
     }
+
+    override fun toString(): String {
+        return "MInteger(value=$value)"
+    }
+
+
 }
 
 class MBoolean(override val value: Boolean) : MValue<Boolean> {
@@ -120,4 +126,12 @@ class MString(override val value: String) : MValue<String> {
     operator fun plus(other: MString): MString {
         return MString(value + other.value)
     }
+}
+
+typealias BuiltinFunction = (List<MObject?>) -> MObject
+
+class MBuiltinFunction(val fn: BuiltinFunction) : MObject {
+    override fun type(): ObjectType = ObjectType.BUILTIN
+
+    override fun inspect(): String = "builtin function"
 }

@@ -67,6 +67,7 @@ object Evaluator {
                 val evaluated = eval(function.body, extendEnv)
                 unwrapReturnValue(evaluated)
             }
+            is MBuiltinFunction -> function.fn(args)
             else -> MError("not a function: ${function.type()}")
         }
     }
@@ -105,7 +106,12 @@ object Evaluator {
 
     private fun evalIdentifier(node: Identifier, env: Environment): MObject {
         return when (val value = env[node.value]) {
-            null -> MError("identifier not found: ${node.value}")
+            null -> {
+                when (val builtin = builtins[node.value]) {
+                    null -> MError("identifier not found: ${node.value}")
+                    else -> builtin
+                }
+            }
             else -> value
         }
     }

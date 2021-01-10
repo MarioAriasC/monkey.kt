@@ -283,6 +283,27 @@ class EvaluatorTests {
         testObject<MString, String>(testEval(input), "Hello World!")
     }
 
+    @Test
+    fun `builtin functions`() {
+        listOf(
+            TestData("""len("")""", 0),
+            TestData("""len("four")""", 4),
+            TestData("""len("hello world")""", 11),
+            TestData("""len(1)""", "argument to `len` not supported, got INTEGER"),
+            TestData("""len("one", "two")""", "wrong number of arguments. got=2, want=1"),
+        ).forEach { (input, expected) ->
+            val evaluated = testEval(input)
+            when (expected) {
+                is Int -> testObject<MInteger, Long>(evaluated, expected.toLong())
+                is String -> {
+                    checkType(evaluated) { error: MError ->
+                        Assert.assertEquals(error.message, expected)
+                    }
+                }
+            }
+        }
+    }
+
     private fun testNullObject(obj: MObject?): Boolean {
         return if (obj != Evaluator.NULL) {
             Assert.fail("object is not NULL, got=${obj!!::class.java} ($obj)")
