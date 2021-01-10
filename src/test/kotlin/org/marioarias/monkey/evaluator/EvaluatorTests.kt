@@ -196,6 +196,10 @@ class EvaluatorTests {
             TestData(
                 "foobar",
                 "identifier not found: foobar",
+            ),
+            TestData(
+                """"Hello" - "World"""",
+                "unknown operator: STRING - STRING"
             )
         )
 
@@ -242,18 +246,18 @@ class EvaluatorTests {
     @Test
     fun `function application`() {
         listOf(
-            TestData( "let identity = fn(x) { x; }; identity(5);", 5 ),
-            TestData( "let identity = fn(x) { return x; }; identity(5);", 5 ),
-            TestData( "let double = fn(x) { x * 2; }; double(5);", 10 ),
-            TestData( "let add = fn(x, y) { x + y; }; add(5, 5);", 10 ),
-            TestData( "let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20 ),
-            TestData( "fn(x) { x; }(5)", 5 ),
+            TestData("let identity = fn(x) { x; }; identity(5);", 5),
+            TestData("let identity = fn(x) { return x; }; identity(5);", 5),
+            TestData("let double = fn(x) { x * 2; }; double(5);", 10),
+            TestData("let add = fn(x, y) { x + y; }; add(5, 5);", 10),
+            TestData("let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20),
+            TestData("fn(x) { x; }(5)", 5),
         ).test()
     }
 
     @Test
     fun `enclosing environments`() {
-          val input = """let first = 10;
+        val input = """let first = 10;
           let second = 10;
           let third = 10;
           
@@ -265,6 +269,18 @@ class EvaluatorTests {
           
           ourFunction(20) + first + second;"""
         testObject<MInteger, Long>(testEval(input), 70L)
+    }
+
+    @Test
+    fun `string literal`() {
+        val input = """"Hello World!""""
+        testObject<MString, String>(testEval(input), "Hello World!")
+    }
+
+    @Test
+    fun `string concatenation`() {
+        val input = """"Hello" + " " + "World!""""
+        testObject<MString, String>(testEval(input), "Hello World!")
     }
 
     private fun testNullObject(obj: MObject?): Boolean {

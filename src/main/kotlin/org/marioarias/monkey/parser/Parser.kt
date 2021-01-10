@@ -9,7 +9,7 @@ import org.marioarias.monkey.token.TokenType
 typealias PrefixParse = () -> Expression?
 typealias InfixParse = (Expression?) -> Expression?
 
-class Parser(val lexer: Lexer) {
+class Parser(private val lexer: Lexer) {
 
     enum class Precedence {
         LOWEST, EQUALS, LESS_GREATER, SUM, PRODUCT, PREFIX, CALL
@@ -48,6 +48,7 @@ class Parser(val lexer: Lexer) {
         prefixParsers[TokenType.LPAREN] = ::parseGroupExpression
         prefixParsers[TokenType.IF] = ::parseIfExpression
         prefixParsers[TokenType.FUNCTION] = ::parseFunctionLiteral
+        prefixParsers[TokenType.STRING] = ::parseStringLiteral
 
 
         infixParsers[TokenType.PLUS] = ::parseInfixExpression
@@ -59,6 +60,10 @@ class Parser(val lexer: Lexer) {
         infixParsers[TokenType.LT] = ::parseInfixExpression
         infixParsers[TokenType.GT] = ::parseInfixExpression
         infixParsers[TokenType.LPAREN] = ::parseCallExpression
+    }
+
+    private fun parseStringLiteral(): Expression {
+        return StringLiteral(curToken, curToken.literal)
     }
 
     private fun nextToken() {
@@ -336,7 +341,7 @@ class Parser(val lexer: Lexer) {
 
         val parameters = parseFunctionParameters()
 
-        if(!expectPeek(TokenType.LBRACE)) {
+        if (!expectPeek(TokenType.LBRACE)) {
             return null
         }
 

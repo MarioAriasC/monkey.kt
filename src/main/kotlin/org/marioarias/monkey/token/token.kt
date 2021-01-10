@@ -34,7 +34,9 @@ enum class TokenType(val value: String) {
     FALSE("FALSE"),
     IF("IF"),
     ELSE("ELSE"),
-    RETURN("RETURN");
+    RETURN("RETURN"),
+    STRING("STRING")
+    ;
 
     companion object {
         val keyboards = mapOf(

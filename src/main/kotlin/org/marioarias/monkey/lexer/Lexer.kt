@@ -41,6 +41,17 @@ class Lexer(private val input: String) {
         return input.substring(currentPosition, position)
     }
 
+    private fun readString(): String {
+        val start = position + 1
+        while (true) {
+            readChar()
+            if (ch == '"' || ch == 0.toChar()) {
+                break
+            }
+        }
+        return input.substring(start, position)
+    }
+
     fun nextToken(): Token {
 
         fun endsWithEqual(oneChar: TokenType, twoChars: TokenType, duplicateChars: Boolean = true) = if (peakChar() == '=') {
@@ -73,6 +84,7 @@ class Lexer(private val input: String) {
             '<' -> LT.token()
             '>' -> GT.token()
             '!' -> endsWithEqual(BANG, NOT_EQ, duplicateChars = false)
+            '"' -> Token(STRING, readString())
             0.toChar() -> Token(EOF, "")
             else -> {
                 when {

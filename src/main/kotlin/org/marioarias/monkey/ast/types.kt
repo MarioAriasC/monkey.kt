@@ -112,3 +112,10 @@ class FunctionLiteral(override val token: Token, val parameters: List<Identifier
         return "${tokenLiteral()}(${parameters?.joinToString()}) $body"
     }
 }
+
+class StringLiteral(override val token: Token, val value: String) : ExpressionWithToken {
+    override fun toString(): String {
+        return value
+    }
+
+}

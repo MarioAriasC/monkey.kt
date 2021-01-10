@@ -27,7 +27,9 @@ if (5 < 10) {
 }
 
 10 == 10;
-10 != 9;             
+10 != 9;   
+"foobar"
+"foo bar"          
          """.trimIndent()
 
         val lexer = Lexer(code)
@@ -105,6 +107,8 @@ if (5 < 10) {
 			NOT_EQ to "!=",
 			INT to "9",
 			SEMICOLON to ";",
+			STRING to "foobar",
+			STRING to "foo bar",
 			EOF to ""
 		)
 

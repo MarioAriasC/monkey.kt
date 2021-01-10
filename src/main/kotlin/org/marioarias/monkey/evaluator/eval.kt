@@ -55,6 +55,7 @@ object Evaluator {
                     }
                 }
             }
+            is StringLiteral -> MString(node.value)
             else -> null
         }
     }
@@ -156,7 +157,20 @@ object Evaluator {
             operator == "==" -> (left == right).toMonkey()
             operator == "!=" -> (left != right).toMonkey()
             left.type() != right.type() -> MError("type mismatch: ${left.type()} $operator ${right.type()}")
+            left.type() == ObjectType.STRING && right.type() == ObjectType.STRING -> evalStringInfixExpression(
+                operator,
+                left,
+                right
+            )
             else -> MError("unknown operator: ${left.type()} $operator ${right.type()}")
+        }
+    }
+
+    private fun evalStringInfixExpression(operator: String, left: MObject, right: MObject): MObject {
+        return if (operator != "+") {
+            MError("unknown operator: ${left.type()} $operator ${right.type()}")
+        } else {
+            (left as MString) + (right as MString)
         }
     }
 

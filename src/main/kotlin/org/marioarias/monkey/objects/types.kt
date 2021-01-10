@@ -5,7 +5,7 @@ import org.marioarias.monkey.ast.Identifier
 import org.marioarias.monkey.evaluator.Environment
 
 enum class ObjectType {
-    INTEGER, BOOLEAN, NULL, RETURN, ERROR, FUNCTION
+    INTEGER, BOOLEAN, NULL, RETURN, ERROR, FUNCTION, STRING
 }
 
 interface MObject {
@@ -112,4 +112,12 @@ class MFunction(val parameters: List<Identifier>?, val body: BlockStatement?, va
         return "fn(${parameters?.joinToString(transform = Identifier::toString) ?: ""}) {\n\t$body\n}"
     }
 
+}
+
+class MString(override val value: String) : MValue<String> {
+    override fun type(): ObjectType = ObjectType.STRING
+
+    operator fun plus(other: MString): MString {
+        return MString(value + other.value)
+    }
 }

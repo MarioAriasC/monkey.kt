@@ -460,6 +460,21 @@ class ParserTests {
         }
     }
 
+    @Test
+    fun `string literal expression`() {
+        val input = """"hello world";"""
+
+        val program = createProgram(input)
+
+        countStatements(1, program)
+
+        checkType(program.statements.first()) { statement: ExpressionStatement ->
+            checkType(statement.expression) { literal: StringLiteral ->
+                Assert.assertEquals(literal.value, "hello world")
+            }
+        }
+    }
+
 
     private fun <L, R> testInfixExpression(
         expression: Expression?,
