@@ -304,6 +304,71 @@ class EvaluatorTests {
         }
     }
 
+    @Test
+    fun `array literal`() {
+        val input = "[1, 2 * 2, 3 + 3]"
+
+        val evaluated = testEval(input)
+        val result = evaluated as MArray
+        Assert.assertEquals(result.elements.size, 3, "array has wrong num of elements, got=${result.elements.size}")
+
+        testObject<MInteger, Long>(result.elements[0], 1)
+        testObject<MInteger, Long>(result.elements[1], 4)
+        testObject<MInteger, Long>(result.elements[2], 6)
+    }
+
+    @Test
+    fun `array index expression`() {
+        listOf(
+            TestData(
+                "[1, 2, 3][0]",
+                1,
+            ),
+            TestData(
+                "[1, 2, 3][1]",
+                2,
+            ),
+            TestData(
+                "[1, 2, 3][2]",
+                3,
+            ),
+            TestData(
+                "let i = 0; [1][i];",
+                1,
+            ),
+            TestData(
+                "[1, 2, 3][1 + 1];",
+                3,
+            ),
+            TestData(
+                "let myArray = [1, 2, 3]; myArray[2];",
+                3,
+            ),
+            TestData(
+                "let myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];",
+                6,
+            ),
+            TestData(
+                "let myArray = [1, 2, 3]; let i = myArray[0]; myArray[i]",
+                2,
+            ),
+            TestData(
+                "[1, 2, 3][3]",
+                null,
+            ),
+            TestData(
+                "[1, 2, 3][-1]",
+                null,
+            )
+        ).forEach { (input, expected) ->
+            val evaluated = testEval(input)
+            when (expected) {
+                is Int -> testObject<MInteger, Long>(evaluated, expected.toLong())
+                else -> testNullObject(evaluated)
+            }
+        }
+    }
+
     private fun testNullObject(obj: MObject?): Boolean {
         return if (obj != Evaluator.NULL) {
             Assert.fail("object is not NULL, got=${obj!!::class.java} ($obj)")
@@ -335,6 +400,10 @@ class EvaluatorTests {
         val lexer = Lexer(input)
         val parser = Parser(lexer)
         val program = parser.parseProgram()
+
+        if(parser.errors().isNotEmpty()) {
+            parser.errors().forEach(::println)
+        }
 
         return Evaluator.eval(program, Environment.newEnvironment())
     }

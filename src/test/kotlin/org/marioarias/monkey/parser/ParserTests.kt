@@ -271,7 +271,15 @@ class ParserTests {
             TestData(
                 "add(a + b + c * d / f + g)",
                 "add((((a + b) + ((c * d) / f)) + g))",
-            )
+            ),
+            TestData(
+                "a * [1, 2, 3, 4][b * c] * d",
+                "((a * ([1, 2, 3, 4][(b * c)])) * d)",
+            ),
+            TestData(
+                "add(a * b[2], b[1], 2 * [1, 2][1])",
+                "add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))",
+            ),
         )
 
         tests.forEach { (input, expected) ->
@@ -472,6 +480,42 @@ class ParserTests {
             checkType(statement.expression) { literal: StringLiteral ->
                 Assert.assertEquals(literal.value, "hello world")
             }
+        }
+    }
+
+    @Test
+    fun `parsing array literal`() {
+        val input = "[1, 2 * 2, 3 + 3]"
+
+        val program = createProgram(input)
+
+        checkType(program.statements.first()) { statement: ExpressionStatement ->
+            checkType(statement.expression) { array: ArrayLiteral ->
+                testLongLiteral(array.elements!!.first(), 1)
+                testInfixExpression(array.elements!![1], 2, "*", 2)
+                testInfixExpression(array.elements!![2], 3, "+", 3)
+            }
+
+        }
+    }
+
+    @Test
+    fun `parsing index expression`() {
+        val input = "myArray[1 + 1]"
+
+        val program = createProgram(input)
+
+        checkType(program.statements.first()) { statement: ExpressionStatement ->
+            println("statement = ${statement}")
+            checkType(statement.expression) { index: IndexExpression ->
+                if (!testIdentifier(index.left, "myArray")) {
+                    return
+                }
+                if (!testInfixExpression(index.index, 1, "+", 1)) {
+                    return
+                }
+            }
+
         }
     }
 

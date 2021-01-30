@@ -5,7 +5,7 @@ import org.marioarias.monkey.ast.Identifier
 import org.marioarias.monkey.evaluator.Environment
 
 enum class ObjectType {
-    INTEGER, BOOLEAN, NULL, RETURN, ERROR, FUNCTION, STRING, BUILTIN
+    INTEGER, BOOLEAN, NULL, RETURN, ERROR, FUNCTION, STRING, BUILTIN, ARRAY
 }
 
 interface MObject {
@@ -134,4 +134,12 @@ class MBuiltinFunction(val fn: BuiltinFunction) : MObject {
     override fun type(): ObjectType = ObjectType.BUILTIN
 
     override fun inspect(): String = "builtin function"
+}
+
+class MArray(val elements: List<MObject?>): MObject {
+    override fun type(): ObjectType = ObjectType.ARRAY
+
+    override fun inspect(): String {
+        return "[${elements.joinToString(separator = ", ")}]"
+    }
 }

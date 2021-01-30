@@ -77,6 +77,8 @@ class Lexer(private val input: String) {
             ')' -> RPAREN.token()
             '{' -> LBRACE.token()
             '}' -> RBRACE.token()
+            '[' -> LBRACKET.token()
+            ']' -> RBRACKET.token()
             '+' -> PLUS.token()
             '-' -> MINUS.token()
             '*' -> ASTERISK.token()

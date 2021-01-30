@@ -117,5 +117,16 @@ class StringLiteral(override val token: Token, val value: String) : ExpressionWi
     override fun toString(): String {
         return value
     }
+}
 
+class ArrayLiteral(override val token: Token, val elements: List<Expression?>?) : ExpressionWithToken {
+    override fun toString(): String {
+        return "[${elements?.joinToString(separator = ", ")}]"
+    }
+}
+
+class IndexExpression(override val token: Token, val left: Expression?, val index: Expression?) : ExpressionWithToken {
+    override fun toString(): String {
+        return "($left[$index])"
+    }
 }

@@ -27,6 +27,8 @@ enum class TokenType(val value: String) {
     RPAREN(")"),
     LBRACE("{"),
     RBRACE("}"),
+    LBRACKET("["),
+    RBRACKET("]"),
 
     FUNCTION("FUNCTION"),
     LET("LET"),

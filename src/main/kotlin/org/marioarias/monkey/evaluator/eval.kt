@@ -48,7 +48,7 @@ object Evaluator {
             is CallExpression -> {
                 eval(node.function, env).ifNotError { function ->
                     val args = evalExpressions(node.arguments, env)
-                    if (args.size == 1 && isError(args.first())) {
+                    if (args.size == 1 && args.first().isError()) {
                         args.first()
                     } else {
                         applyFunction(function, args)
@@ -56,8 +56,54 @@ object Evaluator {
                 }
             }
             is StringLiteral -> MString(node.value)
+            is ArrayLiteral -> {
+                val elements = evalExpressions(node.elements, env)
+                if (elements.size == 1 && elements.first().isError()) {
+                    elements.first()
+                } else {
+                    MArray(elements)
+                }
+            }
+            is IndexExpression -> {
+                val left = eval(node.left, env)
+
+                if (left.isError()) {
+                    return left
+                }
+
+                val index = eval(node.index, env)
+
+                if (index.isError()) {
+                    return index
+                }
+
+                return evalIndexExpression(left, index)
+            }
             else -> null
         }
+    }
+
+    private fun evalIndexExpression(left: MObject?, index: MObject?): MObject? {
+        return when {
+            left?.type() == ObjectType.ARRAY && index?.type() == ObjectType.INTEGER -> evalArrayIndexExpression(
+                left,
+                index
+            )
+            else -> MError("index operator not supported: ${left?.type()}")
+        }
+    }
+
+    private fun evalArrayIndexExpression(array: MObject, index: MObject): MObject? {
+        val mArray = (array as MArray).elements
+        val i = (index as MInteger).value
+        val max = mArray.size - 1
+
+        if (i < 0 || i > max) {
+            return NULL
+        }
+
+        return mArray[i.toInt()]
+
     }
 
     private fun applyFunction(function: MObject, args: List<MObject?>): MObject? {
@@ -87,8 +133,8 @@ object Evaluator {
         return env
     }
 
-    private fun isError(obj: MObject?) = if (obj != null) {
-        obj.type() == ObjectType.ERROR
+    private fun MObject?.isError() = if (this != null) {
+        this.type() == ObjectType.ERROR
     } else {
         false
     }
@@ -96,7 +142,7 @@ object Evaluator {
     private fun evalExpressions(arguments: List<Expression?>?, env: Environment): List<MObject?> {
         return arguments!!.map { argument ->
             val evaluated = eval(argument, env)
-            if (isError(evaluated)) {
+            if (evaluated.isError()) {
                 return listOf(evaluated)
             }
             evaluated
