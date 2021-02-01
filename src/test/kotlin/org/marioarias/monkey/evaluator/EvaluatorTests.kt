@@ -289,15 +289,36 @@ class EvaluatorTests {
             TestData("""len("")""", 0),
             TestData("""len("four")""", 4),
             TestData("""len("hello world")""", 11),
-            TestData("""len(1)""", "argument to `len` not supported, got INTEGER"),
+            TestData("len(1)", "argument to `len` not supported, got INTEGER"),
             TestData("""len("one", "two")""", "wrong number of arguments. got=2, want=1"),
+            TestData("len([1, 2, 3])", 3),
+            TestData("len([])", 0),
+            TestData("push([], 1)", intArrayOf(1)),
+            TestData("push(1, 1)", "argument to `push` must be ARRAY, got INTEGER"),
+            TestData("first([1, 2, 3])", 1),
+            TestData("first([])", null),
+            TestData("first(1)", "argument to `first` must be ARRAY, got INTEGER"),
+            TestData("last([1, 2, 3])", 3),
+            TestData("last([])", null),
+            TestData("last(1)", "argument to `last` must be ARRAY, got INTEGER"),
+            TestData("rest([1, 2, 3])", intArrayOf(2, 3)),
+            TestData("rest([])", null),
         ).forEach { (input, expected) ->
             val evaluated = testEval(input)
             when (expected) {
+                null -> testNullObject(evaluated)
                 is Int -> testObject<MInteger, Long>(evaluated, expected.toLong())
                 is String -> {
                     checkType(evaluated) { error: MError ->
                         Assert.assertEquals(error.message, expected)
+                    }
+                }
+                is IntArray -> {
+                    checkType(evaluated) { array: MArray ->
+                        Assert.assertEquals(expected.size, array.elements.size)
+                        expected.forEachIndexed { i, element ->
+                            testObject<MInteger, Long>(array.elements[i], element.toLong())
+                        }
                     }
                 }
             }
@@ -401,7 +422,7 @@ class EvaluatorTests {
         val parser = Parser(lexer)
         val program = parser.parseProgram()
 
-        if(parser.errors().isNotEmpty()) {
+        if (parser.errors().isNotEmpty()) {
             parser.errors().forEach(::println)
         }
 
