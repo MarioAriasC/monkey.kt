@@ -5,7 +5,7 @@ import org.marioarias.monkey.ast.Identifier
 import org.marioarias.monkey.evaluator.Environment
 
 enum class ObjectType {
-    INTEGER, BOOLEAN, NULL, RETURN, ERROR, FUNCTION, STRING, BUILTIN, ARRAY
+    INTEGER, BOOLEAN, NULL, RETURN, ERROR, FUNCTION, STRING, BUILTIN, ARRAY, HASH
 }
 
 interface MObject {
@@ -21,7 +21,7 @@ interface MValue<T> : MObject {
     }
 }
 
-class MInteger(override val value: Long) : MValue<Long> {
+class MInteger(override val value: Long) : MValue<Long>, Hashable<Long> {
     override fun type(): ObjectType {
         return ObjectType.INTEGER
     }
@@ -69,7 +69,7 @@ class MInteger(override val value: Long) : MValue<Long> {
 
 }
 
-class MBoolean(override val value: Boolean) : MValue<Boolean> {
+class MBoolean(override val value: Boolean) : MValue<Boolean>, Hashable<Boolean> {
     override fun type(): ObjectType {
         return ObjectType.BOOLEAN
     }
@@ -120,7 +120,7 @@ class MFunction(val parameters: List<Identifier>?, val body: BlockStatement?, va
 
 }
 
-class MString(override val value: String) : MValue<String> {
+class MString(override val value: String) : MValue<String>, Hashable<String> {
     override fun type(): ObjectType = ObjectType.STRING
 
     operator fun plus(other: MString): MString {
@@ -141,5 +141,24 @@ class MArray(val elements: List<MObject?>): MObject {
 
     override fun inspect(): String {
         return "[${elements.joinToString(separator = ", ")}]"
+    }
+}
+
+data class HashKey(val type: ObjectType, val value: Int)
+
+interface Hashable<T> : MValue<T>{
+    fun hashKey(): HashKey = HashKey(type(), value.hashCode())
+    
+}
+
+data class HashPair(val key:MObject, val value:MObject)
+
+class MHash(val pairs: Map<HashKey, HashPair>): MObject {
+    override fun type(): ObjectType {
+        return ObjectType.HASH
+    }
+
+    override fun inspect(): String {
+        return "{${pairs.values.joinToString { value -> "${value.key.inspect()}: ${value.value.inspect()}" }}}"
     }
 }

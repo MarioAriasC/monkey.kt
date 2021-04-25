@@ -14,6 +14,7 @@ enum class TokenType(val value: String) {
     PLUS("+"),
     COMMA(","),
     SEMICOLON(";"),
+    COLON(":"),
     MINUS("-"),
     BANG("!"),
     SLASH("/"),

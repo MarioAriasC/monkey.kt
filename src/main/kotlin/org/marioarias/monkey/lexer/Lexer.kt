@@ -72,6 +72,7 @@ class Lexer(private val input: String) {
         return when (ch) {
             '=' -> endsWithEqual(ASSIGN, EQ)
             ';' -> SEMICOLON.token()
+            ':' -> COLON.token()
             ',' -> COMMA.token()
             '(' -> LPAREN.token()
             ')' -> RPAREN.token()

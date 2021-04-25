@@ -6,8 +6,8 @@ import org.marioarias.monkey.objects.*
 object Evaluator {
 
     val NULL = MNull
-    private val TRUE = MBoolean(true)
-    private val FALSE = MBoolean(false)
+    val TRUE = MBoolean(true)
+    val FALSE = MBoolean(false)
 
     private fun Boolean.toMonkey(): MBoolean = if (this) TRUE else FALSE
 
@@ -79,8 +79,32 @@ object Evaluator {
 
                 return evalIndexExpression(left, index)
             }
+            is HashLiteral -> evalHashLiteral(node, env)
             else -> null
         }
+    }
+
+    private fun evalHashLiteral(node: HashLiteral, env: Environment): MObject? {
+        
+        val pairs = node.pairs.mapKeys { (keyNode, _) ->
+            val key = eval(keyNode, env)
+            if(key.isError()) {
+                return key
+            }
+            when(key) {
+                is Hashable<*> -> key
+                else -> return MError("unusable as hash key: ${key?.type()}")
+            }
+        }.mapValues { (key, valueNode) ->
+            val value = eval(valueNode, env)
+            if(value.isError()){
+                return value
+            }
+            HashPair(key, value!!)
+        }.mapKeys { (key, _) ->
+            key.hashKey()
+        }
+        return MHash(pairs)
     }
 
     private fun evalIndexExpression(left: MObject?, index: MObject?): MObject? {
@@ -89,7 +113,19 @@ object Evaluator {
                 left,
                 index
             )
+            left?.type() == ObjectType.HASH -> evalHashIndexExpression(left, index!!)
             else -> MError("index operator not supported: ${left?.type()}")
+        }
+    }
+
+    private fun evalHashIndexExpression(hash: MObject, index: MObject): MObject? {
+        val hashObject = hash as MHash
+        return when(index) {
+            is Hashable<*> -> {
+                val pair = hashObject.pairs[index.hashKey()]
+                pair?.value ?: NULL
+            }
+            else -> MError("unusable as a hash key: ${index.type()}")
         }
     }
 

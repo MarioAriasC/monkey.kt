@@ -506,7 +506,6 @@ class ParserTests {
         val program = createProgram(input)
 
         checkType(program.statements.first()) { statement: ExpressionStatement ->
-            println("statement = ${statement}")
             checkType(statement.expression) { index: IndexExpression ->
                 if (!testIdentifier(index.left, "myArray")) {
                     return
@@ -516,6 +515,29 @@ class ParserTests {
                 }
             }
 
+        }
+    }
+
+    @Test
+    fun `hash literal string keys`() {
+        val input = """{"one": 1, "two": 2, "three": 3}"""
+
+        val program = createProgram(input)
+
+        checkType(program.statements.first()) { statement: ExpressionStatement ->
+            checkType(statement.expression) { hash: HashLiteral ->
+                Assert.assertEquals(3, hash.pairs.size, "hash.pairs has the wrong length")
+
+                val expected = mapOf("one" to 1, "two" to 2, "three" to 3)
+
+                hash.pairs.forEach { (key, value) ->
+                    checkType(key) { literal: StringLiteral ->
+                        val expectedValue = expected[literal.toString()]
+                        testLiteralExpression(value, expectedValue)
+                    }
+                }
+                
+            }
         }
     }
 

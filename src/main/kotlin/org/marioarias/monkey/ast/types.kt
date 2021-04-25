@@ -130,3 +130,9 @@ class IndexExpression(override val token: Token, val left: Expression?, val inde
         return "($left[$index])"
     }
 }
+
+class HashLiteral(override val token: Token, val pairs: Map<Expression, Expression>): ExpressionWithToken {
+    override fun toString(): String {
+        return "{${pairs.keys.joinToString { key -> "$key:${pairs[key]}" }}}"
+    }
+}

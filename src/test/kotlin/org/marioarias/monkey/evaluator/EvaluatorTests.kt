@@ -200,6 +200,10 @@ class EvaluatorTests {
             TestData(
                 """"Hello" - "World"""",
                 "unknown operator: STRING - STRING"
+            ),
+            TestData(
+                """{"name": "Monkey"}[fn(x) {x}];""",
+                "unusable as a hash key: FUNCTION"
             )
         )
 
@@ -390,6 +394,63 @@ class EvaluatorTests {
         }
     }
 
+    @Test
+    fun `hash literals`() {
+        val input = """
+        let two = "two";
+        	{
+        		"one": 10 - 9,
+        		two: 1 + 1,
+        		"thr" + "ee": 6 / 2,
+        		4: 4,
+        		true: 5,
+        		false: 6
+        	}    
+        """.trimIndent()
+        val evaluated = testEval(input)
+        checkType(evaluated) { result: MHash ->
+            val expected = mapOf(
+                MString("one").hashKey() to 1L,
+                MString("two").hashKey() to 2,
+                MString("three").hashKey() to 3,
+                MInteger(4).hashKey() to 4,
+                Evaluator.TRUE.hashKey() to 5,
+                Evaluator.FALSE.hashKey() to 6
+            )
+
+            Assert.assertEquals(
+                expected.size,
+                result.pairs.size,
+                "Hash has wrong number of pairs, got=${expected.size}"
+            )
+
+            expected.forEach { (expectedKey, expectedValue) ->
+                val pair = result.pairs[expectedKey]
+                Assert.assertNotNull(pair, "no pair for given key in pairs")
+                testObject(pair!!.value, expectedValue)
+            }
+        }
+    }
+
+    @Test
+    fun `hash index expressions`() {
+        listOf(
+            TestData("""{"foo": 5}["foo"]""", 5L),
+            TestData("""{"foo": 5}["bar"]""", null),
+            TestData("""let key = "foo";{"foo": 5}[key]""", 5L),
+            TestData("""{}["foo"]""", null),
+            TestData("""{5:5}[5]""", 5L),
+            TestData("""{true:5}[true]""", 5L),
+            TestData("""{false:5}[false]""", 5L),
+        ).forEach { (input, expected) ->
+            val evaluated = testEval(input)
+            when (expected) {
+                is Long -> testObject(evaluated, expected)
+                else -> testNullObject(evaluated)
+            }
+        }
+    }
+
     private fun testNullObject(obj: MObject?): Boolean {
         return if (obj != Evaluator.NULL) {
             Assert.fail("object is not NULL, got=${obj!!::class.java} ($obj)")
@@ -404,6 +465,8 @@ class EvaluatorTests {
             is T -> {
                 when {
                     obj.value != expected -> {
+                        println("obj.value::class.java = ${obj.value!!::class.java}")
+                        println("expected::class.java = ${expected!!::class.java}")
                         Assert.fail("obj has wrong value, got=${obj.value}, want=$expected")
                         false
                     }

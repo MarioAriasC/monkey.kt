@@ -36,8 +36,10 @@ val builtins = mapOf(
                 else -> MError("argument to `len` not supported, got ${arg?.type()}")
             }
         }
-
-
+    },
+    "push" to MBuiltinFunction { args ->
+        args.forEach { arg -> println(arg?.inspect()) }
+        MNull
     },
     PUSH to MBuiltinFunction { args ->
         argSizeCheck(2, args) {
