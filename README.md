@@ -4,7 +4,7 @@ Kotlin's implementation of the [Monkey Language](https://monkeylang.org/)
 
 ## Status
 
-Currently, the first three chapters of the [interpreter book](https://interpreterbook.com/) have been implemented
+The full book [interpreter book](https://interpreterbook.com/) has been implemented
 
 ```text
 Hello, this is the monkey.kt programming language

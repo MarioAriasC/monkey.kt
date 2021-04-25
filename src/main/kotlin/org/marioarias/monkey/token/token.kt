@@ -14,6 +14,7 @@ enum class TokenType(val value: String) {
     PLUS("+"),
     COMMA(","),
     SEMICOLON(";"),
+    COLON(":"),
     MINUS("-"),
     BANG("!"),
     SLASH("/"),
@@ -27,6 +28,8 @@ enum class TokenType(val value: String) {
     RPAREN(")"),
     LBRACE("{"),
     RBRACE("}"),
+    LBRACKET("["),
+    RBRACKET("]"),
 
     FUNCTION("FUNCTION"),
     LET("LET"),
@@ -34,7 +37,9 @@ enum class TokenType(val value: String) {
     FALSE("FALSE"),
     IF("IF"),
     ELSE("ELSE"),
-    RETURN("RETURN");
+    RETURN("RETURN"),
+    STRING("STRING")
+    ;
 
     companion object {
         val keyboards = mapOf(

@@ -196,6 +196,14 @@ class EvaluatorTests {
             TestData(
                 "foobar",
                 "identifier not found: foobar",
+            ),
+            TestData(
+                """"Hello" - "World"""",
+                "unknown operator: STRING - STRING"
+            ),
+            TestData(
+                """{"name": "Monkey"}[fn(x) {x}];""",
+                "unusable as a hash key: FUNCTION"
             )
         )
 
@@ -242,18 +250,18 @@ class EvaluatorTests {
     @Test
     fun `function application`() {
         listOf(
-            TestData( "let identity = fn(x) { x; }; identity(5);", 5 ),
-            TestData( "let identity = fn(x) { return x; }; identity(5);", 5 ),
-            TestData( "let double = fn(x) { x * 2; }; double(5);", 10 ),
-            TestData( "let add = fn(x, y) { x + y; }; add(5, 5);", 10 ),
-            TestData( "let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20 ),
-            TestData( "fn(x) { x; }(5)", 5 ),
+            TestData("let identity = fn(x) { x; }; identity(5);", 5),
+            TestData("let identity = fn(x) { return x; }; identity(5);", 5),
+            TestData("let double = fn(x) { x * 2; }; double(5);", 10),
+            TestData("let add = fn(x, y) { x + y; }; add(5, 5);", 10),
+            TestData("let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20),
+            TestData("fn(x) { x; }(5)", 5),
         ).test()
     }
 
     @Test
     fun `enclosing environments`() {
-          val input = """let first = 10;
+        val input = """let first = 10;
           let second = 10;
           let third = 10;
           
@@ -265,6 +273,182 @@ class EvaluatorTests {
           
           ourFunction(20) + first + second;"""
         testObject<MInteger, Long>(testEval(input), 70L)
+    }
+
+    @Test
+    fun `string literal`() {
+        val input = """"Hello World!""""
+        testObject<MString, String>(testEval(input), "Hello World!")
+    }
+
+    @Test
+    fun `string concatenation`() {
+        val input = """"Hello" + " " + "World!""""
+        testObject<MString, String>(testEval(input), "Hello World!")
+    }
+
+    @Test
+    fun `builtin functions`() {
+        listOf(
+            TestData("""len("")""", 0),
+            TestData("""len("four")""", 4),
+            TestData("""len("hello world")""", 11),
+            TestData("len(1)", "argument to `len` not supported, got INTEGER"),
+            TestData("""len("one", "two")""", "wrong number of arguments. got=2, want=1"),
+            TestData("len([1, 2, 3])", 3),
+            TestData("len([])", 0),
+            TestData("push([], 1)", intArrayOf(1)),
+            TestData("push(1, 1)", "argument to `push` must be ARRAY, got INTEGER"),
+            TestData("first([1, 2, 3])", 1),
+            TestData("first([])", null),
+            TestData("first(1)", "argument to `first` must be ARRAY, got INTEGER"),
+            TestData("last([1, 2, 3])", 3),
+            TestData("last([])", null),
+            TestData("last(1)", "argument to `last` must be ARRAY, got INTEGER"),
+            TestData("rest([1, 2, 3])", intArrayOf(2, 3)),
+            TestData("rest([])", null),
+        ).forEach { (input, expected) ->
+            val evaluated = testEval(input)
+            when (expected) {
+                null -> testNullObject(evaluated)
+                is Int -> testObject<MInteger, Long>(evaluated, expected.toLong())
+                is String -> {
+                    checkType(evaluated) { error: MError ->
+                        Assert.assertEquals(error.message, expected)
+                    }
+                }
+                is IntArray -> {
+                    checkType(evaluated) { array: MArray ->
+                        Assert.assertEquals(expected.size, array.elements.size)
+                        expected.forEachIndexed { i, element ->
+                            testObject<MInteger, Long>(array.elements[i], element.toLong())
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `array literal`() {
+        val input = "[1, 2 * 2, 3 + 3]"
+
+        val evaluated = testEval(input)
+        val result = evaluated as MArray
+        Assert.assertEquals(result.elements.size, 3, "array has wrong num of elements, got=${result.elements.size}")
+
+        testObject<MInteger, Long>(result.elements[0], 1)
+        testObject<MInteger, Long>(result.elements[1], 4)
+        testObject<MInteger, Long>(result.elements[2], 6)
+    }
+
+    @Test
+    fun `array index expression`() {
+        listOf(
+            TestData(
+                "[1, 2, 3][0]",
+                1,
+            ),
+            TestData(
+                "[1, 2, 3][1]",
+                2,
+            ),
+            TestData(
+                "[1, 2, 3][2]",
+                3,
+            ),
+            TestData(
+                "let i = 0; [1][i];",
+                1,
+            ),
+            TestData(
+                "[1, 2, 3][1 + 1];",
+                3,
+            ),
+            TestData(
+                "let myArray = [1, 2, 3]; myArray[2];",
+                3,
+            ),
+            TestData(
+                "let myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];",
+                6,
+            ),
+            TestData(
+                "let myArray = [1, 2, 3]; let i = myArray[0]; myArray[i]",
+                2,
+            ),
+            TestData(
+                "[1, 2, 3][3]",
+                null,
+            ),
+            TestData(
+                "[1, 2, 3][-1]",
+                null,
+            )
+        ).forEach { (input, expected) ->
+            val evaluated = testEval(input)
+            when (expected) {
+                is Int -> testObject<MInteger, Long>(evaluated, expected.toLong())
+                else -> testNullObject(evaluated)
+            }
+        }
+    }
+
+    @Test
+    fun `hash literals`() {
+        val input = """
+        let two = "two";
+        	{
+        		"one": 10 - 9,
+        		two: 1 + 1,
+        		"thr" + "ee": 6 / 2,
+        		4: 4,
+        		true: 5,
+        		false: 6
+        	}    
+        """.trimIndent()
+        val evaluated = testEval(input)
+        checkType(evaluated) { result: MHash ->
+            val expected = mapOf(
+                MString("one").hashKey() to 1L,
+                MString("two").hashKey() to 2,
+                MString("three").hashKey() to 3,
+                MInteger(4).hashKey() to 4,
+                Evaluator.TRUE.hashKey() to 5,
+                Evaluator.FALSE.hashKey() to 6
+            )
+
+            Assert.assertEquals(
+                expected.size,
+                result.pairs.size,
+                "Hash has wrong number of pairs, got=${expected.size}"
+            )
+
+            expected.forEach { (expectedKey, expectedValue) ->
+                val pair = result.pairs[expectedKey]
+                Assert.assertNotNull(pair, "no pair for given key in pairs")
+                testObject(pair!!.value, expectedValue)
+            }
+        }
+    }
+
+    @Test
+    fun `hash index expressions`() {
+        listOf(
+            TestData("""{"foo": 5}["foo"]""", 5L),
+            TestData("""{"foo": 5}["bar"]""", null),
+            TestData("""let key = "foo";{"foo": 5}[key]""", 5L),
+            TestData("""{}["foo"]""", null),
+            TestData("""{5:5}[5]""", 5L),
+            TestData("""{true:5}[true]""", 5L),
+            TestData("""{false:5}[false]""", 5L),
+        ).forEach { (input, expected) ->
+            val evaluated = testEval(input)
+            when (expected) {
+                is Long -> testObject(evaluated, expected)
+                else -> testNullObject(evaluated)
+            }
+        }
     }
 
     private fun testNullObject(obj: MObject?): Boolean {
@@ -281,6 +465,8 @@ class EvaluatorTests {
             is T -> {
                 when {
                     obj.value != expected -> {
+                        println("obj.value::class.java = ${obj.value!!::class.java}")
+                        println("expected::class.java = ${expected!!::class.java}")
                         Assert.fail("obj has wrong value, got=${obj.value}, want=$expected")
                         false
                     }
@@ -298,6 +484,10 @@ class EvaluatorTests {
         val lexer = Lexer(input)
         val parser = Parser(lexer)
         val program = parser.parseProgram()
+
+        if (parser.errors().isNotEmpty()) {
+            parser.errors().forEach(::println)
+        }
 
         return Evaluator.eval(program, Environment.newEnvironment())
     }

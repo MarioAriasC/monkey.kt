@@ -9,10 +9,10 @@ import org.marioarias.monkey.token.TokenType
 typealias PrefixParse = () -> Expression?
 typealias InfixParse = (Expression?) -> Expression?
 
-class Parser(val lexer: Lexer) {
+class Parser(private val lexer: Lexer) {
 
     enum class Precedence {
-        LOWEST, EQUALS, LESS_GREATER, SUM, PRODUCT, PREFIX, CALL
+        LOWEST, EQUALS, LESS_GREATER, SUM, PRODUCT, PREFIX, CALL, INDEX
     }
 
     private val errors: MutableList<String> = mutableListOf()
@@ -33,6 +33,7 @@ class Parser(val lexer: Lexer) {
         TokenType.SLASH to Precedence.PRODUCT,
         TokenType.ASTERISK to Precedence.PRODUCT,
         TokenType.LPAREN to Precedence.CALL,
+        TokenType.LBRACKET to Precedence.INDEX
     )
 
 
@@ -48,7 +49,9 @@ class Parser(val lexer: Lexer) {
         prefixParsers[TokenType.LPAREN] = ::parseGroupExpression
         prefixParsers[TokenType.IF] = ::parseIfExpression
         prefixParsers[TokenType.FUNCTION] = ::parseFunctionLiteral
-
+        prefixParsers[TokenType.STRING] = ::parseStringLiteral
+        prefixParsers[TokenType.LBRACKET] = ::parseArrayLiteral
+        prefixParsers[TokenType.LBRACE] = ::parseHashLiteral
 
         infixParsers[TokenType.PLUS] = ::parseInfixExpression
         infixParsers[TokenType.MINUS] = ::parseInfixExpression
@@ -59,6 +62,78 @@ class Parser(val lexer: Lexer) {
         infixParsers[TokenType.LT] = ::parseInfixExpression
         infixParsers[TokenType.GT] = ::parseInfixExpression
         infixParsers[TokenType.LPAREN] = ::parseCallExpression
+        infixParsers[TokenType.LBRACKET] = ::parseIndexExpression
+    }
+
+    private fun parseHashLiteral(): Expression? {
+        val token = curToken
+        val pairs = mutableMapOf<Expression, Expression>()
+        while (!peekTokenIs(TokenType.RBRACE)) {
+            nextToken()
+            val key = parseExpression(Precedence.LOWEST)
+            if (!expectPeek(TokenType.COLON)) {
+                return null
+            }
+            nextToken()
+            val value = parseExpression(Precedence.LOWEST)
+            pairs[key!!] = value!!
+            if (!peekTokenIs(TokenType.RBRACE) && !expectPeek(TokenType.COMMA)) {
+                return null
+            }
+        }
+        if (!expectPeek(TokenType.RBRACE)) {
+            return null
+        }
+        return HashLiteral(token, pairs)
+    }
+
+    private fun parseIndexExpression(left: Expression?): Expression? {
+        val token = curToken
+        nextToken()
+
+        val index = parseExpression(Precedence.LOWEST)
+
+        if (!expectPeek(TokenType.RBRACKET)) {
+            return null
+        }
+
+        return IndexExpression(token, left, index)
+    }
+
+    private fun parseArrayLiteral(): Expression {
+        val token = curToken
+
+        return ArrayLiteral(token, parseExpressionList(TokenType.RBRACKET))
+    }
+
+    private fun parseExpressionList(end: TokenType): List<Expression?>? {
+
+        val arguments = mutableListOf<Expression?>()
+
+        if (peekTokenIs(end)) {
+            nextToken()
+            return arguments
+        }
+
+        nextToken()
+        arguments.add(parseExpression(Precedence.LOWEST))
+
+        while (peekTokenIs(TokenType.COMMA)) {
+            nextToken()
+            nextToken()
+            arguments.add(parseExpression(Precedence.LOWEST))
+        }
+
+        if (!expectPeek(end)) {
+            return null
+        }
+
+        return arguments
+
+    }
+
+    private fun parseStringLiteral(): Expression {
+        return StringLiteral(curToken, curToken.literal)
     }
 
     private fun nextToken() {
@@ -299,32 +374,8 @@ class Parser(val lexer: Lexer) {
 
     private fun parseCallExpression(expression: Expression?): Expression {
         val token = curToken
-        val arguments = parseCallArguments()
+        val arguments = parseExpressionList(TokenType.RPAREN)
         return CallExpression(token, expression, arguments)
-    }
-
-    private fun parseCallArguments(): List<Expression?>? {
-        val arguments = mutableListOf<Expression?>()
-
-        if (peekTokenIs(TokenType.RPAREN)) {
-            nextToken()
-            return arguments
-        }
-
-        nextToken()
-        arguments.add(parseExpression(Precedence.LOWEST))
-
-        while (peekTokenIs(TokenType.COMMA)) {
-            nextToken()
-            nextToken()
-            arguments.add(parseExpression(Precedence.LOWEST))
-        }
-
-        if (!expectPeek(TokenType.RPAREN)) {
-            return null
-        }
-
-        return arguments
     }
 
     private fun parseFunctionLiteral(): Expression? {
@@ -336,7 +387,7 @@ class Parser(val lexer: Lexer) {
 
         val parameters = parseFunctionParameters()
 
-        if(!expectPeek(TokenType.LBRACE)) {
+        if (!expectPeek(TokenType.LBRACE)) {
             return null
         }
 

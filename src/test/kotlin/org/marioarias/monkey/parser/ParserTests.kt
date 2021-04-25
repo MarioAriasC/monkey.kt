@@ -271,7 +271,15 @@ class ParserTests {
             TestData(
                 "add(a + b + c * d / f + g)",
                 "add((((a + b) + ((c * d) / f)) + g))",
-            )
+            ),
+            TestData(
+                "a * [1, 2, 3, 4][b * c] * d",
+                "((a * ([1, 2, 3, 4][(b * c)])) * d)",
+            ),
+            TestData(
+                "add(a * b[2], b[1], 2 * [1, 2][1])",
+                "add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))",
+            ),
         )
 
         tests.forEach { (input, expected) ->
@@ -456,6 +464,79 @@ class ParserTests {
                 testInfixExpression(exp.arguments?.get(1), 2, "*", 3)
                 testInfixExpression(exp.arguments?.get(2), 4, "+", 5)
 
+            }
+        }
+    }
+
+    @Test
+    fun `string literal expression`() {
+        val input = """"hello world";"""
+
+        val program = createProgram(input)
+
+        countStatements(1, program)
+
+        checkType(program.statements.first()) { statement: ExpressionStatement ->
+            checkType(statement.expression) { literal: StringLiteral ->
+                Assert.assertEquals(literal.value, "hello world")
+            }
+        }
+    }
+
+    @Test
+    fun `parsing array literal`() {
+        val input = "[1, 2 * 2, 3 + 3]"
+
+        val program = createProgram(input)
+
+        checkType(program.statements.first()) { statement: ExpressionStatement ->
+            checkType(statement.expression) { array: ArrayLiteral ->
+                testLongLiteral(array.elements!!.first(), 1)
+                testInfixExpression(array.elements!![1], 2, "*", 2)
+                testInfixExpression(array.elements!![2], 3, "+", 3)
+            }
+
+        }
+    }
+
+    @Test
+    fun `parsing index expression`() {
+        val input = "myArray[1 + 1]"
+
+        val program = createProgram(input)
+
+        checkType(program.statements.first()) { statement: ExpressionStatement ->
+            checkType(statement.expression) { index: IndexExpression ->
+                if (!testIdentifier(index.left, "myArray")) {
+                    return
+                }
+                if (!testInfixExpression(index.index, 1, "+", 1)) {
+                    return
+                }
+            }
+
+        }
+    }
+
+    @Test
+    fun `hash literal string keys`() {
+        val input = """{"one": 1, "two": 2, "three": 3}"""
+
+        val program = createProgram(input)
+
+        checkType(program.statements.first()) { statement: ExpressionStatement ->
+            checkType(statement.expression) { hash: HashLiteral ->
+                Assert.assertEquals(3, hash.pairs.size, "hash.pairs has the wrong length")
+
+                val expected = mapOf("one" to 1, "two" to 2, "three" to 3)
+
+                hash.pairs.forEach { (key, value) ->
+                    checkType(key) { literal: StringLiteral ->
+                        val expectedValue = expected[literal.toString()]
+                        testLiteralExpression(value, expectedValue)
+                    }
+                }
+                
             }
         }
     }
