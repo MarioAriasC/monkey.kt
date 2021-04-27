@@ -159,6 +159,6 @@ class MHash(val pairs: Map<HashKey, HashPair>): MObject {
     }
 
     override fun inspect(): String {
-        return "{${pairs.values.joinToString { value -> "${value.key.inspect()}: ${value.value.inspect()}" }}}"
+        return "{${pairs.values.joinToString { (key, value) -> "${key.inspect()}: ${value.inspect()}" }}}"
     }
 }

@@ -85,24 +85,24 @@ object Evaluator {
     }
 
     private fun evalHashLiteral(node: HashLiteral, env: Environment): MObject? {
-        
-        val pairs = node.pairs.mapKeys { (keyNode, _) ->
-            val key = eval(keyNode, env)
-            if(key.isError()) {
+
+        val pairs = mutableMapOf<HashKey, HashPair>()
+
+        node.pairs.forEach{(keyNode, valueNode) ->
+            val key= eval(keyNode, env)
+            if(key.isError()){
                 return key
             }
-            when(key) {
-                is Hashable<*> -> key
-                else -> return MError("unusable as hash key: ${key?.type()}")
+            when(key){
+                is Hashable<*> -> {
+                    val value = eval(valueNode, env)
+                    if(value.isError()){
+                        return value
+                    }
+                    pairs[key.hashKey()] = HashPair(key, value!!)
+                }
+                else -> return MError("unusable as hash key: ${key?.type()}")                 
             }
-        }.mapValues { (key, valueNode) ->
-            val value = eval(valueNode, env)
-            if(value.isError()){
-                return value
-            }
-            HashPair(key, value!!)
-        }.mapKeys { (key, _) ->
-            key.hashKey()
         }
         return MHash(pairs)
     }
