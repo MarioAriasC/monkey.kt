@@ -38,8 +38,8 @@ enum class TokenType(val value: String) {
     IF("IF"),
     ELSE("ELSE"),
     RETURN("RETURN"),
-    STRING("STRING")
-    ;
+    STRING("STRING"),
+    MACRO("MACRO");
 
     companion object {
         val keyboards = mapOf(
@@ -49,7 +49,8 @@ enum class TokenType(val value: String) {
             "false" to FALSE,
             "if" to IF,
             "else" to ELSE,
-            "return" to RETURN
+            "return" to RETURN,
+            "macro" to MACRO
         )
     }
 }

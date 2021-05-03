@@ -37,10 +37,6 @@ val builtins = mapOf(
             }
         }
     },
-    "push" to MBuiltinFunction { args ->
-        args.forEach { arg -> println(arg?.inspect()) }
-        MNull
-    },
     PUSH to MBuiltinFunction { args ->
         argSizeCheck(2, args) {
             arrayCheck(PUSH, it) { array, _ ->
