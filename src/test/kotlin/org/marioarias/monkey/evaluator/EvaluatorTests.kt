@@ -465,8 +465,6 @@ class EvaluatorTests {
             is T -> {
                 when {
                     obj.value != expected -> {
-                        println("obj.value::class.java = ${obj.value!!::class.java}")
-                        println("expected::class.java = ${expected!!::class.java}")
                         Assert.fail("obj has wrong value, got=${obj.value}, want=$expected")
                         false
                     }
@@ -480,15 +478,19 @@ class EvaluatorTests {
         }
     }
 
-    private fun testEval(input: String): MObject? {
-        val lexer = Lexer(input)
-        val parser = Parser(lexer)
-        val program = parser.parseProgram()
+    companion object {
+        fun testEval(input: String): MObject? {
+            val lexer = Lexer(input)
+            val parser = Parser(lexer)
+            val program = parser.parseProgram()
 
-        if (parser.errors().isNotEmpty()) {
-            parser.errors().forEach(::println)
+            if (parser.errors().isNotEmpty()) {
+                parser.errors().forEach(::println)
+            }
+
+            return Evaluator.eval(program, Environment.newEnvironment())
         }
-
-        return Evaluator.eval(program, Environment.newEnvironment())
     }
+
+
 }

@@ -2,10 +2,11 @@ package org.marioarias.monkey.objects
 
 import org.marioarias.monkey.ast.BlockStatement
 import org.marioarias.monkey.ast.Identifier
+import org.marioarias.monkey.ast.Node
 import org.marioarias.monkey.evaluator.Environment
 
 enum class ObjectType {
-    INTEGER, BOOLEAN, NULL, RETURN, ERROR, FUNCTION, STRING, BUILTIN, ARRAY, HASH
+    INTEGER, BOOLEAN, NULL, RETURN, ERROR, FUNCTION, STRING, BUILTIN, ARRAY, HASH, QUOTE, MACRO
 }
 
 interface MObject {
@@ -161,4 +162,25 @@ class MHash(val pairs: Map<HashKey, HashPair>): MObject {
     override fun inspect(): String {
         return "{${pairs.values.joinToString { (key, value) -> "${key.inspect()}: ${value.inspect()}" }}}"
     }
+}
+
+class MQuote(val node: Node?):MObject {
+    override fun type(): ObjectType {
+        return ObjectType.QUOTE
+    }
+
+    override fun inspect(): String {
+        return "QUOTE($node)"
+    }
+}
+
+class MMacro(val parameters:List<Identifier>?, val body: BlockStatement?, val env: Environment):MObject{
+    override fun type(): ObjectType {
+        return ObjectType.MACRO
+    }
+
+    override fun inspect(): String {
+        return "macro(${parameters?.joinToString()}) {\n$body\n}"
+    }
+
 }

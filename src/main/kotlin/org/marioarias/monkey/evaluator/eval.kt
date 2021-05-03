@@ -46,12 +46,16 @@ object Evaluator {
             is Identifier -> evalIdentifier(node, env)
             is FunctionLiteral -> MFunction(node.parameters, node.body, env)
             is CallExpression -> {
-                eval(node.function, env).ifNotError { function ->
-                    val args = evalExpressions(node.arguments, env)
-                    if (args.size == 1 && args.first().isError()) {
-                        args.first()
-                    } else {
-                        applyFunction(function, args)
+                if (node.function?.tokenLiteral() == "quote") {
+                    quote(node.arguments?.first()!!, env)
+                } else {
+                    eval(node.function, env).ifNotError { function ->
+                        val args = evalExpressions(node.arguments, env)
+                        if (args.size == 1 && args.first().isError()) {
+                            args.first()
+                        } else {
+                            applyFunction(function, args)
+                        }
                     }
                 }
             }
@@ -88,20 +92,20 @@ object Evaluator {
 
         val pairs = mutableMapOf<HashKey, HashPair>()
 
-        node.pairs.forEach{(keyNode, valueNode) ->
-            val key= eval(keyNode, env)
-            if(key.isError()){
+        node.pairs.forEach { (keyNode, valueNode) ->
+            val key = eval(keyNode, env)
+            if (key.isError()) {
                 return key
             }
-            when(key){
+            when (key) {
                 is Hashable<*> -> {
                     val value = eval(valueNode, env)
-                    if(value.isError()){
+                    if (value.isError()) {
                         return value
                     }
                     pairs[key.hashKey()] = HashPair(key, value!!)
                 }
-                else -> return MError("unusable as hash key: ${key?.type()}")                 
+                else -> return MError("unusable as hash key: ${key?.type()}")
             }
         }
         return MHash(pairs)
@@ -120,7 +124,7 @@ object Evaluator {
 
     private fun evalHashIndexExpression(hash: MObject, index: MObject): MObject? {
         val hashObject = hash as MHash
-        return when(index) {
+        return when (index) {
             is Hashable<*> -> {
                 val pair = hashObject.pairs[index.hashKey()]
                 pair?.value ?: NULL
