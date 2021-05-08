@@ -122,7 +122,7 @@ object Evaluator {
         }
     }
 
-    private fun evalHashIndexExpression(hash: MObject, index: MObject): MObject? {
+    private fun evalHashIndexExpression(hash: MObject, index: MObject): MObject {
         val hashObject = hash as MHash
         return when (index) {
             is Hashable<*> -> {

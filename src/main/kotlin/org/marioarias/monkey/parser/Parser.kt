@@ -68,15 +68,15 @@ class Parser(private val lexer: Lexer) {
 
     private fun parseMacroLiteral(): Expression? {
         val token = curToken
-        if(!expectPeek(TokenType.LPAREN)){
+        if (!expectPeek(TokenType.LPAREN)) {
             return null
         }
         val parameters = parseFunctionParameters()
-        if(!expectPeek(TokenType.LBRACE)){
+        if (!expectPeek(TokenType.LBRACE)) {
             return null
         }
         val body = parseBlockStatement()
-        return MacroLiteral(token,parameters, body)
+        return MacroLiteral(token, parameters, body)
     }
 
     private fun parseHashLiteral(): Expression? {

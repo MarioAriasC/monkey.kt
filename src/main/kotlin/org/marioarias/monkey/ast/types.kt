@@ -53,7 +53,8 @@ class Identifier(override val token: Token, val value: String) : NodeAdapter(), 
     }
 }
 
-class LetStatement(override val token: Token, val name: Identifier, val value: Expression?) : NodeAdapter(), StatementWithToken {
+class LetStatement(override val token: Token, val name: Identifier, val value: Expression?) : NodeAdapter(),
+    StatementWithToken {
     override fun toString(): String {
 
         return "${tokenLiteral()} $name = ${value?.toString() ?: ""};"
@@ -83,7 +84,8 @@ class ExpressionStatement(override val token: Token, val expression: Expression?
     }
 }
 
-class PrefixExpression(override val token: Token, val operator: String, val right: Expression?) : NodeAdapter(), ExpressionWithToken {
+class PrefixExpression(override val token: Token, val operator: String, val right: Expression?) : NodeAdapter(),
+    ExpressionWithToken {
     override fun toString(): String {
         return "($operator$right)"
     }
@@ -140,13 +142,15 @@ class ArrayLiteral(override val token: Token, val elements: List<Expression?>?) 
     }
 }
 
-class IndexExpression(override val token: Token, val left: Expression?, val index: Expression?) : NodeAdapter(), ExpressionWithToken {
+class IndexExpression(override val token: Token, val left: Expression?, val index: Expression?) : NodeAdapter(),
+    ExpressionWithToken {
     override fun toString(): String {
         return "($left[$index])"
     }
 }
 
-class HashLiteral(override val token: Token, val pairs: Map<Expression, Expression>) : NodeAdapter(), ExpressionWithToken {
+class HashLiteral(override val token: Token, val pairs: Map<Expression, Expression>) : NodeAdapter(),
+    ExpressionWithToken {
     override fun toString(): String {
         return "{${pairs.keys.joinToString { key -> "$key:${pairs[key]}" }}}"
     }

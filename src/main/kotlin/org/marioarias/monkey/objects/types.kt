@@ -137,7 +137,7 @@ class MBuiltinFunction(val fn: BuiltinFunction) : MObject {
     override fun inspect(): String = "builtin function"
 }
 
-class MArray(val elements: List<MObject?>): MObject {
+class MArray(val elements: List<MObject?>) : MObject {
     override fun type(): ObjectType = ObjectType.ARRAY
 
     override fun inspect(): String {
@@ -147,14 +147,14 @@ class MArray(val elements: List<MObject?>): MObject {
 
 data class HashKey(val type: ObjectType, val value: Int)
 
-interface Hashable<T> : MValue<T>{
+interface Hashable<T> : MValue<T> {
     fun hashKey(): HashKey = HashKey(type(), value.hashCode())
-    
+
 }
 
-data class HashPair(val key:MObject, val value:MObject)
+data class HashPair(val key: MObject, val value: MObject)
 
-class MHash(val pairs: Map<HashKey, HashPair>): MObject {
+class MHash(val pairs: Map<HashKey, HashPair>) : MObject {
     override fun type(): ObjectType {
         return ObjectType.HASH
     }
@@ -164,7 +164,7 @@ class MHash(val pairs: Map<HashKey, HashPair>): MObject {
     }
 }
 
-class MQuote(val node: Node?):MObject {
+class MQuote(val node: Node?) : MObject {
     override fun type(): ObjectType {
         return ObjectType.QUOTE
     }
@@ -174,7 +174,7 @@ class MQuote(val node: Node?):MObject {
     }
 }
 
-class MMacro(val parameters:List<Identifier>?, val body: BlockStatement?, val env: Environment):MObject{
+class MMacro(val parameters: List<Identifier>?, val body: BlockStatement?, val env: Environment) : MObject {
     override fun type(): ObjectType {
         return ObjectType.MACRO
     }

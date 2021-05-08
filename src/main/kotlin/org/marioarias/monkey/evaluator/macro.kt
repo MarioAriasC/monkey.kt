@@ -5,7 +5,6 @@ import org.marioarias.monkey.evaluator.Environment.Companion.newEnclosedEnvironm
 import org.marioarias.monkey.evaluator.Evaluator.eval
 import org.marioarias.monkey.objects.MMacro
 import org.marioarias.monkey.objects.MQuote
-import java.lang.IllegalArgumentException
 
 fun defineMacros(program: Program, env: Environment): Program {
     val newStatements = program.statements.groupBy { statement -> statement.isMacroDefinition() }
@@ -18,7 +17,7 @@ fun expandMacros(program: Node, env: Environment): Node? {
         when (node) {
             is CallExpression -> {
                 val (macro, isMacro) = node.isMacroCall(env)
-                if(!isMacro){
+                if (!isMacro) {
                     node
                 } else {
                     val args = node.arguments?.map { args ->
@@ -27,12 +26,12 @@ fun expandMacros(program: Node, env: Environment): Node? {
                     val evalEnv = extendMacroEnv(macro, args)
 
                     val evaluated = eval(macro?.body, evalEnv)
-                    if(evaluated !is MQuote){
+                    if (evaluated !is MQuote) {
                         throw IllegalArgumentException("we only support returning AST-nodes from macros")
                     } else {
                         evaluated.node
                     }
-                    
+
                 }
             }
             else -> node
@@ -42,7 +41,7 @@ fun expandMacros(program: Node, env: Environment): Node? {
 
 fun extendMacroEnv(macro: MMacro?, args: List<MQuote>?): Environment {
     val extended = newEnclosedEnvironment(macro!!.env)
-    macro.parameters?.forEachIndexed { i,parameter ->
+    macro.parameters?.forEachIndexed { i, parameter ->
         extended[parameter.value] = args!![i]
     }
     return extended
@@ -53,8 +52,8 @@ private fun CallExpression.isMacroCall(env: Environment): Pair<MMacro?, Boolean>
         is Identifier -> {
             val obj = env[this.function.value]
             when {
-                obj !=  null -> {
-                    if(obj is MMacro){
+                obj != null -> {
+                    if (obj is MMacro) {
                         obj to true
                     } else {
                         null to false
