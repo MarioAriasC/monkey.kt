@@ -54,18 +54,19 @@ class Lexer(private val input: String) {
 
     fun nextToken(): Token {
 
-        fun endsWithEqual(oneChar: TokenType, twoChars: TokenType, duplicateChars: Boolean = true) = if (peakChar() == '=') {
-            val currentChar = ch
-            readChar()
-            val value = if (duplicateChars) {
-                "$currentChar$currentChar"
+        fun endsWithEqual(oneChar: TokenType, twoChars: TokenType, duplicateChars: Boolean = true) =
+            if (peakChar() == '=') {
+                val currentChar = ch
+                readChar()
+                val value = if (duplicateChars) {
+                    "$currentChar$currentChar"
+                } else {
+                    "$currentChar$ch"
+                }
+                Token(twoChars, value)
             } else {
-                "$currentChar$ch"
+                oneChar.token()
             }
-            Token(twoChars, value)
-        } else {
-            oneChar.token()
-        }
 
         skipWhitespace()
         var readNextChar = true
