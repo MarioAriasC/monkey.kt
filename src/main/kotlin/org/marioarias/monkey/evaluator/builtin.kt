@@ -77,5 +77,9 @@ val builtins = mapOf(
                 }
             }
         }
+    },
+    "puts" to MBuiltinFunction { args ->
+        args.forEach { arg -> println(arg?.inspect()) }
+        MNull
     }
 )
