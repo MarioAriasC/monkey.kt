@@ -1,8 +1,8 @@
 package org.marioarias.monkey.lexer
 
 import org.marioarias.monkey.token.TokenType.*
-import org.testng.Assert
-import org.testng.annotations.Test
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 
 class LexerTests {
@@ -138,11 +138,11 @@ macro(x, y){x + y;};
             SEMICOLON to ";",
             EOF to ""
         )
-		
+
         expected.forEachIndexed { i, (type, literal) ->
             val token = lexer.nextToken()
-            Assert.assertEquals(token.type, type, "[$i]")
-            Assert.assertEquals(token.literal, literal, "[$i]")
+            assertEquals(token.type, type, "[$i]")
+            assertEquals(token.literal, literal, "[$i]")
         }
     }
 

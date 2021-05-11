@@ -21,7 +21,9 @@ tasks.test {
 
 dependencies {
     implementation(kotlin("stdlib"))
-    testImplementation("org.testng:testng:7.3.0")
+    testImplementation(kotlin("test-common"))
+    testImplementation(kotlin("test-annotations-common"))
+    testImplementation(kotlin("test-testng"))
 }
 
 application {

@@ -4,8 +4,10 @@ import org.marioarias.monkey.ast.*
 import org.marioarias.monkey.checkType
 import org.marioarias.monkey.isType
 import org.marioarias.monkey.lexer.Lexer
-import org.testng.Assert
-import org.testng.annotations.Test
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.fail
 
 
 class ParserTests {
@@ -55,7 +57,7 @@ class ParserTests {
 
             checkType(program.statements.first()) { statement: ReturnStatement ->
                 if (statement.tokenLiteral() != "return") {
-                    Assert.fail("statement.tokenLiteral() not 'return', got=${statement.tokenLiteral()}")
+                    fail("statement.tokenLiteral() not 'return', got=${statement.tokenLiteral()}")
                 }
                 if (testLiteralExpression(statement.returnValue, expectedValue)) {
                     return
@@ -76,8 +78,8 @@ class ParserTests {
         checkType(program.statements.first()) { statement: ExpressionStatement ->
             checkType(statement.expression) { identifier: Identifier ->
                 when {
-                    identifier.value != "foobar" -> Assert.fail("identifier.value not 'foobar'. got=${identifier.value}")
-                    identifier.tokenLiteral() != "foobar" -> Assert.fail("identifier.tokenLiteral() not 'foobar'. got=${identifier.tokenLiteral()}")
+                    identifier.value != "foobar" -> fail("identifier.value not 'foobar'. got=${identifier.value}")
+                    identifier.tokenLiteral() != "foobar" -> fail("identifier.tokenLiteral() not 'foobar'. got=${identifier.tokenLiteral()}")
                 }
             }
 
@@ -96,12 +98,12 @@ class ParserTests {
             when (val identifier = statement.expression) {
                 is IntegerLiteral -> {
                     when {
-                        identifier.value != 5.toLong() -> Assert.fail("identifier.value not 5. got=${identifier.value}")
-                        identifier.tokenLiteral() != "5" -> Assert.fail("identifier.tokenLiteral() not '5'. got=${identifier.tokenLiteral()}")
+                        identifier.value != 5.toLong() -> fail("identifier.value not 5. got=${identifier.value}")
+                        identifier.tokenLiteral() != "5" -> fail("identifier.tokenLiteral() not '5'. got=${identifier.tokenLiteral()}")
                     }
                 }
                 else -> {
-                    Assert.fail("statement.expression not Identifier. got=${identifier!!::class.java}")
+                    fail("statement.expression not Identifier. got=${identifier!!::class.java}")
                 }
             }
         }
@@ -125,7 +127,7 @@ class ParserTests {
 
             checkType(program.statements.first()) { statement: ExpressionStatement ->
                 checkType(statement.expression) { expression: PrefixExpression ->
-                    Assert.assertEquals(
+                    assertEquals(
                         expression.operator,
                         operator,
                         "expression.operator is not ${operator}. got=${expression.operator}"
@@ -286,7 +288,7 @@ class ParserTests {
             val program = createProgram(input)
 
             val actual = program.toString()
-            Assert.assertEquals(actual, expected, "expected ${expected}. got=$actual")
+            assertEquals(actual, expected, "expected ${expected}. got=$actual")
         }
     }
 
@@ -306,7 +308,7 @@ class ParserTests {
             checkType(program.statements.first()) { statement: ExpressionStatement ->
                 checkType(statement.expression) { boolean: BooleanLiteral ->
 
-                    Assert.assertEquals(
+                    assertEquals(
                         boolean.value,
                         expectedBoolean,
                         "value not $expectedBoolean, got=${boolean.value}"
@@ -329,7 +331,7 @@ class ParserTests {
                     return
                 }
 
-                Assert.assertEquals(
+                assertEquals(
                     exp.consequence?.statements?.size,
                     1,
                     "Consequences does not contain 1 statement. got=${exp.consequence?.statements?.size}"
@@ -341,7 +343,7 @@ class ParserTests {
                     }
                 }
 
-                Assert.assertNull(exp.alternative, "exp.alternative was not nil got=${exp.alternative}")
+                assertNull(exp.alternative, "exp.alternative was not nil got=${exp.alternative}")
             }
         }
     }
@@ -359,7 +361,7 @@ class ParserTests {
                     return
                 }
 
-                Assert.assertEquals(
+                assertEquals(
                     exp.consequence?.statements?.size,
                     1,
                     "Consequences does not contain 1 statement. got=${exp.consequence?.statements?.size}"
@@ -371,7 +373,7 @@ class ParserTests {
                     }
                 }
 
-                Assert.assertEquals(
+                assertEquals(
                     1,
                     exp.alternative?.statements?.size,
                     "alternative does not contain 1 statement, got=${exp.alternative?.statements?.size}"
@@ -399,7 +401,7 @@ class ParserTests {
                 testLiteralExpression(function.parameters?.get(0), "x")
                 testLiteralExpression(function.parameters?.get(1), "y")
 
-                Assert.assertEquals(
+                assertEquals(
                     function.body?.statements?.size,
                     1,
                     "function.body.statements has not 1 statement, got=${function.body?.statements?.size}"
@@ -428,7 +430,7 @@ class ParserTests {
 
             checkType(program.statements.first()) { statement: ExpressionStatement ->
                 checkType(statement.expression) { function: FunctionLiteral ->
-                    Assert.assertEquals(
+                    assertEquals(
                         function.parameters?.size,
                         expectedParams.size,
                         "length of parameters is wrong. want ${expectedParams.size}. got=${function.parameters?.size}"
@@ -458,7 +460,7 @@ class ParserTests {
 
 
 
-                Assert.assertEquals(exp.arguments?.size, 3, "wrong length of arguments. got=${exp.arguments?.size}")
+                assertEquals(exp.arguments?.size, 3, "wrong length of arguments. got=${exp.arguments?.size}")
 
                 testLiteralExpression(exp.arguments?.get(0), 1)
                 testInfixExpression(exp.arguments?.get(1), 2, "*", 3)
@@ -478,7 +480,7 @@ class ParserTests {
 
         checkType(program.statements.first()) { statement: ExpressionStatement ->
             checkType(statement.expression) { literal: StringLiteral ->
-                Assert.assertEquals(literal.value, "hello world")
+                assertEquals(literal.value, "hello world")
             }
         }
     }
@@ -526,7 +528,7 @@ class ParserTests {
 
         checkType(program.statements.first()) { statement: ExpressionStatement ->
             checkType(statement.expression) { hash: HashLiteral ->
-                Assert.assertEquals(3, hash.pairs.size, "hash.pairs has the wrong length")
+                assertEquals(3, hash.pairs.size, "hash.pairs has the wrong length")
 
                 val expected = mapOf("one" to 1, "two" to 2, "three" to 3)
 
@@ -536,7 +538,7 @@ class ParserTests {
                         testLiteralExpression(value, expectedValue)
                     }
                 }
-                
+
             }
         }
     }
@@ -546,14 +548,14 @@ class ParserTests {
         val input = "macro(x, y){x + y;}"
         val program = createProgram(input)
         countStatements(1, program)
-        checkType(program.statements.first()){ statement: ExpressionStatement ->
-            checkType(statement.expression){ macro: MacroLiteral ->
+        checkType(program.statements.first()) { statement: ExpressionStatement ->
+            checkType(statement.expression) { macro: MacroLiteral ->
                 val parameters = macro.parameters!!
-                Assert.assertEquals(parameters.size,2)
+                assertEquals(parameters.size, 2)
                 testLiteralExpression(parameters[0], "x")
                 testLiteralExpression(parameters[1], "y")
-                Assert.assertEquals(macro.body.statements?.size,1)
-                checkType(macro.body.statements?.first()){ body: ExpressionStatement ->
+                assertEquals(macro.body.statements?.size, 1)
+                checkType(macro.body.statements?.first()) { body: ExpressionStatement ->
                     testInfixExpression(body.expression, "x", "+", "y")
                 }
             }
@@ -571,8 +573,7 @@ class ParserTests {
             when {
                 !testLiteralExpression(exp.left, leftValue) -> false
                 exp.operator != operator -> {
-                    Assert.fail("exp.operator is not $operator. got=${exp.operator}")
-                    false
+                    fail("exp.operator is not $operator. got=${exp.operator}")
                 }
                 !testLiteralExpression(exp.right, rightValue) -> false
                 else -> true
@@ -587,8 +588,7 @@ class ParserTests {
             is String -> testIdentifier(value, expectedValue)
             is Boolean -> testBooleanLiteral(value, expectedValue)
             else -> {
-                Assert.fail("type of value not handled. got=${expectedValue!!::class.java}")
-                false
+                fail("type of value not handled. got=${expectedValue!!::class.java}")
             }
         }
     }
@@ -599,12 +599,10 @@ class ParserTests {
         return isType(expression) { exp: BooleanLiteral ->
             when {
                 exp.value != b -> {
-                    Assert.fail("exp.value not $b. got=${exp.value}")
-                    false
+                    fail("exp.value not $b. got=${exp.value}")
                 }
                 exp.tokenLiteral() != b.toString() -> {
-                    Assert.fail("exp.tokenLiteral() not $b. got=${exp.tokenLiteral()}")
-                    false
+                    fail("exp.tokenLiteral() not $b. got=${exp.tokenLiteral()}")
                 }
                 else -> true
             }
@@ -617,12 +615,10 @@ class ParserTests {
         return isType(expression) { exp: Identifier ->
             when {
                 exp.value != string -> {
-                    Assert.fail("exp.value no $string. got=${exp.value}")
-                    false
+                    fail("exp.value no $string. got=${exp.value}")
                 }
                 exp.tokenLiteral() != string -> {
-                    Assert.fail("exp.tokenLiteral() no $string. got=${exp.tokenLiteral()}")
-                    false
+                    fail("exp.tokenLiteral() no $string. got=${exp.tokenLiteral()}")
                 }
                 else -> true
             }
@@ -635,12 +631,10 @@ class ParserTests {
         return isType(expression) { exp: IntegerLiteral ->
             when {
                 exp.value != l -> {
-                    Assert.fail("exp.value not $l. got=${exp.value}")
-                    false
+                    fail("exp.value not $l. got=${exp.value}")
                 }
                 exp.tokenLiteral() != l.toString() -> {
-                    Assert.fail("exp.tokenLiteral() not $l. got=${exp.tokenLiteral()}")
-                    false
+                    fail("exp.tokenLiteral() not $l. got=${exp.tokenLiteral()}")
                 }
                 else -> true
             }
@@ -650,19 +644,16 @@ class ParserTests {
 
     private fun testLetStatement(statement: Statement, expectedIdentifier: String): Boolean {
         if (statement.tokenLiteral() != "let") {
-            Assert.fail("statement.tokenLiteral() not 'let'. got=${statement.tokenLiteral()}")
-            return false
+            fail("statement.tokenLiteral() not 'let'. got=${statement.tokenLiteral()}")
         }
 
         return isType(statement) { letStatement: LetStatement ->
             when {
                 letStatement.name.value != expectedIdentifier -> {
-                    Assert.fail("letStatement.name.value not $expectedIdentifier. got=${letStatement.name.value}")
-                    false
+                    fail("letStatement.name.value not $expectedIdentifier. got=${letStatement.name.value}")
                 }
                 letStatement.name.tokenLiteral() != expectedIdentifier -> {
-                    Assert.fail("letStatement.name.tokenLiteral() not $expectedIdentifier. got=${letStatement.name.tokenLiteral()}")
-                    false
+                    fail("letStatement.name.tokenLiteral() not $expectedIdentifier. got=${letStatement.name.tokenLiteral()}")
                 }
                 else -> true
             }
@@ -672,7 +663,7 @@ class ParserTests {
 
     private fun countStatements(i: Int, program: Program) {
         val size = program.statements.size
-        Assert.assertEquals(i, size, "wrong length of arguments. got=$size")
+        assertEquals(i, size, "wrong length of arguments. got=$size")
     }
 
     private fun createProgram(input: String): Program {
@@ -688,7 +679,7 @@ class ParserTests {
         if (errors.isEmpty()) {
             return
         }
-        Assert.fail("parser has ${errors.size} errors: \n${errors.joinToString(" \n")}")
+        fail("parser has ${errors.size} errors: \n${errors.joinToString(" \n")}")
 
     }
 }

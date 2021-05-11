@@ -2,8 +2,8 @@ package org.marioarias.monkey.ast
 
 import org.marioarias.monkey.token.Token
 import org.marioarias.monkey.token.TokenType
-import org.testng.Assert
-import org.testng.annotations.Test
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 
 class ModifyTests {
@@ -83,7 +83,7 @@ class ModifyTests {
             )
         ).forEach { (input, expected) ->
             val modified = modify(input, turnOneIntoTwo)
-            Assert.assertEquals(expected, modified)
+            assertEquals(expected, modified)
         }
 
         val hashLiteral = modify(
@@ -96,14 +96,14 @@ class ModifyTests {
         ) as HashLiteral
 
         hashLiteral.pairs.forEach { (key, value) ->
-            when(key){
-                is IntegerLiteral -> Assert.assertEquals(2, key.value)
+            when (key) {
+                is IntegerLiteral -> assertEquals(2, key.value)
             }
-            when(value){
-                is IntegerLiteral -> Assert.assertEquals(2, value.value)
+            when (value) {
+                is IntegerLiteral -> assertEquals(2, value.value)
             }
         }
 
-        
+
     }
 }

@@ -4,8 +4,10 @@ import org.marioarias.monkey.checkType
 import org.marioarias.monkey.lexer.Lexer
 import org.marioarias.monkey.objects.*
 import org.marioarias.monkey.parser.Parser
-import org.testng.Assert
-import org.testng.annotations.Test
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.fail
 
 
 class EvaluatorTests {
@@ -211,7 +213,7 @@ class EvaluatorTests {
             val evaluated = testEval(input)
 
             checkType(evaluated) { error: MError ->
-                Assert.assertEquals(
+                assertEquals(
                     error.message,
                     expected,
                     "wrong error message. expected=$expected, got=${error.message}"
@@ -236,14 +238,14 @@ class EvaluatorTests {
         val evaluated = testEval(input)
 
         checkType(evaluated) { fn: MFunction ->
-            Assert.assertEquals(fn.parameters?.size, 1, "function has wrong parameters. Parameters=${fn.parameters}")
-            Assert.assertEquals(
+            assertEquals(fn.parameters?.size, 1, "function has wrong parameters. Parameters=${fn.parameters}")
+            assertEquals(
                 fn.parameters?.first().toString(),
                 "x",
                 "parameter is not 'x'. got=${fn.parameters?.first()}"
             )
             val body = "(x + 2)"
-            Assert.assertEquals(fn.body?.toString(), body, "body is not $body, got=${fn.body}")
+            assertEquals(fn.body?.toString(), body, "body is not $body, got=${fn.body}")
         }
     }
 
@@ -314,12 +316,12 @@ class EvaluatorTests {
                 is Int -> testObject<MInteger, Long>(evaluated, expected.toLong())
                 is String -> {
                     checkType(evaluated) { error: MError ->
-                        Assert.assertEquals(error.message, expected)
+                        assertEquals(error.message, expected)
                     }
                 }
                 is IntArray -> {
                     checkType(evaluated) { array: MArray ->
-                        Assert.assertEquals(expected.size, array.elements.size)
+                        assertEquals(expected.size, array.elements.size)
                         expected.forEachIndexed { i, element ->
                             testObject<MInteger, Long>(array.elements[i], element.toLong())
                         }
@@ -335,7 +337,7 @@ class EvaluatorTests {
 
         val evaluated = testEval(input)
         val result = evaluated as MArray
-        Assert.assertEquals(result.elements.size, 3, "array has wrong num of elements, got=${result.elements.size}")
+        assertEquals(result.elements.size, 3, "array has wrong num of elements, got=${result.elements.size}")
 
         testObject<MInteger, Long>(result.elements[0], 1)
         testObject<MInteger, Long>(result.elements[1], 4)
@@ -418,7 +420,7 @@ class EvaluatorTests {
                 Evaluator.FALSE.hashKey() to 6
             )
 
-            Assert.assertEquals(
+            assertEquals(
                 expected.size,
                 result.pairs.size,
                 "Hash has wrong number of pairs, got=${expected.size}"
@@ -426,8 +428,8 @@ class EvaluatorTests {
 
             expected.forEach { (expectedKey, expectedValue) ->
                 val pair = result.pairs[expectedKey]
-                Assert.assertNotNull(pair, "no pair for given key in pairs")
-                testObject(pair!!.value, expectedValue)
+                assertNotNull(pair, "no pair for given key in pairs")
+                testObject(pair.value, expectedValue)
             }
         }
     }
@@ -453,8 +455,8 @@ class EvaluatorTests {
 
     private fun testNullObject(obj: MObject?): Boolean {
         return if (obj != Evaluator.NULL) {
-            Assert.fail("object is not NULL, got=${obj!!::class.java} ($obj)")
-            false
+            fail("object is not NULL, got=${obj!!::class.java} ($obj)")
+
         } else {
             true
         }
@@ -465,15 +467,14 @@ class EvaluatorTests {
             is T -> {
                 when {
                     obj.value != expected -> {
-                        Assert.fail("obj has wrong value, got=${obj.value}, want=$expected")
-                        false
+                        fail("obj has wrong value, got=${obj.value}, want=$expected")
+
                     }
                     else -> true
                 }
             }
             else -> {
-                Assert.fail("obj is not ${T::class.java}, got=${if (obj != null) obj::class.java else "null"}, ($obj)")
-                return false
+                fail("obj is not ${T::class.java}, got=${if (obj != null) obj::class.java else "null"}, ($obj)")
             }
         }
     }
