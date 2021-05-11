@@ -5,8 +5,7 @@ import org.marioarias.monkey.evaluator.Environment.Companion.newEnvironment
 import org.marioarias.monkey.lexer.Lexer
 import org.marioarias.monkey.objects.MMacro
 import org.marioarias.monkey.parser.Parser
-import org.testng.Assert
-import org.testng.annotations.Test
+import kotlin.test.*
 
 
 class MacrosTests {
@@ -20,23 +19,23 @@ class MacrosTests {
 
         val program = defineMacros(testParseProgram(input), env)
 
-        Assert.assertEquals(program.statements.size, 2)
+        assertEquals(program.statements.size, 2)
 
-        Assert.assertNull(env["number"])
+        assertNull(env["number"])
 
-        Assert.assertNull(env["function"])
+        assertNull(env["function"])
 
         val obj = env["myMacro"]
-        Assert.assertNotNull(obj)
+        assertNotNull(obj)
 
         when (obj) {
             is MMacro -> {
-                Assert.assertEquals(obj.parameters?.size, 2)
-                Assert.assertEquals(obj.parameters!![0].toString(), "x")
-                Assert.assertEquals(obj.parameters!![1].toString(), "y")
-                Assert.assertEquals(obj.body.toString(), "(x + y)")
+                assertEquals(obj.parameters?.size, 2)
+                assertEquals(obj.parameters!![0].toString(), "x")
+                assertEquals(obj.parameters!![1].toString(), "y")
+                assertEquals(obj.body.toString(), "(x + y)")
             }
-            else -> Assert.fail("object is not MMacro. got ${obj?.type()}")
+            else -> fail("object is not MMacro. got ${obj.type()}")
         }
 
     }
@@ -68,13 +67,13 @@ class MacrosTests {
                 }
                 unless(10 > 5, puts("not greater"), puts("greater"));
                 """.trimMargin(), """if (!(10 > 5)) {puts("not greater")} else {puts("greater")}"""
-                        )
+            )
         ).forEach { (input, expected) ->
             val expectedProgram = testParseProgram(expected)
             val env = newEnvironment()
             val program = defineMacros(testParseProgram(input), env)
             val expanded = expandMacros(program, env)
-            Assert.assertEquals(expanded.toString(), expectedProgram.toString())
+            assertEquals(expanded.toString(), expectedProgram.toString())
         }
     }
 
