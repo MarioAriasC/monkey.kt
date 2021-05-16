@@ -1,5 +1,12 @@
 package org.marioarias.monkey
 
+import org.marioarias.monkey.ast.Program
+import org.marioarias.monkey.code.Instructions
+import org.marioarias.monkey.lexer.Lexer
+import org.marioarias.monkey.objects.MInteger
+import org.marioarias.monkey.objects.MObject
+import org.marioarias.monkey.parser.Parser
+import kotlin.test.assertEquals
 import kotlin.test.fail
 
 inline fun <reified T> checkType(value: Any?, body: (T) -> Unit) {
@@ -21,5 +28,24 @@ inline fun <reified T> isType(value: Any?, body: (T) -> Boolean): Boolean {
         else -> {
             fail("$value is not ${T::class.java}. got=${value!!::class.java}")
         }
+    }
+}
+
+fun parse(input: String): Program {
+    return Parser(Lexer(input)).parseProgram()
+}
+
+fun List<Instructions>.concat() = fold(byteArrayOf()) { acc, bytes -> acc + bytes }
+
+fun Instructions.assertEquals(actual: Instructions) {
+    forEachIndexed { i, byte ->
+        assertEquals(byte, actual[i])
+    }
+}
+
+fun testIntegerObject(expected: Long, actual: MObject) {
+    when (actual) {
+        is MInteger -> assertEquals(expected, actual.value)
+        else -> fail("object is  not Integer. got=${actual::class}")
     }
 }
