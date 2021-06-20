@@ -8,22 +8,52 @@ import org.marioarias.monkey.objects.MObject
 class MCompiler {
 
     private var instructions: Instructions = byteArrayOf()
-    private var constants: List<MObject> = emptyList()
+    private var constants: MutableList<MObject> = mutableListOf()
 
     @Throws(MCompilerException::class)
     fun compile(node: Node) {
         when (node) {
             is Program -> node.statements.forEach(this::compile)
-            is ExpressionStatement -> compile(node.expression!!)
+            is ExpressionStatement -> {
+                compile(node.expression!!)
+                emit(OpPop)
+            }
             is InfixExpression -> {
+                if (node.operator == "<") {
+                    compile(node.right!!)
+                    compile(node.left!!)
+                    emit(OpGreaterThan)
+                    return
+                }
                 compile(node.left!!)
                 compile(node.right!!)
                 when (node.operator) {
                     "+" -> emit(OpAdd)
+                    "-" -> emit(OpSub)
+                    "*" -> emit(OpMul)
+                    "/" -> emit(OpDiv)
+                    ">" -> emit(OpGreaterThan)
+                    "==" -> emit(OpEqual)
+                    "!=" -> emit(OpNotEqual)
+                    else -> throw MCompilerException("unknown operator ${node.operator}")
+                }
+            }
+            is PrefixExpression -> {
+                compile(node.right!!)
+                when(node.operator){
+                    "!" -> emit(OpBang)
+                    "-" -> emit(OpMinus)
                     else -> throw MCompilerException("unknown operator ${node.operator}")
                 }
             }
             is IntegerLiteral -> emit(OpConstant, addConstant(MInteger(node.value)))
+            is BooleanLiteral -> {
+                if (node.value) {
+                    emit(OpTrue)
+                } else {
+                    emit(OpFalse)
+                }
+            }
         }
     }
 

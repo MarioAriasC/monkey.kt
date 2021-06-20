@@ -55,7 +55,7 @@ fun start(`in`: InputStream, out: PrintStream) {
             compiler.compile(program)
             val machine = VM(compiler.bytecode())
             machine.run()
-            val stackTop = machine.stackTop()
+            val stackTop = machine.lastPoppedStackElem()
             out.println(stackTop?.inspect())
         } catch (e: MCompilerException) {
             out.println("Woops! Compilation failed:\n ${e.message}")

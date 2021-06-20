@@ -1,10 +1,7 @@
 package org.marioarias.monkey.compiler
 
 import org.marioarias.monkey.assertEquals
-import org.marioarias.monkey.code.Instructions
-import org.marioarias.monkey.code.OpAdd
-import org.marioarias.monkey.code.OpConstant
-import org.marioarias.monkey.code.make
+import org.marioarias.monkey.code.*
 import org.marioarias.monkey.concat
 import org.marioarias.monkey.objects.MObject
 import org.marioarias.monkey.parse
@@ -14,27 +11,158 @@ import kotlin.test.assertEquals
 import kotlin.test.fail
 
 class CompilerTests {
-    data class CompilerTestCase<T>(
+    data class CTC<T>(
         val input: String,
         val expectedConstants: List<T>,
         val expectedInstructions: List<Instructions>
     )
 
+
+
     @Test
     fun `integer arithmetic`() {
-        listOf(CompilerTestCase(
-            "1 + 2",
+        listOf(
+            CTC("1 + 2",
             listOf(1, 2),
             listOf(
                 make(OpConstant, 0),
                 make(OpConstant, 1),
-                make(OpAdd)
+                make(OpAdd),
+                make(OpPop)
             )
-        )).runCompilerTests()
+        ),
+            CTC("1; 2",
+                    listOf(1, 2),
+                    listOf(
+                        make(OpConstant, 0),
+                        make(OpPop),
+                        make(OpConstant, 1),
+                        make(OpPop)
+                    )
+                ),
+            CTC("1 - 2",
+                        listOf(1, 2),
+                        listOf(
+                            make(OpConstant, 0),
+                            make(OpConstant, 1),
+                            make(OpSub),
+                            make(OpPop)
+                        )
+                    ),
+            CTC("1 * 2",
+                        listOf(1, 2),
+                        listOf(
+                            make(OpConstant, 0),
+                            make(OpConstant, 1),
+                            make(OpMul),
+                            make(OpPop)
+                        )
+                    ),
+            CTC("2 / 1",
+                        listOf(2, 1),
+                        listOf(
+                            make(OpConstant, 0),
+                            make(OpConstant, 1),
+                            make(OpDiv),
+                            make(OpPop)
+                        )
+                    ),
+            CTC("-1",
+            listOf(1),
+            listOf(
+                make(OpConstant, 0),
+                make(OpMinus),
+                make(OpPop)
+            ))
+        ).runCompilerTests()
     }
 
-    private fun <T> List<CompilerTestCase<T>>.runCompilerTests() {
+    @Test
+    fun `boolean expressions`() {
+        listOf(
+            CTC("true",
+                listOf(),
+                listOf(
+                    make(OpTrue),
+                    make(OpPop)
+                )
+            ),
+            CTC("false",
+                listOf(),
+                listOf(
+                    make(OpFalse),
+                    make(OpPop)
+                )
+            ),
+            CTC("1 > 2",
+                listOf(1, 2),
+                listOf(
+                    make(OpConstant,0),
+                    make(OpConstant,1),
+                    make(OpGreaterThan),
+                    make(OpPop)
+                )
+            ),
+            CTC("1 < 2",
+                listOf(2, 1),
+                listOf(
+                    make(OpConstant,0),
+                    make(OpConstant,1),
+                    make(OpGreaterThan),
+                    make(OpPop)
+                )
+            ),
+            CTC("1 == 2",
+                listOf(1, 2),
+                listOf(
+                    make(OpConstant,0),
+                    make(OpConstant,1),
+                    make(OpEqual),
+                    make(OpPop)
+                )
+            ),
+            CTC("1 != 2",
+                listOf(1, 2),
+                listOf(
+                    make(OpConstant,0),
+                    make(OpConstant,1),
+                    make(OpNotEqual),
+                    make(OpPop)
+                )
+            ),
+            CTC("true == false",
+                listOf(),
+                listOf(
+                    make(OpTrue),
+                    make(OpFalse),
+                    make(OpEqual),
+                    make(OpPop)
+                )
+            ),
+            CTC("true != false",
+                listOf(),
+                listOf(
+                    make(OpTrue),
+                    make(OpFalse),
+                    make(OpNotEqual),
+                    make(OpPop)
+                )
+            ),
+            CTC("!true",
+                listOf(),
+                listOf(
+                    make(OpTrue),
+                    make(OpBang),
+                    make(OpPop)
+                )
+            )
+
+        ).runCompilerTests()
+    }
+
+    private fun <T> List<CTC<T>>.runCompilerTests() {
         forEach { (input, expectedConstants, expectedInstructions) ->
+            println("input = ${input}")
             val program = parse(input)
             val compiler = MCompiler()
 

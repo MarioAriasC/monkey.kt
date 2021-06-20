@@ -61,13 +61,37 @@ typealias Opcode = Byte
 
 const val OpConstant: Opcode = 1
 const val OpAdd: Opcode = 2
+const val OpPop: Opcode = 3
+const val OpSub: Opcode = 4
+const val OpMul: Opcode = 5
+const val OpDiv: Opcode = 6
+const val OpTrue: Opcode = 7
+const val OpFalse: Opcode = 8
+const val OpEqual: Opcode = 9
+const val OpNotEqual: Opcode = 10
+const val OpGreaterThan: Opcode = 11
+const val OpMinus: Opcode = 12
+const val OpBang: Opcode = 13
 
 val definitions: Map<Opcode, Definition> = mapOf(
-    OpConstant to Definition("OpConstant", intArrayOf(2)),
-    OpAdd to Definition("OpAdd", intArrayOf())
+    OpConstant to "OpConstant".toDefinition(intArrayOf(2)),
+    OpAdd to "OpAdd".toDefinition(),
+    OpPop to "OpPop".toDefinition(),
+    OpSub to "OpSub".toDefinition(),
+    OpMul to "OpMul".toDefinition(),
+    OpDiv to "OpDiv".toDefinition(),
+    OpTrue to "OpTrue".toDefinition(),
+    OpFalse to "OpFalse".toDefinition(),
+    OpEqual to "OpEqual".toDefinition(),
+    OpNotEqual to "OpNotEqual".toDefinition(),
+    OpGreaterThan to "OpGreaterThan".toDefinition(),
+    OpMinus to "OpMinus".toDefinition(),
+    OpBang to "OpBang".toDefinition(),
 )
 
-data class Definition(val name: String, val operandsWidths: IntArray) {
+private fun String.toDefinition(operandsWidths: IntArray = intArrayOf()) = Definition(this, operandsWidths)
+
+data class Definition(val name: String, val operandsWidths: IntArray = intArrayOf()) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is Definition) return false
