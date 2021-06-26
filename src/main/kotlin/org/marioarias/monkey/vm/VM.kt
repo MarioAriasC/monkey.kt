@@ -2,13 +2,11 @@ package org.marioarias.monkey.vm
 
 import org.marioarias.monkey.code.*
 import org.marioarias.monkey.compiler.Bytecode
-import org.marioarias.monkey.objects.MBoolean
-import org.marioarias.monkey.objects.MInteger
-import org.marioarias.monkey.objects.MObject
-import org.marioarias.monkey.objects.ObjectType
+import org.marioarias.monkey.objects.*
 
 val True = MBoolean(true)
 val False = MBoolean(false)
+val Null = MNull
 
 class VM(bytecode: Bytecode) {
     private var constant: List<MObject> = bytecode.constants
@@ -48,6 +46,21 @@ class VM(bytecode: Bytecode) {
                 }
                 OpBang -> executeBangOperator()
                 OpMinus -> executeMinusOperator()
+                OpJump -> {
+                    val pos = instructions.offset(i + 1).readChar().code
+                    i = pos - 1
+                }
+                OpJumpNotTruthy -> {
+                    val pos = instructions.offset(i + 1).readChar().code
+                    i += 2
+                    val condition = pop()
+                    if (!condition.isTruthy()) {
+                        i = pos - 1
+                    }
+                }
+                OpNull -> {
+                    push(Null)
+                }
             }
             i++
         }
@@ -55,7 +68,7 @@ class VM(bytecode: Bytecode) {
 
     private fun executeMinusOperator() {
         val operand = pop()
-        if(operand!!.type() != ObjectType.INTEGER){
+        if (operand!!.type() != ObjectType.INTEGER) {
             throw VMException("unsupported type for negation: ${operand.type()}")
         }
         val value = (operand as MInteger).value
@@ -63,9 +76,10 @@ class VM(bytecode: Bytecode) {
     }
 
     private fun executeBangOperator() {
-        when(pop()){
+        when (pop()) {
             True -> push(False)
             False -> push(True)
+            Null -> push(True)
             else -> push(False)
         }
     }
@@ -89,11 +103,11 @@ class VM(bytecode: Bytecode) {
     }
 
     private fun executeComparison(op: Byte) {
-        binaryOperationTemplate(op, ::executeBinaryIntegerComparison) { op, left, leftType, right, rightType ->
-            val bool = when(op) {
+        binaryOperationTemplate(op, ::executeBinaryIntegerComparison) { opCode, left, leftType, right, rightType ->
+            val bool = when (opCode) {
                 OpEqual -> (left == right).toMBoolean()
                 OpNotEqual -> (left != right).toMBoolean()
-                else -> throw VMException("unknown operator $op ($leftType $rightType)")
+                else -> throw VMException("unknown operator $opCode ($leftType $rightType)")
             }
             push(bool)
         }
@@ -102,7 +116,7 @@ class VM(bytecode: Bytecode) {
     private fun executeBinaryIntegerComparison(op: Byte, left: MInteger, right: MInteger) {
         val leftValue = left.value
         val rightValue = right.value
-        val bool = when(op){
+        val bool = when (op) {
             OpEqual -> (leftValue == rightValue).toMBoolean()
             OpNotEqual -> (leftValue != rightValue).toMBoolean()
             OpGreaterThan -> (leftValue > rightValue).toMBoolean()
@@ -152,6 +166,14 @@ class VM(bytecode: Bytecode) {
     }
 
 
+}
+
+private fun MObject?.isTruthy(): Boolean {
+    return when (this) {
+        is MBoolean -> value
+        is MNull -> false
+        else -> true
+    }
 }
 
 class VMException(message: String) : Exception(message)

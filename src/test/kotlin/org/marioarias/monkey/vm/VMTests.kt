@@ -2,6 +2,7 @@ package org.marioarias.monkey.vm
 
 import org.marioarias.monkey.compiler.MCompiler
 import org.marioarias.monkey.objects.MBoolean
+import org.marioarias.monkey.objects.MNull
 import org.marioarias.monkey.objects.MObject
 import org.marioarias.monkey.parse
 import org.marioarias.monkey.testIntegerObject
@@ -60,6 +61,23 @@ class VMTests {
             VTC("!!true", true),
             VTC("!!false", false),
             VTC("!!5", true),
+            VTC("!(if (false) { 5; })", true),
+        ).runVmTests()
+    }
+
+    @Test
+    fun conditional() {
+         listOf<VTC<Any>>(
+            VTC("if (true) {10}", 10),
+            VTC("if (true) {10} else {20}", 10),
+            VTC("if (false) {10} else {20}", 20),
+            VTC("if (1) {10}", 10),
+            VTC("if (1 < 2) {10}", 10),
+            VTC("if (1 < 2) {10} else {20}", 10),
+            VTC("if (1 > 2) {10} else {20}", 20),
+            VTC("if (1 > 2) {10}", Null),
+            VTC("if (false) {10}", Null),
+            VTC("if ((if (false) {10})) {10} else {20}", 20),
         ).runVmTests()
     }
 
@@ -79,6 +97,7 @@ class VMTests {
         when (expected) {
             is Long -> testIntegerObject(expected, actual)
             is Boolean -> testBooleanObject(expected, actual)
+            is MNull -> assertEquals(MNull, actual, "object is not Null")
         }
     }
 

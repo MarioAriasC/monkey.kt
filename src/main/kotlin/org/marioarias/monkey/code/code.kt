@@ -29,6 +29,10 @@ fun ByteArray.offset(offset: Int): Instructions {
     return takeLast(size - offset).toByteArray()
 }
 
+fun ByteArray.onset(onset:Int): Instructions{
+    return take(onset).toByteArray()
+}
+
 private fun fmtInstruction(def: Definition, operands: IntArray): String {
     val operandCount = def.operandsWidths.size
     if (operands.size != operandCount) {
@@ -72,6 +76,9 @@ const val OpNotEqual: Opcode = 10
 const val OpGreaterThan: Opcode = 11
 const val OpMinus: Opcode = 12
 const val OpBang: Opcode = 13
+const val OpJumpNotTruthy: Opcode = 14
+const val OpJump: Opcode = 15
+const val OpNull: Opcode = 16
 
 val definitions: Map<Opcode, Definition> = mapOf(
     OpConstant to "OpConstant".toDefinition(intArrayOf(2)),
@@ -87,6 +94,9 @@ val definitions: Map<Opcode, Definition> = mapOf(
     OpGreaterThan to "OpGreaterThan".toDefinition(),
     OpMinus to "OpMinus".toDefinition(),
     OpBang to "OpBang".toDefinition(),
+    OpJumpNotTruthy to "OpJumpNotTruthy".toDefinition(intArrayOf(2)),
+    OpJump to "OpJump".toDefinition(intArrayOf(2)),
+    OpNull to "OpNull".toDefinition(),
 )
 
 private fun String.toDefinition(operandsWidths: IntArray = intArrayOf()) = Definition(this, operandsWidths)

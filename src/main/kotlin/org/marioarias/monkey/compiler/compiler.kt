@@ -5,10 +5,14 @@ import org.marioarias.monkey.code.*
 import org.marioarias.monkey.objects.MInteger
 import org.marioarias.monkey.objects.MObject
 
+data class EmittedInstruction(val op: Opcode = 0, val position: Int = 0)
+
 class MCompiler {
 
     private var instructions: Instructions = byteArrayOf()
     private var constants: MutableList<MObject> = mutableListOf()
+    private var lastInstruction = EmittedInstruction()
+    private var previousInstruction = EmittedInstruction()
 
     @Throws(MCompilerException::class)
     fun compile(node: Node) {
@@ -40,7 +44,7 @@ class MCompiler {
             }
             is PrefixExpression -> {
                 compile(node.right!!)
-                when(node.operator){
+                when (node.operator) {
                     "!" -> emit(OpBang)
                     "-" -> emit(OpMinus)
                     else -> throw MCompilerException("unknown operator ${node.operator}")
@@ -54,7 +58,53 @@ class MCompiler {
                     emit(OpFalse)
                 }
             }
+            is IfExpression -> {
+                compile(node.condition!!)
+                val jumpNotTruthyPos = emit(OpJumpNotTruthy, 9999)
+                compile(node.consequence!!)
+                if (lastInstructionIsPop()) {
+                    removeLastPop()
+                }
+                val jumpPos = emit(OpJump, 9999)
+
+                val afterConsequencePos = instructions.size
+                changeOperand(jumpNotTruthyPos, afterConsequencePos)
+                if (node.alternative == null) {
+                    emit(OpNull)
+                } else {
+                    compile(node.alternative)
+                    if (lastInstructionIsPop()) {
+                        removeLastPop()
+                    }
+                }
+                val afterAlternativePos = instructions.size
+                changeOperand(jumpPos, afterAlternativePos)
+            }
+            is BlockStatement -> node.statements!!.forEach { statement ->
+                compile(statement!!)
+            }
         }
+    }
+
+    private fun changeOperand(opPos: Int, operand: Int) {
+        val op = instructions[opPos]
+        val newInstruction = make(op, operand)
+        replaceInstruction(opPos, newInstruction)
+    }
+
+    private fun replaceInstruction(pos: Int, newInstruction: Instructions) {
+        for (i in newInstruction.indices) {
+            instructions[pos + i] = newInstruction[i]
+        }
+    }
+
+    private fun removeLastPop() {
+        instructions = instructions.onset(lastInstruction.position)
+        lastInstruction = previousInstruction
+    }
+
+    private fun lastInstructionIsPop(): Boolean {
+        return lastInstruction.op == OpPop
     }
 
     private fun addConstant(obj: MObject): Int {
@@ -70,7 +120,17 @@ class MCompiler {
 
     private fun emit(op: Opcode, vararg operands: Int): Int {
         val ins = make(op, *operands)
-        return addInstruction(ins)
+        val pos = addInstruction(ins)
+        setLastInstruction(op, pos)
+        return pos
+    }
+
+    private fun setLastInstruction(op: Opcode, position: Int) {
+        val previous = lastInstruction
+        val last = EmittedInstruction(op, position)
+        previousInstruction = previous
+        lastInstruction = last
+
     }
 
     fun bytecode(): Bytecode = Bytecode(instructions, constants)
