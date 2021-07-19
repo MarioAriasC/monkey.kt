@@ -209,6 +209,44 @@ class CompilerTests {
         ).runCompilerTests()
     }
 
+    @Test
+    fun `global let statement`() {
+        listOf(
+            CTC(
+                "let one = 1; let two = 2;",
+                listOf(1, 2),
+                listOf(
+                    make(OpConstant, 0),
+                    make(OpSetGlobal, 0),
+                    make(OpConstant, 1),
+                    make(OpSetGlobal, 1),
+                )
+            ),
+            CTC(
+                "let one = 1; one;",
+                listOf(1),
+                listOf(
+                    make(OpConstant, 0),
+                    make(OpSetGlobal, 0),
+                    make(OpGetGlobal, 0),
+                    make(OpPop),
+                )
+            ),
+            CTC(
+                "let one = 1; let two = one; two;",
+                listOf(1),
+                listOf(
+                    make(OpConstant, 0),
+                    make(OpSetGlobal, 0),
+                    make(OpGetGlobal, 0),
+                    make(OpSetGlobal, 1),
+                    make(OpGetGlobal, 1),
+                    make(OpPop),
+                )
+            )
+        ).runCompilerTests()
+    }
+
     private fun <T> List<CTC<T>>.runCompilerTests() {
         forEach { (input, expectedConstants, expectedInstructions) ->
             println("input = ${input}")

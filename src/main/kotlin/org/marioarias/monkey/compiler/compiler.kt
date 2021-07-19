@@ -7,12 +7,15 @@ import org.marioarias.monkey.objects.MObject
 
 data class EmittedInstruction(val op: Opcode = 0, val position: Int = 0)
 
-class MCompiler {
+class MCompiler(
+    private var constants: MutableList<MObject> = mutableListOf(),
+    private val symbolTable: SymbolTable = SymbolTable()
+) {
 
     private var instructions: Instructions = byteArrayOf()
-    private var constants: MutableList<MObject> = mutableListOf()
     private var lastInstruction = EmittedInstruction()
     private var previousInstruction = EmittedInstruction()
+
 
     @Throws(MCompilerException::class)
     fun compile(node: Node) {
@@ -82,6 +85,15 @@ class MCompiler {
             }
             is BlockStatement -> node.statements!!.forEach { statement ->
                 compile(statement!!)
+            }
+            is LetStatement -> {
+                compile(node.value!!)
+                val symbol = symbolTable.define(node.name.value)
+                emit(OpSetGlobal, symbol.index)
+            }
+            is Identifier -> {
+                val symbol = symbolTable.resolve(node.value)
+                emit(OpGetGlobal, symbol.index)
             }
         }
     }

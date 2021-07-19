@@ -29,6 +29,10 @@ fun ByteArray.offset(offset: Int): Instructions {
     return takeLast(size - offset).toByteArray()
 }
 
+fun ByteArray.readInt(offset: Int): Int {
+    return offset(offset).readChar().code
+}
+
 fun ByteArray.onset(onset:Int): Instructions{
     return take(onset).toByteArray()
 }
@@ -79,6 +83,9 @@ const val OpBang: Opcode = 13
 const val OpJumpNotTruthy: Opcode = 14
 const val OpJump: Opcode = 15
 const val OpNull: Opcode = 16
+const val OpGetGlobal: Opcode = 17
+const val OpSetGlobal: Opcode = 18
+
 
 val definitions: Map<Opcode, Definition> = mapOf(
     OpConstant to "OpConstant".toDefinition(intArrayOf(2)),
@@ -97,6 +104,8 @@ val definitions: Map<Opcode, Definition> = mapOf(
     OpJumpNotTruthy to "OpJumpNotTruthy".toDefinition(intArrayOf(2)),
     OpJump to "OpJump".toDefinition(intArrayOf(2)),
     OpNull to "OpNull".toDefinition(),
+    OpGetGlobal to "OpGetGlobal".toDefinition(intArrayOf(2)),
+    OpSetGlobal to "OpSetGlobal".toDefinition(intArrayOf(2)),
 )
 
 private fun String.toDefinition(operandsWidths: IntArray = intArrayOf()) = Definition(this, operandsWidths)

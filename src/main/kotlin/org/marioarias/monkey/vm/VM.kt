@@ -13,6 +13,11 @@ class VM(bytecode: Bytecode) {
     private var instructions: Instructions = bytecode.instructions
     private var stack: MutableList<MObject> = mutableListOf()
     private var sp: Int = 0
+    private var globals: MutableList<MObject> = mutableListOf()
+
+    constructor(bytecode: Bytecode, globals: MutableList<MObject>) : this(bytecode) {
+        this.globals = globals
+    }
 
     fun stackTop(): MObject? {
         return if (sp == 0) {
@@ -31,9 +36,9 @@ class VM(bytecode: Bytecode) {
         while (i < instructions.size) {
             when (val op = instructions[i]) {
                 OpConstant -> {
-                    val constIndex = instructions.offset(i + 1).readChar()
+                    val constIndex = instructions.readInt(i + 1)
                     i += 2
-                    push(constant[constIndex.code])
+                    push(constant[constIndex])
                 }
                 OpAdd, OpSub, OpMul, OpDiv -> {
                     executeBinaryOperation(op)
@@ -47,11 +52,11 @@ class VM(bytecode: Bytecode) {
                 OpBang -> executeBangOperator()
                 OpMinus -> executeMinusOperator()
                 OpJump -> {
-                    val pos = instructions.offset(i + 1).readChar().code
+                    val pos = instructions.readInt(i + 1)
                     i = pos - 1
                 }
                 OpJumpNotTruthy -> {
-                    val pos = instructions.offset(i + 1).readChar().code
+                    val pos = instructions.readInt(i + 1)
                     i += 2
                     val condition = pop()
                     if (!condition.isTruthy()) {
@@ -60,6 +65,16 @@ class VM(bytecode: Bytecode) {
                 }
                 OpNull -> {
                     push(Null)
+                }
+                OpSetGlobal -> {
+                    val globalIndex = instructions.readInt(i + 1)
+                    i += 2
+                    globals.add(globalIndex, pop()!!)
+                }
+                OpGetGlobal -> {
+                    val globalIndex = instructions.readInt(i + 1)
+                    i += 2
+                    push(globals[globalIndex])
                 }
             }
             i++

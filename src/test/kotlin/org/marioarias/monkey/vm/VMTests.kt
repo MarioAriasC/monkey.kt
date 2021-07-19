@@ -81,6 +81,15 @@ class VMTests {
         ).runVmTests()
     }
 
+    @Test
+    fun `global let statements`() {
+        listOf(
+            VTC("let one = 1; one;", 1),
+            VTC("let one = 1; let two = 2; one + two", 3),
+            VTC("let one = 1; let two = one + one; one + two", 3),
+        ).runVmTests()
+    }
+
     private fun <T> List<VTC<T>>.runVmTests() {
         forEach { (input, expected) ->
             val program = parse(input)
