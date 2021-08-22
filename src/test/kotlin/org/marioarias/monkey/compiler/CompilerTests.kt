@@ -1,11 +1,8 @@
 package org.marioarias.monkey.compiler
 
-import org.marioarias.monkey.assertEquals
+import org.marioarias.monkey.*
 import org.marioarias.monkey.code.*
-import org.marioarias.monkey.concat
 import org.marioarias.monkey.objects.MObject
-import org.marioarias.monkey.parse
-import org.marioarias.monkey.testIntegerObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.fail
@@ -247,6 +244,151 @@ class CompilerTests {
         ).runCompilerTests()
     }
 
+    @Test
+    fun `string expressions`() {
+        listOf(
+            CTC(
+                """"monkey"""",
+                listOf("monkey"),
+                listOf(
+                    make(OpConstant, 0),
+                    make(OpPop)
+                )
+            ),
+            CTC(
+                """"mon" + "key"""",
+                listOf("mon", "key"),
+                listOf(
+                    make(OpConstant, 0),
+                    make(OpConstant, 1),
+                    make(OpAdd),
+                    make(OpPop)
+                )
+            )
+        ).runCompilerTests()
+    }
+
+    @Test
+    fun `array literals`() {
+        listOf(
+            CTC(
+                "[]",
+                listOf(),
+                listOf(
+                    make(OpArray, 0),
+                    make(OpPop)
+                )
+            ),
+            CTC(
+                "[1, 2, 3]",
+                listOf(1, 2, 3),
+                listOf(
+                    make(OpConstant, 0),
+                    make(OpConstant, 1),
+                    make(OpConstant, 2),
+                    make(OpArray, 3),
+                    make(OpPop)
+                )
+            ),
+            CTC(
+                "[1 + 2, 3 - 4, 5 * 6]",
+                listOf(1, 2, 3, 4, 5, 6),
+                listOf(
+                    make(OpConstant, 0),
+                    make(OpConstant, 1),
+                    make(OpAdd),
+                    make(OpConstant, 2),
+                    make(OpConstant, 3),
+                    make(OpSub),
+                    make(OpConstant, 4),
+                    make(OpConstant, 5),
+                    make(OpMul),
+                    make(OpArray, 3),
+                    make(OpPop)
+                )
+            ),
+        ).runCompilerTests()
+    }
+
+    @Test
+    fun `hash literal`() {
+        listOf(
+            CTC(
+                "{}",
+                listOf(),
+                listOf(
+                    make(OpHash, 0),
+                    make(OpPop)
+                )
+            ),
+            CTC(
+                "{1: 2, 3: 4, 5: 6}",
+                listOf(1, 2, 3, 4, 5, 6),
+                listOf(
+                    make(OpConstant, 0),
+                    make(OpConstant, 1),
+                    make(OpConstant, 2),
+                    make(OpConstant, 3),
+                    make(OpConstant, 4),
+                    make(OpConstant, 5),
+                    make(OpHash, 6),
+                    make(OpPop)
+                )
+            ),
+            CTC(
+                "{1: 2 + 3, 4: 5 * 6}",
+                listOf(1, 2, 3, 4, 5, 6),
+                listOf(
+                    make(OpConstant, 0),
+                    make(OpConstant, 1),
+                    make(OpConstant, 2),
+                    make(OpAdd),
+                    make(OpConstant, 3),
+                    make(OpConstant, 4),
+                    make(OpConstant, 5),
+                    make(OpMul),
+                    make(OpHash, 4),
+                    make(OpPop)
+                )
+            )
+        ).runCompilerTests()
+    }
+
+    @Test
+    fun `index expressions`() {
+        listOf(
+            CTC(
+                "[1, 2, 3][1 + 1]",
+                listOf(1, 2, 3, 1, 1),
+                listOf(
+                    make(OpConstant, 0),
+                    make(OpConstant, 1),
+                    make(OpConstant, 2),
+                    make(OpArray, 3),
+                    make(OpConstant, 3),
+                    make(OpConstant, 4),
+                    make(OpAdd),
+                    make(OpIndex),
+                    make(OpPop)
+                )
+            ),
+            CTC(
+                "{1: 2}[2 - 1]",
+                listOf(1, 2, 2, 1),
+                listOf(
+                    make(OpConstant, 0),
+                    make(OpConstant, 1),
+                    make(OpHash, 2),
+                    make(OpConstant, 2),
+                    make(OpConstant, 3),
+                    make(OpSub),
+                    make(OpIndex),
+                    make(OpPop)
+                )
+            )
+        ).runCompilerTests()
+    }
+
     private fun <T> List<CTC<T>>.runCompilerTests() {
         forEach { (input, expectedConstants, expectedInstructions) ->
             println("input = ${input}")
@@ -277,6 +419,7 @@ class CompilerTests {
         expected.forEachIndexed { i, constant ->
             when (constant) {
                 is Long -> testIntegerObject(constant, actual[i])
+                is String -> testStringObject(constant, actual[i])
             }
         }
     }

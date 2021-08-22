@@ -4,6 +4,7 @@ import org.marioarias.monkey.ast.*
 import org.marioarias.monkey.code.*
 import org.marioarias.monkey.objects.MInteger
 import org.marioarias.monkey.objects.MObject
+import org.marioarias.monkey.objects.MString
 
 data class EmittedInstruction(val op: Opcode = 0, val position: Int = 0)
 
@@ -94,6 +95,29 @@ class MCompiler(
             is Identifier -> {
                 val symbol = symbolTable.resolve(node.value)
                 emit(OpGetGlobal, symbol.index)
+            }
+            is StringLiteral -> {
+                val str = MString(node.value)
+                emit(OpConstant, addConstant(str))
+            }
+            is ArrayLiteral -> {
+                node.elements!!.forEach { element ->
+                    compile(element!!)
+                }
+                emit(OpArray, node.elements.size)
+            }
+            is HashLiteral -> {
+                val keys = node.pairs.keys.sortedBy { key -> key.toString() }
+                keys.forEach { key ->
+                    compile(key)
+                    compile(node.pairs[key]!!)
+                }
+                emit(OpHash, node.pairs.size * 2)
+            }
+            is IndexExpression -> {
+                compile(node.left!!)
+                compile(node.index!!)
+                emit(OpIndex)
             }
         }
     }

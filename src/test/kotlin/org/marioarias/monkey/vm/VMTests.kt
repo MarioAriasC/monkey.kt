@@ -1,13 +1,14 @@
 package org.marioarias.monkey.vm
 
+import org.marioarias.monkey.checkType
 import org.marioarias.monkey.compiler.MCompiler
-import org.marioarias.monkey.objects.MBoolean
-import org.marioarias.monkey.objects.MNull
-import org.marioarias.monkey.objects.MObject
+import org.marioarias.monkey.objects.*
 import org.marioarias.monkey.parse
 import org.marioarias.monkey.testIntegerObject
+import org.marioarias.monkey.testStringObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 class VMTests {
     data class VTC<T>(val input: String, val expected: T)
@@ -67,7 +68,7 @@ class VMTests {
 
     @Test
     fun conditional() {
-         listOf<VTC<Any>>(
+        listOf<VTC<Any>>(
             VTC("if (true) {10}", 10),
             VTC("if (true) {10} else {20}", 10),
             VTC("if (false) {10} else {20}", 20),
@@ -90,7 +91,60 @@ class VMTests {
         ).runVmTests()
     }
 
-    private fun <T> List<VTC<T>>.runVmTests() {
+    @Test
+    fun `string expressions`() {
+        listOf(
+            VTC(""" "monkey" """, "monkey"),
+            VTC(""" "mon" + "key" """, "monkey"),
+            VTC(""" "mon" + "key" + "banana" """, "monkeybanana"),
+        ).runVmTests()
+    }
+
+    @Test
+    fun `array literals`() {
+        listOf(
+            VTC("[]", emptyList()),
+            VTC("[1, 2, 3]", listOf(1L, 2L, 3L)),
+            VTC("[1 + 2, 3 * 4, 5 + 6]", listOf(3L, 12L, 11L)),
+        ).runVmTests()
+    }
+
+    @Test
+    fun `hash literals`() {
+        listOf(
+            VTC("{}", emptyMap()),
+            VTC(
+                "{1: 2, 2: 3}", mapOf(
+                    MInteger(1).hashKey() to 2L,
+                    MInteger(2).hashKey() to 3L
+                )
+            ),
+            VTC(
+                "{1 + 1: 2 * 2, 3 + 3: 4 * 4}", mapOf(
+                    MInteger(2).hashKey() to 4L,
+                    MInteger(6).hashKey() to 16L
+                )
+            ),
+        ).runVmTests()
+    }
+
+    @Test
+    fun `index expressions`() {
+        listOf(
+            VTC("[1, 2, 3][1]", 2),
+            VTC("[1, 2, 3][0 + 2]", 3),
+            VTC("[[1, 1, 1]][0][0]", 1),
+            VTC("[][0]", Null),
+            VTC("[1, 2, 3][99]", Null),
+            VTC("[1][-1]", Null),
+            VTC("{1: 1, 2: 2}[1]", 1),
+            VTC("{1: 1, 2: 2}[2]", 2),
+            VTC("{1: 1}[0]", Null),
+            VTC("{}[0]", Null),
+        ).runVmTests()
+    }
+
+    private fun <T> List<VTC<out T>>.runVmTests() {
         forEach { (input, expected) ->
             val program = parse(input)
             val compiler = MCompiler()
@@ -107,6 +161,25 @@ class VMTests {
             is Long -> testIntegerObject(expected, actual)
             is Boolean -> testBooleanObject(expected, actual)
             is MNull -> assertEquals(MNull, actual, "object is not Null")
+            is String -> testStringObject(expected, actual)
+            is List<*> -> {
+                checkType(actual) { array: MArray ->
+                    assertEquals(array.elements.size, expected.size)
+                    expected.forEachIndexed { i, any ->
+                        testIntegerObject(any as Long, array.elements[i]!!)
+                    }
+                }
+            }
+            is Map<*, *> -> {
+                checkType(actual) { hash: MHash ->
+                    assertEquals(expected.size, hash.pairs.size)
+                    expected.forEach { (expectedKey, expectedValue) ->
+                        val pair = hash.pairs[expectedKey]
+                        assertNotNull(pair, "no pair for give key in pairs")
+                        testIntegerObject(expectedValue as Long, pair.value)
+                    }
+                }
+            }
         }
     }
 

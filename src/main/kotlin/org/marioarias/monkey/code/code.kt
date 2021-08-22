@@ -85,6 +85,9 @@ const val OpJump: Opcode = 15
 const val OpNull: Opcode = 16
 const val OpGetGlobal: Opcode = 17
 const val OpSetGlobal: Opcode = 18
+const val OpArray: Opcode = 19
+const val OpHash: Opcode = 20
+const val OpIndex: Opcode = 21
 
 
 val definitions: Map<Opcode, Definition> = mapOf(
@@ -106,6 +109,9 @@ val definitions: Map<Opcode, Definition> = mapOf(
     OpNull to "OpNull".toDefinition(),
     OpGetGlobal to "OpGetGlobal".toDefinition(intArrayOf(2)),
     OpSetGlobal to "OpSetGlobal".toDefinition(intArrayOf(2)),
+    OpArray to "OpArray".toDefinition(intArrayOf(2)),
+    OpHash to "OpHash".toDefinition(intArrayOf(2)),
+    OpIndex to "OpIndex".toDefinition(),
 )
 
 private fun String.toDefinition(operandsWidths: IntArray = intArrayOf()) = Definition(this, operandsWidths)
