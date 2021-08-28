@@ -6,6 +6,7 @@ import org.marioarias.monkey.lexer.Lexer
 import org.marioarias.monkey.objects.MInteger
 import org.marioarias.monkey.objects.MObject
 import org.marioarias.monkey.objects.MString
+import org.marioarias.monkey.objects.typeDesc
 import org.marioarias.monkey.parser.Parser
 import kotlin.test.assertEquals
 import kotlin.test.fail
@@ -47,13 +48,13 @@ fun Instructions.assertEquals(actual: Instructions) {
 fun testIntegerObject(expected: Long, actual: MObject) {
     when (actual) {
         is MInteger -> assertEquals(expected, actual.value)
-        else -> fail("object is  not Integer. got=${actual::class}")
+        else -> fail("object is  not Integer. got=${actual.typeDesc()}")
     }
 }
 
 fun testStringObject(expected: String, actual: MObject) {
     when (actual) {
         is MString -> assertEquals(expected, actual.value)
-        else -> fail("object is not String. got${actual::class}")
+        else -> fail("object is not String. got${actual.typeDesc()}")
     }
 }

@@ -102,33 +102,31 @@ class VM(bytecode: Bytecode) {
 
     private fun executeIndexExpression(left: MObject, index: MObject) {
         when {
-            left.type() == ObjectType.ARRAY && index.type() == ObjectType.INTEGER -> executeArrayIndex(left, index)
-            left.type() == ObjectType.HASH -> executeHashIndex(left, index)
-            else -> throw VMException("index operator not supported ${left::class}")
+            left is MArray && index is MInteger -> executeArrayIndex(left, index)
+            left is MHash -> executeHashIndex(left, index)
+            else -> throw VMException("index operator not supported ${left.typeDesc()}")
         }
     }
 
-    private fun executeHashIndex(hash: MObject, index: MObject) {
-        val hashObject = hash as MHash
+    private fun executeHashIndex(hash: MHash, index: MObject) {
         when (index) {
             is Hashable<*> -> {
-                when (val pair = hashObject.pairs[index.hashKey()]) {
+                when (val pair = hash.pairs[index.hashKey()]) {
                     null -> push(Null)
                     else -> push(pair.value)
                 }
             }
-            else -> throw VMException("unusable as hash key: ${index::class}")
+            else -> throw VMException("unusable as hash key: ${index.typeDesc()}")
         }
     }
 
-    private fun executeArrayIndex(array: MObject, index: MObject) {
-        val arrayObject = array as MArray
-        val i = (index as MInteger).value
-        val max = arrayObject.elements.size - 1L
+    private fun executeArrayIndex(array: MArray, index: MInteger) {
+        val i = index.value
+        val max = array.elements.size - 1L
         if (i < 0 || i > max) {
             push(Null)
         } else {
-            push(arrayObject.elements[i.toInt()]!!)
+            push(array.elements[i.toInt()]!!)
         }
     }
 
@@ -137,13 +135,13 @@ class VM(bytecode: Bytecode) {
         for (i in startIndex until endIndex step 2) {
             val key = stack[i]
             val value = stack[i + 1]
-            if (key ==  null || value == null){
+            if (key == null || value == null) {
                 continue
             }
             val pair = HashPair(key, value)
             when (key) {
                 is Hashable<*> -> hashedPairs[key.hashKey()] = pair
-                else -> throw VMException("unusable as hash key: ${key.type()}")
+                else -> throw VMException("unusable as hash key: ${key.typeDesc()}")
             }
         }
         return MHash(hashedPairs)
@@ -161,10 +159,10 @@ class VM(bytecode: Bytecode) {
 
     private fun executeMinusOperator() {
         val operand = pop()
-        if (operand!!.type() != ObjectType.INTEGER) {
-            throw VMException("unsupported type for negation: ${operand.type()}")
+        if (operand !is MInteger) {
+            throw VMException("unsupported type for negation: ${operand.typeDesc()}")
         }
-        val value = (operand as MInteger).value
+        val value = operand.value
         push(MInteger(-value))
     }
 
@@ -181,32 +179,29 @@ class VM(bytecode: Bytecode) {
         op: Byte,
         intOperation: (op: Byte, left: MInteger, right: MInteger) -> Unit,
         stringOperation: (op: Byte, left: MString, right: MString) -> Unit = { _, _, _ -> },
-        otherOperation: (op: Byte, left: MObject, leftType: ObjectType, right: MObject, rightType: ObjectType) -> Unit
+        otherOperation: (op: Byte, left: MObject, right: MObject) -> Unit
     ) {
         val right = pop()
         val left = pop()
 
-        val leftType = left!!.type()
-        val rightType = right!!.type()
-
         when {
-            leftType == ObjectType.INTEGER && rightType == ObjectType.INTEGER -> {
-                intOperation(op, left as MInteger, right as MInteger)
+            left is MInteger && right is MInteger -> {
+                intOperation(op, left, right)
             }
-            leftType == ObjectType.STRING && rightType == ObjectType.STRING -> {
-                stringOperation(op, left as MString, right as MString)
+            left is MString && right is MString -> {
+                stringOperation(op, left, right)
             }
-            else -> otherOperation(op, left, leftType, right, rightType)
+            else -> otherOperation(op, left!!, right!!)
 
         }
     }
 
     private fun executeComparison(op: Byte) {
-        binaryOperationTemplate(op, ::executeBinaryIntegerComparison) { opCode, left, leftType, right, rightType ->
+        binaryOperationTemplate(op, ::executeBinaryIntegerComparison) { opCode, left, right ->
             val bool = when (opCode) {
                 OpEqual -> (left == right).toMBoolean()
                 OpNotEqual -> (left != right).toMBoolean()
-                else -> throw VMException("unknown operator $opCode ($leftType $rightType)")
+                else -> throw VMException("unknown operator $opCode (${left.typeDesc()} ${right.typeDesc()})")
             }
             push(bool)
         }
@@ -235,8 +230,8 @@ class VM(bytecode: Bytecode) {
             op,
             ::executeBinaryIntegerOperation,
             ::executeBinaryStringOperation
-        ) { _, _, leftType, _, rightType ->
-            throw VMException("unsupported types for binary operation: $leftType $rightType")
+        ) { _, left, right ->
+            throw VMException("unsupported types for binary operation: ${left.typeDesc()} ${right.typeDesc()}")
         }
     }
 

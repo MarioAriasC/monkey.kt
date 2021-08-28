@@ -13,8 +13,8 @@ private fun argSizeCheck(expectedSize: Int, args: List<MObject?>, body: BuiltinF
 }
 
 private fun arrayCheck(builtinName: String, args: List<MObject?>, body: (MArray, Int) -> MObject): MObject {
-    return if (args.first()?.type() != ObjectType.ARRAY) {
-        MError("argument to `$builtinName` must be ARRAY, got ${args.first()?.type()}")
+    return if (args.first() !is MArray) {
+        MError("argument to `$builtinName` must be ARRAY, got ${args.first().typeDesc()}")
     } else {
         val array = args.first() as MArray
         body(array, array.elements.size)
@@ -33,7 +33,7 @@ val builtins = mapOf(
             when (val arg = it.first()) {
                 is MString -> MInteger(arg.value.length.toLong())
                 is MArray -> MInteger(arg.elements.size.toLong())
-                else -> MError("argument to `len` not supported, got ${arg?.type()}")
+                else -> MError("argument to `len` not supported, got ${arg.typeDesc()}")
             }
         }
     },

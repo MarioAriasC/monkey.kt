@@ -5,13 +5,16 @@ import org.marioarias.monkey.ast.Identifier
 import org.marioarias.monkey.ast.Node
 import org.marioarias.monkey.evaluator.Environment
 
-enum class ObjectType {
-    INTEGER, BOOLEAN, NULL, RETURN, ERROR, FUNCTION, STRING, BUILTIN, ARRAY, HASH, QUOTE, MACRO
+interface MObject {
+    fun inspect(): String
 }
 
-interface MObject {
-    fun type(): ObjectType
-    fun inspect(): String
+fun MObject?.typeDesc(): String {
+    return if(this == null){
+        "null"
+    } else {
+        this::class.simpleName!!
+    }
 }
 
 interface MValue<T> : MObject {
@@ -23,9 +26,6 @@ interface MValue<T> : MObject {
 }
 
 class MInteger(override val value: Long) : MValue<Long>, Hashable<Long> {
-    override fun type(): ObjectType {
-        return ObjectType.INTEGER
-    }
 
     operator fun compareTo(other: MInteger): Int {
         return value.compareTo(other.value)
@@ -67,19 +67,16 @@ class MInteger(override val value: Long) : MValue<Long>, Hashable<Long> {
         return "MInteger(value=$value)"
     }
 
+    override fun hashType(): HashType = HashType.INTEGER
+
 
 }
 
 class MBoolean(override val value: Boolean) : MValue<Boolean>, Hashable<Boolean> {
-    override fun type(): ObjectType {
-        return ObjectType.BOOLEAN
-    }
+    override fun hashType(): HashType = HashType.BOOLEAN
 }
 
 class MReturnValue(val value: MObject) : MObject {
-    override fun type(): ObjectType {
-        return ObjectType.RETURN
-    }
 
     override fun inspect(): String {
         return value.inspect()
@@ -87,10 +84,6 @@ class MReturnValue(val value: MObject) : MObject {
 }
 
 class MError(val message: String) : MObject {
-    override fun type(): ObjectType {
-        return ObjectType.ERROR
-    }
-
     override fun inspect(): String {
         return "ERROR: $message"
     }
@@ -101,20 +94,12 @@ class MError(val message: String) : MObject {
 }
 
 object MNull : MObject {
-    override fun type(): ObjectType {
-        return ObjectType.NULL
-    }
-
     override fun inspect(): String {
         return "null"
     }
 }
 
 class MFunction(val parameters: List<Identifier>?, val body: BlockStatement?, val env: Environment) : MObject {
-    override fun type(): ObjectType {
-        return ObjectType.FUNCTION
-    }
-
     override fun inspect(): String {
         return "fn(${parameters?.joinToString(transform = Identifier::toString) ?: ""}) {\n\t$body\n}"
     }
@@ -122,42 +107,41 @@ class MFunction(val parameters: List<Identifier>?, val body: BlockStatement?, va
 }
 
 class MString(override val value: String) : MValue<String>, Hashable<String> {
-    override fun type(): ObjectType = ObjectType.STRING
-
     operator fun plus(other: MString): MString {
         return MString(value + other.value)
     }
+
+    override fun hashType(): HashType = HashType.STRING
 }
 
 typealias BuiltinFunction = (List<MObject?>) -> MObject
 
 class MBuiltinFunction(val fn: BuiltinFunction) : MObject {
-    override fun type(): ObjectType = ObjectType.BUILTIN
-
     override fun inspect(): String = "builtin function"
 }
 
 class MArray(val elements: List<MObject?>) : MObject {
-    override fun type(): ObjectType = ObjectType.ARRAY
-
     override fun inspect(): String {
         return "[${elements.joinToString(separator = ", ")}]"
     }
 }
 
-data class HashKey(val type: ObjectType, val value: Int)
+enum class HashType{
+    INTEGER, BOOLEAN, STRING
+}
+
+data class HashKey(val type: HashType, val value: Int)
+
 
 interface Hashable<T> : MValue<T> {
-    fun hashKey(): HashKey = HashKey(type(), value.hashCode())
+    fun hashKey(): HashKey = HashKey(hashType(), value.hashCode())
 
+    fun hashType(): HashType
 }
 
 data class HashPair(val key: MObject, val value: MObject)
 
 class MHash(val pairs: Map<HashKey, HashPair>) : MObject {
-    override fun type(): ObjectType {
-        return ObjectType.HASH
-    }
 
     override fun inspect(): String {
         return "{${pairs.values.joinToString { (key, value) -> "${key.inspect()}: ${value.inspect()}" }}}"
@@ -165,9 +149,6 @@ class MHash(val pairs: Map<HashKey, HashPair>) : MObject {
 }
 
 class MQuote(val node: Node?) : MObject {
-    override fun type(): ObjectType {
-        return ObjectType.QUOTE
-    }
 
     override fun inspect(): String {
         return "QUOTE($node)"
@@ -175,12 +156,7 @@ class MQuote(val node: Node?) : MObject {
 }
 
 class MMacro(val parameters: List<Identifier>?, val body: BlockStatement?, val env: Environment) : MObject {
-    override fun type(): ObjectType {
-        return ObjectType.MACRO
-    }
-
     override fun inspect(): String {
         return "macro(${parameters?.joinToString()}) {\n$body\n}"
     }
-
 }

@@ -4,6 +4,7 @@ import org.marioarias.monkey.ast.Program
 import org.marioarias.monkey.evaluator.Environment.Companion.newEnvironment
 import org.marioarias.monkey.lexer.Lexer
 import org.marioarias.monkey.objects.MMacro
+import org.marioarias.monkey.objects.typeDesc
 import org.marioarias.monkey.parser.Parser
 import kotlin.test.*
 
@@ -35,7 +36,7 @@ class MacrosTests {
                 assertEquals(obj.parameters!![1].toString(), "y")
                 assertEquals(obj.body.toString(), "(x + y)")
             }
-            else -> fail("object is not MMacro. got ${obj.type()}")
+            else -> fail("object is not MMacro. got ${obj.typeDesc()}")
         }
 
     }
