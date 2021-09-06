@@ -2,20 +2,43 @@ package org.marioarias.monkey.compiler
 
 import org.marioarias.monkey.ast.*
 import org.marioarias.monkey.code.*
+import org.marioarias.monkey.objects.MCompiledFunction
 import org.marioarias.monkey.objects.MInteger
 import org.marioarias.monkey.objects.MObject
 import org.marioarias.monkey.objects.MString
 
-data class EmittedInstruction(val op: Opcode = 0, val position: Int = 0)
+data class EmittedInstruction(var op: Opcode = 0, val position: Int = 0)
+
+data class CompilationScope(
+    var instructions: Instructions = byteArrayOf(),
+    var lastInstruction: EmittedInstruction = EmittedInstruction(),
+    var previousInstruction: EmittedInstruction = EmittedInstruction()
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is CompilationScope) return false
+
+        if (!instructions.contentEquals(other.instructions)) return false
+        if (lastInstruction != other.lastInstruction) return false
+        if (previousInstruction != other.previousInstruction) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = instructions.contentHashCode()
+        result = 31 * result + lastInstruction.hashCode()
+        result = 31 * result + previousInstruction.hashCode()
+        return result
+    }
+}
 
 class MCompiler(
     private var constants: MutableList<MObject> = mutableListOf(),
-    private val symbolTable: SymbolTable = SymbolTable()
+    var symbolTable: SymbolTable = SymbolTable()
 ) {
-
-    private var instructions: Instructions = byteArrayOf()
-    private var lastInstruction = EmittedInstruction()
-    private var previousInstruction = EmittedInstruction()
+    var scopes = mutableListOf(CompilationScope())
+    var scopeIndex = 0
 
 
     @Throws(MCompilerException::class)
@@ -66,22 +89,22 @@ class MCompiler(
                 compile(node.condition!!)
                 val jumpNotTruthyPos = emit(OpJumpNotTruthy, 9999)
                 compile(node.consequence!!)
-                if (lastInstructionIsPop()) {
+                if (isLastInstructionPop()) {
                     removeLastPop()
                 }
                 val jumpPos = emit(OpJump, 9999)
 
-                val afterConsequencePos = instructions.size
+                val afterConsequencePos = currentInstructions().size
                 changeOperand(jumpNotTruthyPos, afterConsequencePos)
                 if (node.alternative == null) {
                     emit(OpNull)
                 } else {
                     compile(node.alternative)
-                    if (lastInstructionIsPop()) {
+                    if (isLastInstructionPop()) {
                         removeLastPop()
                     }
                 }
-                val afterAlternativePos = instructions.size
+                val afterAlternativePos = currentInstructions().size
                 changeOperand(jumpPos, afterAlternativePos)
             }
             is BlockStatement -> node.statements!!.forEach { statement ->
@@ -90,11 +113,20 @@ class MCompiler(
             is LetStatement -> {
                 compile(node.value!!)
                 val symbol = symbolTable.define(node.name.value)
-                emit(OpSetGlobal, symbol.index)
+                if (symbol.scope == SymbolScope.GLOBAL) {
+                    emit(OpSetGlobal, symbol.index)
+                } else {
+                    emit(OpSetLocal, symbol.index)
+                }
             }
             is Identifier -> {
                 val symbol = symbolTable.resolve(node.value)
-                emit(OpGetGlobal, symbol.index)
+
+                if (symbol.scope == SymbolScope.GLOBAL) {
+                    emit(OpGetGlobal, symbol.index)
+                } else {
+                    emit(OpGetLocal, symbol.index)
+                }
             }
             is StringLiteral -> {
                 val str = MString(node.value)
@@ -119,29 +151,94 @@ class MCompiler(
                 compile(node.index!!)
                 emit(OpIndex)
             }
+            is FunctionLiteral -> {
+                enterScope()
+                node.parameters?.forEach { parameter ->
+                    symbolTable.define(parameter.value)
+                }
+                compile(node.body!!)
+                if (isLastInstructionPop()) {
+                    replaceLastPopWithReturn()
+                }
+                if (!lastInstructionIs(OpReturnValue)) {
+                    emit(OpReturn)
+                }
+
+                val numLocals = symbolTable.numDefinitions
+                val instructions = leaveScope()
+
+                val compiledFn = MCompiledFunction(
+                    instructions = instructions,
+                    numLocals = numLocals,
+                    numParameters = node.parameters!!.size
+                )
+                emit(OpConstant, addConstant(compiledFn))
+            }
+            is ReturnStatement -> {
+                compile(node.returnValue!!)
+                emit(OpReturnValue)
+            }
+            is CallExpression -> {
+                compile(node.function!!)
+                node.arguments!!.forEach { arg ->
+                    compile(arg!!)
+                }
+                emit(OpCall, node.arguments.size)
+            }
         }
     }
 
+    fun leaveScope(): Instructions {
+        val instructions = currentInstructions()
+        scopes.removeLast()
+        scopeIndex--
+        symbolTable = symbolTable.outer!!
+        return instructions
+    }
+
+    private fun replaceLastPopWithReturn() {
+        val lasPos = currentScope().lastInstruction.position
+        replaceInstruction(lasPos, make(OpReturnValue))
+        currentScope().lastInstruction.op = OpReturnValue
+    }
+
+    fun enterScope() {
+        scopes += CompilationScope()
+        symbolTable = SymbolTable(outer = symbolTable)
+        scopeIndex++
+    }
+
     private fun changeOperand(opPos: Int, operand: Int) {
-        val op = instructions[opPos]
+        val op = currentInstructions()[opPos]
         val newInstruction = make(op, operand)
         replaceInstruction(opPos, newInstruction)
     }
 
     private fun replaceInstruction(pos: Int, newInstruction: Instructions) {
         for (i in newInstruction.indices) {
-            instructions[pos + i] = newInstruction[i]
+            currentInstructions()[pos + i] = newInstruction[i]
         }
     }
 
     private fun removeLastPop() {
-        instructions = instructions.onset(lastInstruction.position)
-        lastInstruction = previousInstruction
+
+        with(currentScope()) {
+            val last = lastInstruction
+            val previous = previousInstruction
+
+            val old = currentInstructions()
+            val newInstruction = old.onset(last.position)
+            instructions = newInstruction
+            lastInstruction = previous
+        }
+
     }
 
-    private fun lastInstructionIsPop(): Boolean {
-        return lastInstruction.op == OpPop
+    private fun isLastInstructionPop(): Boolean {
+        return lastInstructionIs(OpPop)
     }
+
+    private fun lastInstructionIs(op: Opcode) = currentScope().lastInstruction.op == op
 
     private fun addConstant(obj: MObject): Int {
         constants += obj
@@ -149,12 +246,12 @@ class MCompiler(
     }
 
     private fun addInstruction(ins: ByteArray): Int {
-        val posNewInstruction = instructions.size
-        instructions += ins
+        val posNewInstruction = currentInstructions().size
+        currentScope().instructions += ins
         return posNewInstruction
     }
 
-    private fun emit(op: Opcode, vararg operands: Int): Int {
+    fun emit(op: Opcode, vararg operands: Int): Int {
         val ins = make(op, *operands)
         val pos = addInstruction(ins)
         setLastInstruction(op, pos)
@@ -162,14 +259,19 @@ class MCompiler(
     }
 
     private fun setLastInstruction(op: Opcode, position: Int) {
-        val previous = lastInstruction
-        val last = EmittedInstruction(op, position)
-        previousInstruction = previous
-        lastInstruction = last
-
+        with(currentScope()) {
+            val previous = lastInstruction
+            val last = EmittedInstruction(op, position)
+            previousInstruction = previous
+            lastInstruction = last
+        }
     }
 
-    fun bytecode(): Bytecode = Bytecode(instructions, constants)
+    fun bytecode(): Bytecode = Bytecode(currentInstructions(), constants)
+
+    fun currentInstructions(): Instructions = currentScope().instructions
+
+    fun currentScope(): CompilationScope = scopes[scopeIndex]
 }
 
 data class Bytecode(val instructions: Instructions, val constants: List<MObject>) {

@@ -3,6 +3,7 @@ package org.marioarias.monkey.objects
 import org.marioarias.monkey.ast.BlockStatement
 import org.marioarias.monkey.ast.Identifier
 import org.marioarias.monkey.ast.Node
+import org.marioarias.monkey.code.Instructions
 import org.marioarias.monkey.evaluator.Environment
 
 interface MObject {
@@ -10,7 +11,7 @@ interface MObject {
 }
 
 fun MObject?.typeDesc(): String {
-    return if(this == null){
+    return if (this == null) {
         "null"
     } else {
         this::class.simpleName!!
@@ -126,7 +127,7 @@ class MArray(val elements: List<MObject?>) : MObject {
     }
 }
 
-enum class HashType{
+enum class HashType {
     INTEGER, BOOLEAN, STRING
 }
 
@@ -158,5 +159,11 @@ class MQuote(val node: Node?) : MObject {
 class MMacro(val parameters: List<Identifier>?, val body: BlockStatement?, val env: Environment) : MObject {
     override fun inspect(): String {
         return "macro(${parameters?.joinToString()}) {\n$body\n}"
+    }
+}
+
+class MCompiledFunction(val instructions: Instructions, val numLocals: Int = 0, val numParameters: Int = 0) : MObject {
+    override fun inspect(): String {
+        return "CompiledFunction[$this]"
     }
 }

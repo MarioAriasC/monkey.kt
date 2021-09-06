@@ -197,7 +197,7 @@ class Parser(private val lexer: Lexer) {
 
         val returnValue = parseExpression(Precedence.LOWEST)
 
-        while (!curTokenIs(TokenType.SEMICOLON)) {
+        while (peekTokenIs(TokenType.SEMICOLON)) {
             nextToken()
         }
 

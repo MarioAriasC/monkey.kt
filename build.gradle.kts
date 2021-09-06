@@ -5,8 +5,6 @@ plugins {
     application
 }
 
-val compileKotlin: KotlinCompile by tasks
-
 group = "org.marioarias"
 version = "1.0-SNAPSHOT"
 
@@ -18,6 +16,9 @@ tasks.test {
     useTestNG()
 }
 
+tasks.withType<KotlinCompile> {
+    kotlinOptions.jvmTarget = "11"
+}
 
 dependencies {
     implementation(kotlin("stdlib"))

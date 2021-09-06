@@ -11,6 +11,7 @@ class CodeTests {
         listOf(
             Triple(OpConstant, intArrayOf(65534), byteArrayOf(OpConstant, 255.toByte(), 254.toByte())),
             Triple(OpAdd, intArrayOf(), byteArrayOf(OpAdd)),
+            Triple(OpGetLocal, intArrayOf(255), byteArrayOf(OpGetLocal, 255.toByte()))
         ).forEach { (op, operands, expected) ->
             val instruction = make(op, *operands)
             assertEquals(expected.size, instruction.size)
@@ -22,10 +23,16 @@ class CodeTests {
 
     @Test
     fun `instructions inspect()`() {
-        val instructions = listOf(make(OpAdd), make(OpConstant, 2), make(OpConstant, 65535))
+        val instructions = listOf(
+            make(OpAdd),
+            make(OpGetLocal, 1),
+            make(OpConstant, 2),
+            make(OpConstant, 65535)
+        )
         val expected = """0000 OpAdd
-            |0001 OpConstant 2
-            |0004 OpConstant 65535
+            |0001 OpGetLocal 1
+            |0003 OpConstant 2
+            |0006 OpConstant 65535
             |
         """.trimMargin()
         val instruction = instructions.concat()

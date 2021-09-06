@@ -10,16 +10,35 @@ val Null = MNull
 
 class VM(bytecode: Bytecode) {
     private var constant: List<MObject> = bytecode.constants
-    private var instructions: Instructions = bytecode.instructions
     private var stack: MutableList<MObject?> = Array<MObject?>(STACK_SIZE) { null }.toMutableList()
     private var sp: Int = 0
     private var globals: MutableList<MObject> = mutableListOf()
+    private var frames: MutableList<Frame?> = Array<Frame?>(MAX_FRAME_SIZE) { null }.toMutableList()
+    private var frameIndex: Int = 1
+
+    init {
+        val mainFn = MCompiledFunction(bytecode.instructions)
+        val mainFrame = Frame(mainFn, 0)
+        frames[0] = mainFrame
+    }
 
     constructor(bytecode: Bytecode, globals: MutableList<MObject>) : this(bytecode) {
         this.globals = globals
     }
 
-    fun stackTop(): MObject? {
+    private fun currentFrame(): Frame = frames[frameIndex - 1]!!
+
+    private fun pushFrame(frame: Frame) {
+        frames[frameIndex] = frame
+        frameIndex++
+    }
+
+    private fun popFrame(): Frame {
+        frameIndex--
+        return frames[frameIndex]!!
+    }
+
+    private fun stackTop(): MObject? {
         return if (sp == 0) {
             null
         } else {
@@ -32,12 +51,19 @@ class VM(bytecode: Bytecode) {
     }
 
     fun run() {
-        var i = 0
-        while (i < instructions.size) {
-            when (val op = instructions[i]) {
+        var ip: Int
+        var ins: Instructions
+        var op: Opcode
+        while (currentFrame().ip < currentFrame().instructions().size - 1) {
+            currentFrame().ip++
+            ip = currentFrame().ip
+            ins = currentFrame().instructions()
+            op = ins[ip]
+
+            when (op) {
                 OpConstant -> {
-                    val constIndex = instructions.readInt(i + 1)
-                    i += 2
+                    val constIndex = ins.readInt(ip + 1)
+                    currentFrame().ip += 2
                     push(constant[constIndex])
                 }
                 OpAdd, OpSub, OpMul, OpDiv -> {
@@ -52,40 +78,40 @@ class VM(bytecode: Bytecode) {
                 OpBang -> executeBangOperator()
                 OpMinus -> executeMinusOperator()
                 OpJump -> {
-                    val pos = instructions.readInt(i + 1)
-                    i = pos - 1
+                    val pos = ins.readInt(ip + 1)
+                    currentFrame().ip = pos - 1
                 }
                 OpJumpNotTruthy -> {
-                    val pos = instructions.readInt(i + 1)
-                    i += 2
+                    val pos = ins.readInt(ip + 1)
+                    currentFrame().ip += 2
                     val condition = pop()
                     if (!condition.isTruthy()) {
-                        i = pos - 1
+                        currentFrame().ip = pos - 1
                     }
                 }
                 OpNull -> {
                     push(Null)
                 }
                 OpSetGlobal -> {
-                    val globalIndex = instructions.readInt(i + 1)
-                    i += 2
+                    val globalIndex = ins.readInt(ip + 1)
+                    currentFrame().ip += 2
                     globals.add(globalIndex, pop()!!)
                 }
                 OpGetGlobal -> {
-                    val globalIndex = instructions.readInt(i + 1)
-                    i += 2
+                    val globalIndex = ins.readInt(ip + 1)
+                    currentFrame().ip += 2
                     push(globals[globalIndex])
                 }
                 OpArray -> {
-                    val numElements = instructions.readInt(i + 1)
-                    i += 2
+                    val numElements = ins.readInt(ip + 1)
+                    currentFrame().ip += 2
                     val array = buildArray(sp - numElements, sp)
                     sp -= numElements
                     push(array)
                 }
                 OpHash -> {
-                    val numElements = instructions.readInt(i + 1)
-                    i += 2
+                    val numElements = ins.readInt(ip + 1)
+                    currentFrame().ip += 2
                     val hash = buildHash(sp - numElements, sp)
                     sp -= numElements
                     push(hash)
@@ -95,9 +121,51 @@ class VM(bytecode: Bytecode) {
                     val left = pop()
                     executeIndexExpression(left!!, index!!)
                 }
+                OpCall -> {
+                    val numArgs = ins.readByte(ip + 1)
+                    currentFrame().ip++
+                    callFunction(numArgs.toInt())
+                }
+                OpReturnValue -> {
+                    val returnValue = pop()
+                    val frame = popFrame()
+                    sp = frame.basePointer - 1
+                    push(returnValue!!)
+                }
+                OpReturn -> {
+                    val frame = popFrame()
+                    sp = frame.basePointer - 1
+                    push(Null)
+                }
+                OpSetLocal -> {
+                    val localIndex = ins.readByte(ip + 1)
+                    currentFrame().ip++
+                    val frame = currentFrame()
+                    stack[frame.basePointer + localIndex.toInt()] = pop()
+                }
+                OpGetLocal -> {
+                    val localIndex = ins.readByte(ip + 1)
+                    currentFrame().ip++
+                    val frame = currentFrame()
+                    push(stack[frame.basePointer + localIndex.toInt()]!!)
+                }
             }
-            i++
         }
+    }
+
+    private fun callFunction(numArgs: Int) {
+        when (val fn = stack[sp - 1 - numArgs]) {
+            is MCompiledFunction -> {
+                if (fn.numParameters != numArgs) {
+                    throw VMException("wrong number of arguments: want=${fn.numParameters}, got=$numArgs")
+                }
+                val frame = Frame(fn, sp - numArgs)
+                pushFrame(frame)
+                sp = frame.basePointer + fn.numLocals
+            }
+            else -> throw VMException("calling non-function")
+        }
+
     }
 
     private fun executeIndexExpression(left: MObject, index: MObject) {
@@ -269,6 +337,7 @@ class VM(bytecode: Bytecode) {
 
     companion object {
         const val STACK_SIZE = 2048
+        const val MAX_FRAME_SIZE = 1024
     }
 
 

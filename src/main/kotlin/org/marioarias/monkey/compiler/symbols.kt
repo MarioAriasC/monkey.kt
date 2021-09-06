@@ -1,16 +1,21 @@
 package org.marioarias.monkey.compiler
 
 enum class SymbolScope {
-    GLOBAL
+    GLOBAL, LOCAL
 }
 
 data class Symbol(val name: String, val scope: SymbolScope, val index: Int)
 
-class SymbolTable(private val store: MutableMap<String, Symbol> = mutableMapOf()) {
+class SymbolTable(private val store: MutableMap<String, Symbol> = mutableMapOf(), val outer: SymbolTable? = null) {
     var numDefinitions: Int = 0
 
     fun define(name: String): Symbol {
-        val symbol = Symbol(name, SymbolScope.GLOBAL, numDefinitions)
+        val scope = if (outer == null) {
+            SymbolScope.GLOBAL
+        } else {
+            SymbolScope.LOCAL
+        }
+        val symbol = Symbol(name, scope, numDefinitions)
         store[name] = symbol
         numDefinitions++
         return symbol
@@ -18,13 +23,9 @@ class SymbolTable(private val store: MutableMap<String, Symbol> = mutableMapOf()
 
     @Throws(SymbolException::class)
     fun resolve(name: String): Symbol {
-        val symbol = store[name]
-        if(symbol != null) {
-            return symbol
-        } else {
-            throw SymbolException("undefined variable $name")
-        }
+        return store[name]
+            ?: (outer?.resolve(name) ?: throw SymbolException("undefined variable $name"))
     }
 }
 
-class SymbolException(message: String): Exception(message)
+class SymbolException(message: String) : Exception(message)

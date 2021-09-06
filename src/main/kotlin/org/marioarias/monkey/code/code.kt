@@ -6,6 +6,8 @@ import java.io.DataOutputStream
 
 typealias Instructions = ByteArray
 
+fun instructions(vararg instructions: Instructions): List<Instructions> = listOf(*instructions)
+
 
 fun Instructions.inspect(): String {
     val builder = StringBuilder()
@@ -33,7 +35,11 @@ fun ByteArray.readInt(offset: Int): Int {
     return offset(offset).readChar().code
 }
 
-fun ByteArray.onset(onset:Int): Instructions{
+fun ByteArray.readByte(offset: Int): Byte {
+    return offset(offset).readByte()
+}
+
+fun ByteArray.onset(onset: Int): Instructions {
     return take(onset).toByteArray()
 }
 
@@ -53,6 +59,11 @@ private fun fmtInstruction(def: Definition, operands: IntArray): String {
 fun ByteArray.readChar(): Char {
     val stream = DataInputStream(this.inputStream())
     return stream.readChar().also { stream.close() }
+}
+
+fun ByteArray.readByte(): Byte {
+    val stream = DataInputStream(this.inputStream())
+    return stream.readByte().also { stream.close() }
 }
 
 fun ByteArray.writeChar(offset: Int, i: Int) {
@@ -88,6 +99,11 @@ const val OpSetGlobal: Opcode = 18
 const val OpArray: Opcode = 19
 const val OpHash: Opcode = 20
 const val OpIndex: Opcode = 21
+const val OpCall: Opcode = 22
+const val OpReturnValue: Opcode = 23
+const val OpReturn: Opcode = 24
+const val OpGetLocal: Opcode = 25
+const val OpSetLocal: Opcode = 26
 
 
 val definitions: Map<Opcode, Definition> = mapOf(
@@ -112,6 +128,11 @@ val definitions: Map<Opcode, Definition> = mapOf(
     OpArray to "OpArray".toDefinition(intArrayOf(2)),
     OpHash to "OpHash".toDefinition(intArrayOf(2)),
     OpIndex to "OpIndex".toDefinition(),
+    OpCall to "OpCall".toDefinition(intArrayOf(1)),
+    OpReturnValue to "OpReturnValue".toDefinition(),
+    OpReturn to "OpReturn".toDefinition(),
+    OpGetLocal to "OpGetLocal".toDefinition(intArrayOf(1)),
+    OpSetLocal to "OpSetLocal".toDefinition(intArrayOf(1))
 )
 
 private fun String.toDefinition(operandsWidths: IntArray = intArrayOf()) = Definition(this, operandsWidths)
@@ -139,6 +160,7 @@ fun readOperands(def: Definition, ins: Instructions): Pair<IntArray, Int> {
     val operands = def.operandsWidths.map { width ->
         when (width) {
             2 -> ins.offset(offset).readChar().code
+            1 -> ins.offset(offset).readByte().toInt()
             else -> width
         }.also { offset += width }
     }
@@ -161,6 +183,7 @@ fun make(op: Opcode, vararg operands: Int): Instructions {
             val width = def.operandsWidths[i]
             when (width) {
                 2 -> instruction.writeChar(offset, operand)
+                1 -> instruction[offset] = operand.toByte()
             }
             offset += width
         }

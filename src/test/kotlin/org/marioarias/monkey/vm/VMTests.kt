@@ -6,9 +6,10 @@ import org.marioarias.monkey.objects.*
 import org.marioarias.monkey.parse
 import org.marioarias.monkey.testIntegerObject
 import org.marioarias.monkey.testStringObject
-import kotlin.test.Test
+import org.testng.annotations.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.fail
 
 class VMTests {
     data class VTC<T>(val input: String, val expected: T)
@@ -142,6 +143,271 @@ class VMTests {
             VTC("{1: 1}[0]", Null),
             VTC("{}[0]", Null),
         ).runVmTests()
+    }
+
+    @Test
+    fun `calling functions without arguments`() {
+        listOf(
+            VTC(
+                """
+         let fivePlusTen = fn() {5 + 10; };
+         fivePlusTen()
+         """, 15
+            ),
+            VTC(
+                """
+         let one = fn() { 1; }
+         let two = fn() { 2; }
+         one() + two()
+         """, 3
+            ),
+            VTC(
+                """
+                        let a = fn() { 1 };
+        let b = fn () { a() + 1 };
+        let c = fn () { b() + 1 };
+        c();
+        """,
+                3,
+            ),
+        ).runVmTests()
+    }
+
+    @Test
+    fun `functions with return statement`() {
+        listOf(
+            VTC(
+                """
+            let earlyExit = fn() { return 99; 100; };
+            earlyExit();
+            """,
+                99,
+            ),
+            VTC(
+                """
+            let earlyExit = fn() { return 99; return 100; };
+            earlyExit();
+            """",
+                99,
+            )
+        ).runVmTests()
+    }
+
+    @Test
+    fun `functions without return value`() {
+        listOf(
+            VTC(
+                """
+            let noReturn = fn() {};
+            noReturn();            
+            """,
+                Null,
+            ),
+            VTC(
+                """
+            let noReturn = fn() {};
+            let noReturnTwo = fn() { noReturn(); };
+            noReturn();
+            noReturnTwo();            
+            """,
+                Null,
+            ),
+        ).runVmTests()
+    }
+
+    @Test
+    fun `first class functions`() {
+        listOf(
+            VTC(
+                """
+            let returnsOne = fn(){ 1;};
+            let returnsOneReturner = fn() {returnsOne;}
+            returnsOneReturner()();
+            """,
+                1,
+            ),
+            VTC(
+                """
+            let returnsOneReturner = fn() {
+            	let returnsOne = fn() {
+            		1;
+            	};
+            	returnsOne;
+            }
+            returnsOneReturner()();
+            """,
+
+                1,
+            ),
+        ).runVmTests()
+    }
+
+    @Test
+    fun `calling functions with bindings`() {
+        listOf(
+            VTC(
+                """
+            let one = fn() { let one = 1; one;};
+            one();
+            """,
+                1,
+            ),
+            VTC(
+                """
+            let oneAndTwo = fn() {
+            	let one = 1;
+            	let two = 2;
+            	one + two;
+            };
+            oneAndTwo();
+            """,
+                3,
+            ),
+            VTC(
+                """
+            let oneAndTwo = fn() {
+            	let one = 1;
+            	let two = 2;
+            	one + two;
+            };
+            let threeAndFour = fn() {
+            	let three = 3;
+            	let four = 4;
+            	three + four;
+            };
+            oneAndTwo() + threeAndFour();
+            """,
+                10,
+            ),
+            VTC(
+                """
+            let firstFoobar = fn() {
+            	let foobar = 50;
+            	foobar;
+            };
+            
+            let secondFoobar = fn() {
+            	let foobar = 100;
+            	foobar;
+            };
+            firstFoobar() + secondFoobar();
+            """,
+                150,
+            ),
+            VTC(
+                """
+            let globalSeed = 50;
+            let minusOne = fn() {
+            	let num = 1;
+            	globalSeed - num;
+            };
+            let minusTwo = fn() {
+            	let num = 2;
+            	globalSeed - num;
+            };
+            minusOne() + minusTwo();
+            """,
+                97,
+            ),
+        ).runVmTests()
+    }
+
+    @Test
+    fun `calling functions with arguments and bindings`() {
+        listOf(
+            VTC(
+                """
+            let identity = fn(a) { a; };
+            identity(4);
+            """,
+                4,
+            ),
+            VTC(
+                """
+            let sum = fn(a, b) { a + b; };
+            sum(1, 2);
+            """"""",
+                3,
+            ),
+            VTC(
+                """
+            let sum = fn(a, b){
+            	let c = a + b;
+            	c;
+            }
+            sum(1, 2);
+            """,
+                3,
+            ),
+            VTC(
+                """
+            let sum = fn(a, b){
+            	let c = a + b;
+            	c;
+            }
+            sum(1, 2) + sum(3, 4);
+            """,
+                10,
+            ),
+            VTC(
+                """
+            let sum = fn(a, b){
+            	let c = a + b;
+            	c;
+            }
+            let outer = fn() {
+            	sum(1, 2) + sum(3, 4);
+            };
+            outer();
+            """,
+                10,
+            ),
+            VTC(
+                """
+            let globalNum = 10;
+            let sum = fn(a, b){
+            	let c = a + b;
+            	c + globalNum;
+            }
+            let outer = fn() {
+            	sum(1, 2) + sum(3, 4) + globalNum;
+            };
+            outer() + globalNum;
+            """,
+                50,
+            ),
+        ).runVmTests()
+    }
+
+    @Test
+    fun `calling functions with wrong arguments`() {
+        listOf(
+            VTC(
+                "fn() {1;}(1);",
+                "wrong number of arguments: want=0, got=1",
+            ),
+            VTC(
+                "fn(a) {a;}();",
+                "wrong number of arguments: want=1, got=0",
+            ),
+            VTC(
+                "fn(a, b) {a + b;}(1);",
+                "wrong number of arguments: want=2, got=1",
+            ),
+        ).forEach { (input, expected) ->
+            val program = parse(input)
+            val compiler = MCompiler()
+            compiler.compile(program)
+
+            val vm = VM(compiler.bytecode())
+
+            try {
+                vm.run()
+                fail("expected VM error but resulted in none.")
+            } catch (e: VMException) {
+                assertEquals(expected, e.message)
+            }
+        }
     }
 
     private fun <T> List<VTC<out T>>.runVmTests() {
