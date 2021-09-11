@@ -410,6 +410,50 @@ class VMTests {
         }
     }
 
+    @Test
+    fun `builtins functions`() {
+        listOf(
+            VTC("len(\"\")", 0),
+            VTC("len(\"four\")", 4),
+            VTC("len(\"hello world\")", 11),
+            VTC(
+                "len(1)", MError(
+                    "argument to `len` not supported, got MInteger",
+                )
+            ),
+            VTC(
+                "len(\"one\", \"two\")", MError(
+                    "wrong number of arguments. got=2, want=1"
+                )
+            ),
+            VTC("len([1, 2, 3])", 3),
+            VTC("len([])", 0),
+            VTC("puts(\"hello\", \"world!\")", Null),
+            VTC("first([1, 2, 3])", 1),
+            VTC("first([])", Null),
+            VTC(
+                "first(1)", MError(
+                    "argument to `first` must be ARRAY, got MInteger"
+                )
+            ),
+            VTC("last([1, 2, 3])", 3),
+            VTC("last([])", Null),
+            VTC(
+                "last(1)", MError(
+                    "argument to `last` must be ARRAY, got MInteger"
+                )
+            ),
+            VTC("rest([1,2,3])", listOf(2.toLong(), 3.toLong())),
+            VTC("rest([])", Null),
+            VTC("push([], 1)", listOf(1.toLong())),
+            VTC(
+                "push(1, 1)", MError(
+                    "argument to `push` must be ARRAY, got MInteger"
+                )
+            ),
+        ).runVmTests()
+    }
+
     private fun <T> List<VTC<out T>>.runVmTests() {
         forEach { (input, expected) ->
             val program = parse(input)
@@ -444,6 +488,11 @@ class VMTests {
                         assertNotNull(pair, "no pair for give key in pairs")
                         testIntegerObject(expectedValue as Long, pair.value)
                     }
+                }
+            }
+            is MError -> {
+                checkType(actual) { error: MError ->
+                    assertEquals(error.message, expected.message)
                 }
             }
         }

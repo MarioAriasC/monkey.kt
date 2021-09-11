@@ -124,7 +124,7 @@ class VM(bytecode: Bytecode) {
                 OpCall -> {
                     val numArgs = ins.readByte(ip + 1)
                     currentFrame().ip++
-                    callFunction(numArgs.toInt())
+                    executeCall(numArgs.toInt())
                 }
                 OpReturnValue -> {
                     val returnValue = pop()
@@ -149,23 +149,42 @@ class VM(bytecode: Bytecode) {
                     val frame = currentFrame()
                     push(stack[frame.basePointer + localIndex.toInt()]!!)
                 }
+                OpGetBuiltin -> {
+                    val builtIndex = ins.readByte(ip + 1)
+                    currentFrame().ip++
+                    val (_, definition) = builtins[builtIndex.toInt()]
+                    push(definition)
+                }
             }
         }
     }
 
-    private fun callFunction(numArgs: Int) {
-        when (val fn = stack[sp - 1 - numArgs]) {
-            is MCompiledFunction -> {
-                if (fn.numParameters != numArgs) {
-                    throw VMException("wrong number of arguments: want=${fn.numParameters}, got=$numArgs")
-                }
-                val frame = Frame(fn, sp - numArgs)
-                pushFrame(frame)
-                sp = frame.basePointer + fn.numLocals
-            }
-            else -> throw VMException("calling non-function")
+    private fun executeCall(numArgs: Int) {
+        when (val callee = stack[sp - 1 - numArgs]) {
+            is MCompiledFunction -> callFunction(callee, numArgs)
+            is MBuiltinFunction -> callBuiltin(callee, numArgs)
+            else -> throw VMException("calling non-function or non-built-in")
         }
+    }
 
+    private fun callBuiltin(builtin: MBuiltinFunction, numArgs: Int) {
+        val args = stack.slice(sp - numArgs until sp)
+        val result = builtin.fn(args)
+        sp = sp - numArgs - 1
+        if (result != null) {
+            push(result)
+        } else {
+            push(Null)
+        }
+    }
+
+    private fun callFunction(fn: MCompiledFunction, numArgs: Int) {
+        if (fn.numParameters != numArgs) {
+            throw VMException("wrong number of arguments: want=${fn.numParameters}, got=$numArgs")
+        }
+        val frame = Frame(fn, sp - numArgs)
+        pushFrame(frame)
+        sp = frame.basePointer + fn.numLocals
     }
 
     private fun executeIndexExpression(left: MObject, index: MObject) {

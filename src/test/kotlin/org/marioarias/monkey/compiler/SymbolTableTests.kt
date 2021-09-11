@@ -121,5 +121,34 @@ class SymbolTableTests {
 
     }
 
+    @Test
+    fun `define resolve builtins`() {
+        val global = SymbolTable()
+        val firstLocal = SymbolTable(outer = global)
+        val secondLocal = SymbolTable(outer = firstLocal)
+
+        val expected = listOf(
+            Symbol("a", SymbolScope.BUILTIN, 0),
+            Symbol("c", SymbolScope.BUILTIN, 1),
+            Symbol("e", SymbolScope.BUILTIN, 2),
+            Symbol("f", SymbolScope.BUILTIN, 3),
+        )
+
+        expected.forEachIndexed { i, symbol ->
+            global.defineBuiltin(i, symbol.name)
+        }
+
+        listOf(global, firstLocal, secondLocal).forEach { table ->
+            expected.forEach { symbol ->
+                try {
+                    val result = table.resolve(symbol.name)
+                    assertEquals(symbol, result)
+                } catch (e: SymbolException) {
+                    fail("name ${symbol.name} not resolvable")
+                }
+            }
+        }
+    }
+
 
 }

@@ -689,6 +689,41 @@ fn() {
         ).runCompilerTests()
     }
 
+    @Test
+    fun builtins() {
+        listOf(
+            CTC(
+                """
+len([]);
+push([], 1);                
+            """.trimIndent(),
+                listOf(1),
+                make(OpGetBuiltin, 0),
+                make(OpArray, 0),
+                make(OpCall, 1),
+                make(OpPop),
+                make(OpGetBuiltin, 5),
+                make(OpArray, 0),
+                make(OpConstant, 0),
+                make(OpCall, 2),
+                make(OpPop),
+            ),
+            CTC(
+                "fn() { len([])}",
+                listOf(
+                    instructions(
+                        make(OpGetBuiltin, 0),
+                        make(OpArray, 0),
+                        make(OpCall, 1),
+                        make(OpReturnValue)
+                    )
+                ),
+                make(OpConstant, 0),
+                make(OpPop),
+            )
+        ).runCompilerTests()
+    }
+
     private fun testScopeInstructionsSize(compiler: MCompiler, instructionsSize: Int) {
         assertEquals(instructionsSize, compiler.currentScope().instructions.size)
     }
@@ -697,7 +732,7 @@ fn() {
         assertEquals(scopeIndex, compiler.scopeIndex)
     }
 
-    private fun <T> List<CTC<T>>.runCompilerTests() {
+    private fun <T> List<CTC<out T>>.runCompilerTests() {
         forEach { (input, expectedConstants, expectedInstructions) ->
             println("input = ${input}")
             val program = parse(input)
@@ -731,6 +766,7 @@ fn() {
                 is List<*> -> {
                     when (val act = actual[i]) {
                         is MCompiledFunction -> {
+                            @Suppress("UNCHECKED_CAST")
                             testInstructions(constant as List<Instructions>, act.instructions)
                         }
                         else -> fail("constant $act - not a function, got = ${act.typeDesc()}")

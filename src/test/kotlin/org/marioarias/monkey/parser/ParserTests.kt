@@ -4,7 +4,7 @@ import org.marioarias.monkey.ast.*
 import org.marioarias.monkey.checkType
 import org.marioarias.monkey.isType
 import org.marioarias.monkey.lexer.Lexer
-import kotlin.test.Test
+import org.testng.annotations.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.fail

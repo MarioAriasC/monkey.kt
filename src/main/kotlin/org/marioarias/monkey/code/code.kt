@@ -104,6 +104,7 @@ const val OpReturnValue: Opcode = 23
 const val OpReturn: Opcode = 24
 const val OpGetLocal: Opcode = 25
 const val OpSetLocal: Opcode = 26
+const val OpGetBuiltin: Opcode = 27
 
 
 val definitions: Map<Opcode, Definition> = mapOf(
@@ -132,7 +133,8 @@ val definitions: Map<Opcode, Definition> = mapOf(
     OpReturnValue to "OpReturnValue".toDefinition(),
     OpReturn to "OpReturn".toDefinition(),
     OpGetLocal to "OpGetLocal".toDefinition(intArrayOf(1)),
-    OpSetLocal to "OpSetLocal".toDefinition(intArrayOf(1))
+    OpSetLocal to "OpSetLocal".toDefinition(intArrayOf(1)),
+    OpGetBuiltin to "OgGetBuiltin".toDefinition(intArrayOf(1))
 )
 
 private fun String.toDefinition(operandsWidths: IntArray = intArrayOf()) = Definition(this, operandsWidths)

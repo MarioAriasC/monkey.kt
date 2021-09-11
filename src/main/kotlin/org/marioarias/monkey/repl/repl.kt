@@ -3,9 +3,9 @@ package org.marioarias.monkey.repl
 import org.marioarias.monkey.compiler.MCompiler
 import org.marioarias.monkey.compiler.MCompilerException
 import org.marioarias.monkey.compiler.SymbolTable
-import org.marioarias.monkey.evaluator.Environment
 import org.marioarias.monkey.lexer.Lexer
 import org.marioarias.monkey.objects.MObject
+import org.marioarias.monkey.objects.builtins
 import org.marioarias.monkey.parser.Parser
 import org.marioarias.monkey.vm.VM
 import org.marioarias.monkey.vm.VMException
@@ -36,6 +36,9 @@ fun start(`in`: InputStream, out: PrintStream) {
     var constants = mutableListOf<MObject>()
     val globals = mutableListOf<MObject>()
     val symbolTable = SymbolTable()
+    builtins.forEachIndexed { i, (name, _) ->
+        symbolTable.defineBuiltin(i, name)
+    }
     while (scanner.hasNext()) {
 
         val code = scanner.nextLine()
@@ -60,7 +63,7 @@ fun start(`in`: InputStream, out: PrintStream) {
             compiler.compile(program)
             val bytecode = compiler.bytecode()
             constants = bytecode.constants.toMutableList()
-            val machine = VM(bytecode,  globals)
+            val machine = VM(bytecode, globals)
             machine.run()
             val stackTop = machine.lastPoppedStackElem()
             out.println(stackTop?.inspect())
@@ -73,7 +76,7 @@ fun start(`in`: InputStream, out: PrintStream) {
             out.print("$PROMPT ")
             continue
         }
-        
+
         out.print("$PROMPT ")
     }
 }

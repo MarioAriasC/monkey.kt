@@ -115,7 +115,7 @@ class MString(override val value: String) : MValue<String>, Hashable<String> {
     override fun hashType(): HashType = HashType.STRING
 }
 
-typealias BuiltinFunction = (List<MObject?>) -> MObject
+typealias BuiltinFunction = (List<MObject?>) -> MObject?
 
 class MBuiltinFunction(val fn: BuiltinFunction) : MObject {
     override fun inspect(): String = "builtin function"

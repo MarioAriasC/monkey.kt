@@ -1,7 +1,7 @@
 package org.marioarias.monkey.compiler
 
 enum class SymbolScope {
-    GLOBAL, LOCAL
+    GLOBAL, LOCAL, BUILTIN
 }
 
 data class Symbol(val name: String, val scope: SymbolScope, val index: Int)
@@ -19,6 +19,17 @@ class SymbolTable(private val store: MutableMap<String, Symbol> = mutableMapOf()
         store[name] = symbol
         numDefinitions++
         return symbol
+    }
+
+    fun defineBuiltin(index: Int, name: String): Symbol {
+        val stored = store[name]
+        return if (stored == null) {
+            val symbol = Symbol(name, SymbolScope.BUILTIN, index)
+            store[name] = symbol
+            symbol
+        } else {
+            stored
+        }
     }
 
     @Throws(SymbolException::class)

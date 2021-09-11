@@ -2,10 +2,7 @@ package org.marioarias.monkey.compiler
 
 import org.marioarias.monkey.ast.*
 import org.marioarias.monkey.code.*
-import org.marioarias.monkey.objects.MCompiledFunction
-import org.marioarias.monkey.objects.MInteger
-import org.marioarias.monkey.objects.MObject
-import org.marioarias.monkey.objects.MString
+import org.marioarias.monkey.objects.*
 
 data class EmittedInstruction(var op: Opcode = 0, val position: Int = 0)
 
@@ -39,6 +36,13 @@ class MCompiler(
 ) {
     var scopes = mutableListOf(CompilationScope())
     var scopeIndex = 0
+
+
+    init {
+        builtins.forEachIndexed { i, (name, _) ->
+            symbolTable.defineBuiltin(i, name)
+        }
+    }
 
 
     @Throws(MCompilerException::class)
@@ -121,12 +125,7 @@ class MCompiler(
             }
             is Identifier -> {
                 val symbol = symbolTable.resolve(node.value)
-
-                if (symbol.scope == SymbolScope.GLOBAL) {
-                    emit(OpGetGlobal, symbol.index)
-                } else {
-                    emit(OpGetLocal, symbol.index)
-                }
+                loadSymbol(symbol)
             }
             is StringLiteral -> {
                 val str = MString(node.value)
@@ -186,6 +185,15 @@ class MCompiler(
                 emit(OpCall, node.arguments.size)
             }
         }
+    }
+
+    private fun loadSymbol(symbol: Symbol) {
+        val opcode = when (symbol.scope) {
+            SymbolScope.GLOBAL -> OpGetGlobal
+            SymbolScope.LOCAL -> OpGetLocal
+            SymbolScope.BUILTIN -> OpGetBuiltin
+        }
+        emit(opcode, symbol.index)
     }
 
     fun leaveScope(): Instructions {

@@ -152,7 +152,9 @@ object Evaluator {
                 val evaluated = eval(function.body, extendEnv)
                 unwrapReturnValue(evaluated)
             }
-            is MBuiltinFunction -> function.fn(args)
+            is MBuiltinFunction -> {
+                function.fn(args) ?: MNull
+            }
             else -> MError("not a function: ${function.typeDesc()}")
         }
     }
