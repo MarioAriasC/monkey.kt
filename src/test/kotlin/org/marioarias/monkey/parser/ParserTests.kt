@@ -544,6 +544,17 @@ class ParserTests {
     }
 
     @Test
+    fun `function literal with name`() {
+        val input = "let myFunction = fn() {};"
+        val program = createProgram(input)
+        checkType(program.statements.first()) { statement: LetStatement ->
+            checkType(statement.value) { function: FunctionLiteral ->
+                assertEquals("myFunction", function.name)
+            }
+        }
+    }
+
+    @Test
     fun `macro literal parsing`() {
         val input = "macro(x, y){x + y;}"
         val program = createProgram(input)

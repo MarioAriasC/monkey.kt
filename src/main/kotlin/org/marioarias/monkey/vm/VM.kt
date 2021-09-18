@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUnsignedTypes::class)
+
 package org.marioarias.monkey.vm
 
 import org.marioarias.monkey.code.*
@@ -10,15 +12,16 @@ val Null = MNull
 
 class VM(bytecode: Bytecode) {
     private var constant: List<MObject> = bytecode.constants
-    private var stack: MutableList<MObject?> = Array<MObject?>(STACK_SIZE) { null }.toMutableList()
+    private var stack = Array<MObject?>(STACK_SIZE) { null }
     private var sp: Int = 0
     private var globals: MutableList<MObject> = mutableListOf()
-    private var frames: MutableList<Frame?> = Array<Frame?>(MAX_FRAME_SIZE) { null }.toMutableList()
+    private var frames = Array<Frame?>(MAX_FRAME_SIZE) { null }
     private var frameIndex: Int = 1
 
     init {
         val mainFn = MCompiledFunction(bytecode.instructions)
-        val mainFrame = Frame(mainFn, 0)
+        val mainClosure = MClosure(mainFn)
+        val mainFrame = Frame(mainClosure, 0)
         frames[0] = mainFrame
     }
 
@@ -155,13 +158,43 @@ class VM(bytecode: Bytecode) {
                     val (_, definition) = builtins[builtIndex.toInt()]
                     push(definition)
                 }
+                OpClosure -> {
+                    val constIndex = ins.readInt(ip + 1)
+                    val numFree = ins.readByte(ip + 3)
+                    currentFrame().ip += 3
+                    pushClosure(constIndex, numFree.toInt())
+                }
+                OpGetFree -> {
+                    val freeIndex = ins.readByte(ip + 1)
+                    currentFrame().ip++
+                    val currentClosure = currentFrame().cl
+                    push(currentClosure.free[freeIndex.toInt()])
+                }
+                OpCurrentClosure -> {
+                    val currentClosure = currentFrame().cl
+                    push(currentClosure)
+                }
             }
+        }
+    }
+
+    private fun pushClosure(constIndex: Int, numFree: Int) {
+        when (val constant = constant[constIndex]) {
+            is MCompiledFunction -> {
+                val free = Array(numFree) { i ->
+                    stack[sp - numFree - i]!!
+                }.toList()
+                sp -= numFree
+                val closure = MClosure(constant, free)
+                push(closure)
+            }
+            else -> throw VMException("not a function $constant")
         }
     }
 
     private fun executeCall(numArgs: Int) {
         when (val callee = stack[sp - 1 - numArgs]) {
-            is MCompiledFunction -> callFunction(callee, numArgs)
+            is MClosure -> callClosure(callee, numArgs)
             is MBuiltinFunction -> callBuiltin(callee, numArgs)
             else -> throw VMException("calling non-function or non-built-in")
         }
@@ -178,13 +211,13 @@ class VM(bytecode: Bytecode) {
         }
     }
 
-    private fun callFunction(fn: MCompiledFunction, numArgs: Int) {
-        if (fn.numParameters != numArgs) {
-            throw VMException("wrong number of arguments: want=${fn.numParameters}, got=$numArgs")
+    private fun callClosure(cl: MClosure, numArgs: Int) {
+        if (cl.fn.numParameters != numArgs) {
+            throw VMException("wrong number of arguments: want=${cl.fn.numParameters}, got=$numArgs")
         }
-        val frame = Frame(fn, sp - numArgs)
+        val frame = Frame(cl, sp - numArgs)
         pushFrame(frame)
-        sp = frame.basePointer + fn.numLocals
+        sp = frame.basePointer + cl.fn.numLocals
     }
 
     private fun executeIndexExpression(left: MObject, index: MObject) {
@@ -262,39 +295,23 @@ class VM(bytecode: Bytecode) {
         }
     }
 
-    private fun binaryOperationTemplate(
-        op: Byte,
-        intOperation: (op: Byte, left: MInteger, right: MInteger) -> Unit,
-        stringOperation: (op: Byte, left: MString, right: MString) -> Unit = { _, _, _ -> },
-        otherOperation: (op: Byte, left: MObject, right: MObject) -> Unit
-    ) {
+
+
+    private fun executeComparison(op: Opcode) {
         val right = pop()
         val left = pop()
 
         when {
-            left is MInteger && right is MInteger -> {
-                intOperation(op, left, right)
+            left is MInteger && right is MInteger -> executeBinaryIntegerComparison(op, left, right)
+            else -> when(op){
+                OpEqual -> push((left == right).toMBoolean())
+                OpNotEqual -> push((left != right).toMBoolean())
+                else -> throw VMException("unknown operator $op (${left.typeDesc()} ${right.typeDesc()})")
             }
-            left is MString && right is MString -> {
-                stringOperation(op, left, right)
-            }
-            else -> otherOperation(op, left!!, right!!)
-
         }
     }
 
-    private fun executeComparison(op: Byte) {
-        binaryOperationTemplate(op, ::executeBinaryIntegerComparison) { opCode, left, right ->
-            val bool = when (opCode) {
-                OpEqual -> (left == right).toMBoolean()
-                OpNotEqual -> (left != right).toMBoolean()
-                else -> throw VMException("unknown operator $opCode (${left.typeDesc()} ${right.typeDesc()})")
-            }
-            push(bool)
-        }
-    }
-
-    private fun executeBinaryIntegerComparison(op: Byte, left: MInteger, right: MInteger) {
+    private fun executeBinaryIntegerComparison(op: Opcode, left: MInteger, right: MInteger) {
         val leftValue = left.value
         val rightValue = right.value
         val bool = when (op) {
@@ -312,17 +329,18 @@ class VM(bytecode: Bytecode) {
         False
     }
 
-    private fun executeBinaryOperation(op: Byte) {
-        binaryOperationTemplate(
-            op,
-            ::executeBinaryIntegerOperation,
-            ::executeBinaryStringOperation
-        ) { _, left, right ->
-            throw VMException("unsupported types for binary operation: ${left.typeDesc()} ${right.typeDesc()}")
+    private fun executeBinaryOperation(op: Opcode) {
+        val right = pop()
+        val left = pop()
+
+        when {
+            left is MInteger && right is MInteger -> executeBinaryIntegerOperation(op, left, right)
+            left is MString  && right is MString -> executeBinaryStringOperation(op, left, right)
+            else -> throw VMException("unsupported types for binary operation: ${left.typeDesc()} ${right.typeDesc()}")
         }
     }
 
-    private fun executeBinaryStringOperation(op: Byte, left: MString, right: MString) {
+    private fun executeBinaryStringOperation(op: Opcode, left: MString, right: MString) {
         val result = when (op) {
             OpAdd -> MString(left.value + right.value)
             else -> throw VMException("unknown string operator: $op")
@@ -330,7 +348,7 @@ class VM(bytecode: Bytecode) {
         push(result)
     }
 
-    private fun executeBinaryIntegerOperation(op: Byte, left: MInteger, right: MInteger) {
+    private fun executeBinaryIntegerOperation(op: Opcode, left: MInteger, right: MInteger) {
         val result = when (op) {
             OpAdd -> left + right
             OpSub -> left - right
@@ -349,7 +367,7 @@ class VM(bytecode: Bytecode) {
         if (sp >= STACK_SIZE) {
             throw VMException("stack overflow")
         }
-        stack.add(sp, obj)
+        stack[sp] = obj
         sp++
     }
 

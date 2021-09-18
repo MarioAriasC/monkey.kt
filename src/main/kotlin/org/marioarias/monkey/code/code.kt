@@ -1,13 +1,8 @@
+@file:OptIn(ExperimentalUnsignedTypes::class)
+
 package org.marioarias.monkey.code
 
-import java.io.ByteArrayOutputStream
-import java.io.DataInputStream
-import java.io.DataOutputStream
-
-typealias Instructions = ByteArray
-
-fun instructions(vararg instructions: Instructions): List<Instructions> = listOf(*instructions)
-
+typealias Instructions = UByteArray
 
 fun Instructions.inspect(): String {
     val builder = StringBuilder()
@@ -27,20 +22,63 @@ fun Instructions.inspect(): String {
 }
 
 
-fun ByteArray.offset(offset: Int): Instructions {
-    return takeLast(size - offset).toByteArray()
+private inline fun Instructions.takeBase(n: Int, body: (size: Int) -> Instructions): Instructions {
+    if (n < 0) {
+        throw IllegalArgumentException("Requested element count $n is less than zero.")
+    }
+    if (n == 0) {
+        return ubyteArrayOf()
+    }
+    val size = size
+    if (n >= size) {
+        return this
+    }
+    return body(size)
 }
 
-fun ByteArray.readInt(offset: Int): Int {
+
+fun Instructions.offset(offset: Int): Instructions {
+    fun takeLast(n: Int): Instructions {
+        return takeBase(n) { size ->
+            if (n == 1) {
+                ubyteArrayOf(this[size - 1])
+            }
+            val returned = UByteArray(n)
+            for ((i, v) in (size - n until size).withIndex()) {
+                returned[i] = this[v]
+            }
+            returned
+        }
+    }
+    return takeLast(size - offset)
+}
+
+fun Instructions.onset(onset: Int): Instructions {
+    fun take(n: Int): Instructions {
+        return takeBase(n) {
+            if (n == 1) {
+                ubyteArrayOf(first())
+            }
+            val returned = UByteArray(n)
+            for ((i, ubyte) in this.withIndex()) {
+                returned[i] = ubyte
+                if (i + 1 == n) {
+                    break
+                }
+            }
+            returned
+        }
+    }
+
+    return take(onset)
+}
+
+fun Instructions.readInt(offset: Int): Int {
     return offset(offset).readChar().code
 }
 
-fun ByteArray.readByte(offset: Int): Byte {
+fun Instructions.readByte(offset: Int): UByte {
     return offset(offset).readByte()
-}
-
-fun ByteArray.onset(onset: Int): Instructions {
-    return take(onset).toByteArray()
 }
 
 private fun fmtInstruction(def: Definition, operands: IntArray): String {
@@ -51,64 +89,75 @@ private fun fmtInstruction(def: Definition, operands: IntArray): String {
     return when (operandCount) {
         0 -> def.name
         1 -> "${def.name} ${operands[0]}"
+        2 -> "${def.name} ${operands[0]} ${operands[1]}"
         else -> "ERROR: unhandled operandCount for ${def.name}"
     }
 }
 
-
-fun ByteArray.readChar(): Char {
-    val stream = DataInputStream(this.inputStream())
-    return stream.readChar().also { stream.close() }
+fun Instructions.read(position: Int): Int {
+    return (this[position] and 255u).toInt()
 }
 
-fun ByteArray.readByte(): Byte {
-    val stream = DataInputStream(this.inputStream())
-    return stream.readByte().also { stream.close() }
+fun Instructions.readChar(): Char {
+    val ch1 = read(0)
+    val ch2 = read(1)
+    if ((ch1 or ch2) < 0) {
+        throw IllegalStateException()
+    } else {
+        return ((ch1 shl 8) + (ch2 shl 0)).toChar()
+    }
 }
 
-fun ByteArray.writeChar(offset: Int, i: Int) {
-    val byteStream = ByteArrayOutputStream(this.size)
-    val stream = DataOutputStream(byteStream)
-    stream.writeChar(i)
-    stream.close()
-    val newArray = byteStream.toByteArray()
-    this[offset] = newArray[0]
-    this[offset + 1] = newArray[1]
+fun Instructions.readByte(): UByte {
+    val ch = read(0)
+    if (ch < 0) {
+        throw IllegalStateException()
+    } else {
+        return ch.toUByte()
+    }
 }
 
-typealias Opcode = Byte
+fun Instructions.writeChar(offset: Int, i: Int) {
+    this[offset] = ((i ushr 8) and 255).toUByte()
+    this[offset + 1] = ((i ushr 0) and 255).toUByte()
+}
 
-const val OpConstant: Opcode = 1
-const val OpAdd: Opcode = 2
-const val OpPop: Opcode = 3
-const val OpSub: Opcode = 4
-const val OpMul: Opcode = 5
-const val OpDiv: Opcode = 6
-const val OpTrue: Opcode = 7
-const val OpFalse: Opcode = 8
-const val OpEqual: Opcode = 9
-const val OpNotEqual: Opcode = 10
-const val OpGreaterThan: Opcode = 11
-const val OpMinus: Opcode = 12
-const val OpBang: Opcode = 13
-const val OpJumpNotTruthy: Opcode = 14
-const val OpJump: Opcode = 15
-const val OpNull: Opcode = 16
-const val OpGetGlobal: Opcode = 17
-const val OpSetGlobal: Opcode = 18
-const val OpArray: Opcode = 19
-const val OpHash: Opcode = 20
-const val OpIndex: Opcode = 21
-const val OpCall: Opcode = 22
-const val OpReturnValue: Opcode = 23
-const val OpReturn: Opcode = 24
-const val OpGetLocal: Opcode = 25
-const val OpSetLocal: Opcode = 26
-const val OpGetBuiltin: Opcode = 27
+typealias Opcode = UByte
+
+const val OpConstant: Opcode = 0u
+const val OpAdd: Opcode = 1u
+const val OpPop: Opcode = 2u
+const val OpSub: Opcode = 3u
+const val OpMul: Opcode = 4u
+const val OpDiv: Opcode = 5u
+const val OpTrue: Opcode = 6u
+const val OpFalse: Opcode = 7u
+const val OpEqual: Opcode = 8u
+const val OpNotEqual: Opcode = 9u
+const val OpGreaterThan: Opcode = 10u
+const val OpMinus: Opcode = 11u
+const val OpBang: Opcode = 12u
+const val OpJumpNotTruthy: Opcode = 13u
+const val OpJump: Opcode = 14u
+const val OpNull: Opcode = 15u
+const val OpGetGlobal: Opcode = 16u
+const val OpSetGlobal: Opcode = 17u
+const val OpArray: Opcode = 18u
+const val OpHash: Opcode = 19u
+const val OpIndex: Opcode = 20u
+const val OpCall: Opcode = 21u
+const val OpReturnValue: Opcode = 22u
+const val OpReturn: Opcode = 23u
+const val OpGetLocal: Opcode = 24u
+const val OpSetLocal: Opcode = 25u
+const val OpGetBuiltin: Opcode = 26u
+const val OpClosure: Opcode = 27u
+const val OpGetFree: Opcode = 28u
+const val OpCurrentClosure: Opcode = 29u
 
 
 val definitions: Map<Opcode, Definition> = mapOf(
-    OpConstant to "OpConstant".toDefinition(intArrayOf(2)),
+    OpConstant to "OpConstant".toDefinition(2),
     OpAdd to "OpAdd".toDefinition(),
     OpPop to "OpPop".toDefinition(),
     OpSub to "OpSub".toDefinition(),
@@ -121,23 +170,26 @@ val definitions: Map<Opcode, Definition> = mapOf(
     OpGreaterThan to "OpGreaterThan".toDefinition(),
     OpMinus to "OpMinus".toDefinition(),
     OpBang to "OpBang".toDefinition(),
-    OpJumpNotTruthy to "OpJumpNotTruthy".toDefinition(intArrayOf(2)),
-    OpJump to "OpJump".toDefinition(intArrayOf(2)),
+    OpJumpNotTruthy to "OpJumpNotTruthy".toDefinition(2),
+    OpJump to "OpJump".toDefinition(2),
     OpNull to "OpNull".toDefinition(),
-    OpGetGlobal to "OpGetGlobal".toDefinition(intArrayOf(2)),
-    OpSetGlobal to "OpSetGlobal".toDefinition(intArrayOf(2)),
-    OpArray to "OpArray".toDefinition(intArrayOf(2)),
-    OpHash to "OpHash".toDefinition(intArrayOf(2)),
+    OpGetGlobal to "OpGetGlobal".toDefinition(2),
+    OpSetGlobal to "OpSetGlobal".toDefinition(2),
+    OpArray to "OpArray".toDefinition(2),
+    OpHash to "OpHash".toDefinition(2),
     OpIndex to "OpIndex".toDefinition(),
-    OpCall to "OpCall".toDefinition(intArrayOf(1)),
+    OpCall to "OpCall".toDefinition(1),
     OpReturnValue to "OpReturnValue".toDefinition(),
     OpReturn to "OpReturn".toDefinition(),
-    OpGetLocal to "OpGetLocal".toDefinition(intArrayOf(1)),
-    OpSetLocal to "OpSetLocal".toDefinition(intArrayOf(1)),
-    OpGetBuiltin to "OgGetBuiltin".toDefinition(intArrayOf(1))
+    OpGetLocal to "OpGetLocal".toDefinition(1),
+    OpSetLocal to "OpSetLocal".toDefinition(1),
+    OpGetBuiltin to "OgGetBuiltin".toDefinition(1),
+    OpClosure to "OpClosure".toDefinition(2, 1),
+    OpGetFree to "OpGetFree".toDefinition(1),
+    OpCurrentClosure to "OpCurrentClosure".toDefinition()
 )
 
-private fun String.toDefinition(operandsWidths: IntArray = intArrayOf()) = Definition(this, operandsWidths)
+private fun String.toDefinition(vararg operandsWidths: Int) = Definition(this, intArrayOf(*operandsWidths))
 
 data class Definition(val name: String, val operandsWidths: IntArray = intArrayOf()) {
     override fun equals(other: Any?): Boolean {
@@ -161,7 +213,7 @@ fun readOperands(def: Definition, ins: Instructions): Pair<IntArray, Int> {
     var offset = 0
     val operands = def.operandsWidths.map { width ->
         when (width) {
-            2 -> ins.offset(offset).readChar().code
+            2 -> ins.readInt(offset)
             1 -> ins.offset(offset).readByte().toInt()
             else -> width
         }.also { offset += width }
@@ -178,19 +230,19 @@ fun make(op: Opcode, vararg operands: Int): Instructions {
         val def = lookup(op)
 
         val instructionLen = def.operandsWidths.sum() + 1
-        val instruction = ByteArray(instructionLen)
+        val instruction = UByteArray(instructionLen)
         instruction[0] = op
         var offset = 1
         operands.forEachIndexed { i, operand ->
             val width = def.operandsWidths[i]
             when (width) {
                 2 -> instruction.writeChar(offset, operand)
-                1 -> instruction[offset] = operand.toByte()
+                1 -> instruction[offset] = operand.toUByte()
             }
             offset += width
         }
         instruction
     } catch (e: IllegalArgumentException) {
-        byteArrayOf()
+        ubyteArrayOf()
     }
 }

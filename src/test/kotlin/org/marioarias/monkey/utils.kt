@@ -1,3 +1,4 @@
+@file:OptIn(ExperimentalUnsignedTypes::class)
 package org.marioarias.monkey
 
 import org.marioarias.monkey.ast.Program
@@ -37,7 +38,7 @@ fun parse(input: String): Program {
     return Parser(Lexer(input)).parseProgram()
 }
 
-fun List<Instructions>.concat() = fold(byteArrayOf()) { acc, bytes -> acc + bytes }
+fun List<Instructions>.concat(): Instructions = fold(ubyteArrayOf()) { acc, bytes -> acc + bytes }
 
 fun Instructions.assertEquals(actual: Instructions) {
     forEachIndexed { i, byte ->

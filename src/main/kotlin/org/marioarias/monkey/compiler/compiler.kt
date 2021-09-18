@@ -1,13 +1,15 @@
+@file:OptIn(ExperimentalUnsignedTypes::class)
+
 package org.marioarias.monkey.compiler
 
 import org.marioarias.monkey.ast.*
 import org.marioarias.monkey.code.*
 import org.marioarias.monkey.objects.*
 
-data class EmittedInstruction(var op: Opcode = 0, val position: Int = 0)
+data class EmittedInstruction(var op: Opcode = 0u, val position: Int = 0)
 
 data class CompilationScope(
-    var instructions: Instructions = byteArrayOf(),
+    var instructions: Instructions = ubyteArrayOf(),
     var lastInstruction: EmittedInstruction = EmittedInstruction(),
     var previousInstruction: EmittedInstruction = EmittedInstruction()
 ) {
@@ -115,8 +117,8 @@ class MCompiler(
                 compile(statement!!)
             }
             is LetStatement -> {
-                compile(node.value!!)
                 val symbol = symbolTable.define(node.name.value)
+                compile(node.value!!)
                 if (symbol.scope == SymbolScope.GLOBAL) {
                     emit(OpSetGlobal, symbol.index)
                 } else {
@@ -152,6 +154,9 @@ class MCompiler(
             }
             is FunctionLiteral -> {
                 enterScope()
+                if (node.name.isNotEmpty()) {
+                    symbolTable.defineFunctionName(node.name)
+                }
                 node.parameters?.forEach { parameter ->
                     symbolTable.define(parameter.value)
                 }
@@ -163,15 +168,19 @@ class MCompiler(
                     emit(OpReturn)
                 }
 
+                val freeSymbols = symbolTable.freeSymbols
+
                 val numLocals = symbolTable.numDefinitions
                 val instructions = leaveScope()
+                
+                freeSymbols.forEach(this::loadSymbol)
 
                 val compiledFn = MCompiledFunction(
                     instructions = instructions,
                     numLocals = numLocals,
                     numParameters = node.parameters!!.size
                 )
-                emit(OpConstant, addConstant(compiledFn))
+                emit(OpClosure, addConstant(compiledFn), freeSymbols.size)
             }
             is ReturnStatement -> {
                 compile(node.returnValue!!)
@@ -192,8 +201,14 @@ class MCompiler(
             SymbolScope.GLOBAL -> OpGetGlobal
             SymbolScope.LOCAL -> OpGetLocal
             SymbolScope.BUILTIN -> OpGetBuiltin
+            SymbolScope.FREE -> OpGetFree
+            SymbolScope.FUNCTION -> OpCurrentClosure
         }
-        emit(opcode, symbol.index)
+        if (opcode != OpCurrentClosure) {
+            emit(opcode, symbol.index)
+        } else {
+            emit(opcode)
+        }
     }
 
     fun leaveScope(): Instructions {
@@ -253,7 +268,7 @@ class MCompiler(
         return constants.size - 1
     }
 
-    private fun addInstruction(ins: ByteArray): Int {
+    private fun addInstruction(ins: Instructions): Int {
         val posNewInstruction = currentInstructions().size
         currentScope().instructions += ins
         return posNewInstruction
@@ -277,7 +292,7 @@ class MCompiler(
 
     fun bytecode(): Bytecode = Bytecode(currentInstructions(), constants)
 
-    fun currentInstructions(): Instructions = currentScope().instructions
+    private fun currentInstructions(): Instructions = currentScope().instructions
 
     fun currentScope(): CompilationScope = scopes[scopeIndex]
 }

@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUnsignedTypes::class)
+
 package org.marioarias.monkey.compiler
 
 import org.marioarias.monkey.*
@@ -16,13 +18,7 @@ class CompilerTests {
         val input: String,
         val expectedConstants: List<T>,
         val expectedInstructions: List<Instructions>
-    ) {
-        constructor(input: String, expectedConstants: List<T>, vararg instructions: Instructions) : this(
-            input,
-            expectedConstants,
-            listOf(*instructions)
-        )
-    }
+    )
 
 
     @Test
@@ -413,7 +409,7 @@ class CompilerTests {
                     )
                 ),
                 listOf(
-                    make(OpConstant, 2),
+                    make(OpClosure, 2, 0),
                     make(OpPop)
                 )
             ),
@@ -428,7 +424,7 @@ class CompilerTests {
                     )
                 ),
                 listOf(
-                    make(OpConstant, 2),
+                    make(OpClosure, 2, 0),
                     make(OpPop)
                 )
             ),
@@ -443,7 +439,7 @@ class CompilerTests {
                     )
                 ),
                 listOf(
-                    make(OpConstant, 2),
+                    make(OpClosure, 2, 0),
                     make(OpPop),
                 ),
             )
@@ -461,7 +457,7 @@ class CompilerTests {
                     )
                 ),
                 listOf(
-                    make(OpConstant, 0),
+                    make(OpClosure, 0, 0),
                     make(OpPop)
                 ),
             )
@@ -480,9 +476,11 @@ class CompilerTests {
                         make(OpReturnValue)
                     )
                 ),
-                make(OpConstant, 1),
-                make(OpCall, 0),
-                make(OpPop),
+                listOf(
+                    make(OpClosure, 1, 0),
+                    make(OpCall, 0),
+                    make(OpPop)
+                )
             ),
             CTC(
                 """
@@ -496,11 +494,13 @@ noArg();
                         make(OpReturnValue)
                     )
                 ),
-                make(OpConstant, 1),
-                make(OpSetGlobal, 0),
-                make(OpGetGlobal, 0),
-                make(OpCall, 0),
-                make(OpPop),
+                listOf(
+                    make(OpClosure, 1, 0),
+                    make(OpSetGlobal, 0),
+                    make(OpGetGlobal, 0),
+                    make(OpCall, 0),
+                    make(OpPop)
+                )
             ),
             CTC(
                 """
@@ -513,12 +513,14 @@ oneArg(24);
                     ),
                     24
                 ),
-                make(OpConstant, 0),
-                make(OpSetGlobal, 0),
-                make(OpGetGlobal, 0),
-                make(OpConstant, 1),
-                make(OpCall, 1),
-                make(OpPop),
+                listOf(
+                    make(OpClosure, 0, 0),
+                    make(OpSetGlobal, 0),
+                    make(OpGetGlobal, 0),
+                    make(OpConstant, 1),
+                    make(OpCall, 1),
+                    make(OpPop)
+                )
             ),
             CTC(
                 """
@@ -526,19 +528,21 @@ let manyArg = fn(a, b, c){};
 manyArg(24, 25, 26);                    
                 """.trimIndent(),
                 listOf(
-                    instructions(
+                    listOf(
                         make(OpReturn)
                     ),
                     24, 25, 26
                 ),
-                make(OpConstant, 0),
-                make(OpSetGlobal, 0),
-                make(OpGetGlobal, 0),
-                make(OpConstant, 1),
-                make(OpConstant, 2),
-                make(OpConstant, 3),
-                make(OpCall, 3),
-                make(OpPop),
+                listOf(
+                    make(OpClosure, 0, 0),
+                    make(OpSetGlobal, 0),
+                    make(OpGetGlobal, 0),
+                    make(OpConstant, 1),
+                    make(OpConstant, 2),
+                    make(OpConstant, 3),
+                    make(OpCall, 3),
+                    make(OpPop)
+                )
             ),
             CTC(
                 """
@@ -546,17 +550,19 @@ let oneArg = fn(a) {a};
 oneArg(24);                    
                 """.trimIndent(),
                 listOf(
-                    instructions(
+                    listOf(
                         make(OpGetLocal, 0),
                         make(OpReturnValue)
                     ), 24
                 ),
-                make(OpConstant, 0),
-                make(OpSetGlobal, 0),
-                make(OpGetGlobal, 0),
-                make(OpConstant, 1),
-                make(OpCall, 1),
-                make(OpPop),
+                listOf(
+                    make(OpClosure, 0, 0),
+                    make(OpSetGlobal, 0),
+                    make(OpGetGlobal, 0),
+                    make(OpConstant, 1),
+                    make(OpCall, 1),
+                    make(OpPop)
+                )
             ),
             CTC(
                 """
@@ -564,7 +570,7 @@ let manyArgs = fn(a, b, c) {a; b; c};
 manyArgs(24, 25, 26);                    
                 """.trimIndent(),
                 listOf(
-                    instructions(
+                    listOf(
                         make(OpGetLocal, 0),
                         make(OpPop),
                         make(OpGetLocal, 1),
@@ -573,14 +579,16 @@ manyArgs(24, 25, 26);
                         make(OpReturnValue),
                     ), 24, 25, 26
                 ),
-                make(OpConstant, 0),
-                make(OpSetGlobal, 0),
-                make(OpGetGlobal, 0),
-                make(OpConstant, 1),
-                make(OpConstant, 2),
-                make(OpConstant, 3),
-                make(OpCall, 3),
-                make(OpPop),
+                listOf(
+                    make(OpClosure, 0, 0),
+                    make(OpSetGlobal, 0),
+                    make(OpGetGlobal, 0),
+                    make(OpConstant, 1),
+                    make(OpConstant, 2),
+                    make(OpConstant, 3),
+                    make(OpCall, 3),
+                    make(OpPop)
+                )
             )
         ).runCompilerTests()
 
@@ -632,17 +640,17 @@ let num = 55;
 fn() { num }                
             """.trimIndent(),
                 listOf(
-                    55, instructions(
+                    55, listOf(
                         make(OpGetGlobal, 0),
                         make(OpReturnValue),
                     )
                 ),
-                make(OpConstant, 0),
-                make(OpSetGlobal, 0),
-                make(OpConstant, 1),
-                make(
-                    OpPop
-                ),
+                listOf(
+                    make(OpConstant, 0),
+                    make(OpSetGlobal, 0),
+                    make(OpClosure, 1, 0),
+                    make(OpPop)
+                )
             ),
             CTC(
                 """
@@ -653,15 +661,17 @@ fn() { num }
                                 """.trimIndent(),
                 listOf(
                     55,
-                    instructions(
+                    listOf(
                         make(OpConstant, 0),
                         make(OpSetLocal, 0),
                         make(OpGetLocal, 0),
                         make(OpReturnValue),
                     )
                 ),
-                make(OpConstant, 1),
-                make(OpPop),
+                listOf(
+                    make(OpClosure, 1, 0),
+                    make(OpPop)
+                )
             ),
             CTC(
                 """
@@ -672,7 +682,7 @@ fn() {
 }                                        
                 """.trimIndent(),
                 listOf(
-                    55, 77, instructions(
+                    55, 77, listOf(
                         make(OpConstant, 0),
                         make(OpSetLocal, 0),
                         make(OpConstant, 1),
@@ -683,8 +693,10 @@ fn() {
                         make(OpReturnValue),
                     )
                 ),
-                make(OpConstant, 2),
-                make(OpPop),
+                listOf(
+                    make(OpClosure, 2, 0),
+                    make(OpPop)
+                )
             )
         ).runCompilerTests()
     }
@@ -698,30 +710,227 @@ len([]);
 push([], 1);                
             """.trimIndent(),
                 listOf(1),
-                make(OpGetBuiltin, 0),
-                make(OpArray, 0),
-                make(OpCall, 1),
-                make(OpPop),
-                make(OpGetBuiltin, 5),
-                make(OpArray, 0),
-                make(OpConstant, 0),
-                make(OpCall, 2),
-                make(OpPop),
+                listOf(
+                    make(OpGetBuiltin, 0),
+                    make(OpArray, 0),
+                    make(OpCall, 1),
+                    make(OpPop),
+                    make(OpGetBuiltin, 5),
+                    make(OpArray, 0),
+                    make(OpConstant, 0),
+                    make(OpCall, 2),
+                    make(OpPop)
+                )
             ),
             CTC(
                 "fn() { len([])}",
                 listOf(
-                    instructions(
+                    listOf(
                         make(OpGetBuiltin, 0),
                         make(OpArray, 0),
                         make(OpCall, 1),
                         make(OpReturnValue)
                     )
                 ),
-                make(OpConstant, 0),
-                make(OpPop),
+                listOf(
+                    make(OpClosure, 0, 0),
+                    make(OpPop)
+                )
             )
         ).runCompilerTests()
+    }
+
+    @Test
+    fun closures() {
+        listOf(
+            CTC(
+                """
+                fn(a) {
+                	fn(b){
+                		a + b
+                	}
+                }    
+                """.trimIndent(),
+                listOf(
+                    listOf(
+                        make(OpGetFree, 0),
+                        make(OpGetLocal, 0),
+                        make(OpAdd),
+                        make(OpReturnValue),
+                    ),
+                    listOf(
+                        make(OpGetLocal, 0),
+                        make(OpClosure, 0, 1),
+                        make(OpReturnValue),
+                    )
+                ),
+                listOf(
+                    make(OpClosure, 1, 0),
+                    make(OpPop),
+                )
+            ),
+            CTC(
+                """
+            fn(a) {
+            	fn(b){
+            		fn(c) {
+            			a + b + c
+            		}
+            	}
+            }
+            """,
+                listOf(
+                    listOf(
+                        make(OpGetFree, 0),
+                        make(OpGetFree, 1),
+                        make(OpAdd),
+                        make(OpGetLocal, 0),
+                        make(OpAdd),
+                        make(OpReturnValue),
+                    ),
+                    listOf(
+                        make(OpGetFree, 0),
+                        make(OpGetLocal, 0),
+                        make(OpClosure, 0, 2),
+                        make(OpReturnValue),
+                    ),
+                    listOf(
+                        make(OpGetLocal, 0),
+                        make(OpClosure, 1, 1),
+                        make(OpReturnValue),
+                    ),
+                ),
+                listOf(
+                    make(OpClosure, 2, 0),
+                    make(OpPop),
+                ),
+            ),
+            CTC(
+                """
+            let global = 55;
+            
+            fn() {
+            	let a = 66;
+            
+            	fn(){
+            		let b = 77;
+            
+            		fn(){
+            			let c = 88;
+            
+            			global + a + b + c;
+            		}
+            	}
+            }
+            """,
+
+                listOf(
+                    55, 66, 77, 88,
+                    listOf(
+                        make(OpConstant, 3),
+                        make(OpSetLocal, 0),
+                        make(OpGetGlobal, 0),
+                        make(OpGetFree, 0),
+                        make(OpAdd),
+                        make(OpGetFree, 1),
+                        make(OpAdd),
+                        make(OpGetLocal, 0),
+                        make(OpAdd),
+                        make(OpReturnValue),
+                    ),
+                    listOf(
+                        make(OpConstant, 2),
+                        make(OpSetLocal, 0),
+                        make(OpGetFree, 0),
+                        make(OpGetLocal, 0),
+                        make(OpClosure, 4, 2),
+                        make(OpReturnValue),
+                    ),
+                    listOf(
+                        make(OpConstant, 1),
+                        make(OpSetLocal, 0),
+                        make(OpGetLocal, 0),
+                        make(OpClosure, 5, 1),
+                        make(OpReturnValue),
+                    ),
+                ),
+                listOf(
+                    make(OpConstant, 0),
+                    make(OpSetGlobal, 0),
+                    make(OpClosure, 6, 0),
+                    make(OpPop),
+                ),
+            )
+        ).runCompilerTests()
+    }
+
+    @Test
+    fun `recursive functions`() {
+        listOf(
+            CTC(
+                """
+            let countDown = fn(x) { countDown(x - 1) };
+            countDown(1);
+            """,
+                listOf(
+                    1,
+                    listOf(
+                        make(OpCurrentClosure),
+                        make(OpGetLocal, 0),
+                        make(OpConstant, 0),
+                        make(OpSub),
+                        make(OpCall, 1),
+                        make(OpReturnValue),
+                    ),
+                    1,
+                ),
+                listOf(
+                    make(OpClosure, 1, 0),
+                    make(OpSetGlobal, 0),
+                    make(OpGetGlobal, 0),
+                    make(OpConstant, 2),
+                    make(OpCall, 1),
+                    make(OpPop),
+                ),
+            ),
+            CTC(
+                """
+                let wrapper = fn(){
+                	let countDown = fn(x) { countDown(x - 1); };
+                	countDown(1);
+                };
+                wrapper();
+                """,
+                listOf(
+                    1,
+                    listOf(
+                        make(OpCurrentClosure),
+                        make(OpGetLocal, 0),
+                        make(OpConstant, 0),
+                        make(OpSub),
+                        make(OpCall, 1),
+                        make(OpReturnValue),
+                    ),
+                    1,
+                    listOf(
+                        make(OpClosure, 1, 0),
+                        make(OpSetLocal, 0),
+                        make(OpGetLocal, 0),
+                        make(OpConstant, 2),
+                        make(OpCall, 1),
+                        make(OpReturnValue),
+                    ),
+                ),
+                listOf(
+                    make(OpClosure, 3, 0),
+                    make(OpSetGlobal, 0),
+                    make(OpGetGlobal, 0),
+                    make(OpCall, 0),
+                    make(OpPop),
+                ),
+            )
+        ).runCompilerTests()
+
     }
 
     private fun testScopeInstructionsSize(compiler: MCompiler, instructionsSize: Int) {
@@ -734,7 +943,7 @@ push([], 1);
 
     private fun <T> List<CTC<out T>>.runCompilerTests() {
         forEach { (input, expectedConstants, expectedInstructions) ->
-            println("input = ${input}")
+//            println("input = ${input}")
             val program = parse(input)
             val compiler = MCompiler()
 

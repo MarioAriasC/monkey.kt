@@ -224,6 +224,10 @@ class Parser(private val lexer: Lexer) {
 
         val value = parseExpression(Precedence.LOWEST)
 
+        if (value is FunctionLiteral) {
+            value.name = name.value
+        }
+
         if (peekTokenIs(TokenType.SEMICOLON)) {
             nextToken()
         }

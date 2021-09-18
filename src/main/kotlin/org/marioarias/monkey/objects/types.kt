@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUnsignedTypes::class)
+
 package org.marioarias.monkey.objects
 
 import org.marioarias.monkey.ast.BlockStatement
@@ -75,6 +77,16 @@ class MInteger(override val value: Long) : MValue<Long>, Hashable<Long> {
 
 class MBoolean(override val value: Boolean) : MValue<Boolean>, Hashable<Boolean> {
     override fun hashType(): HashType = HashType.BOOLEAN
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is MBoolean) return false
+        return value == other.value
+    }
+
+    override fun hashCode(): Int {
+        return value.hashCode()
+    }
 }
 
 class MReturnValue(val value: MObject) : MObject {
@@ -166,4 +178,11 @@ class MCompiledFunction(val instructions: Instructions, val numLocals: Int = 0, 
     override fun inspect(): String {
         return "CompiledFunction[$this]"
     }
+}
+
+class MClosure(val fn: MCompiledFunction, val free: List<MObject> = emptyList()) : MObject {
+    override fun inspect(): String {
+        return "Closure[$this]"
+    }
+
 }

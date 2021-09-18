@@ -1,10 +1,12 @@
+@file:OptIn(ExperimentalUnsignedTypes::class)
+
 package org.marioarias.monkey.vm
 
 import org.marioarias.monkey.code.Instructions
-import org.marioarias.monkey.objects.MCompiledFunction
+import org.marioarias.monkey.objects.MClosure
 
-class Frame(private val fn: MCompiledFunction, internal val basePointer: Int) {
-    public var ip = -1
+class Frame(val cl: MClosure, internal val basePointer: Int) {
+    var ip = -1
 
-    public fun instructions(): Instructions = fn.instructions
+    fun instructions(): Instructions = cl.fn.instructions
 }
