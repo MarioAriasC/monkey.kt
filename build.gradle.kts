@@ -1,11 +1,9 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.5.0"
+    kotlin("jvm") version "1.5.30"
     application
 }
-
-val compileKotlin: KotlinCompile by tasks
 
 group = "org.marioarias"
 version = "1.0-SNAPSHOT"
@@ -18,6 +16,14 @@ tasks.test {
     useTestNG()
 }
 
+tasks.withType<KotlinCompile> {
+    kotlinOptions {
+        jvmTarget = "11"
+        freeCompilerArgs = freeCompilerArgs + "-Xopt-in=kotlin.RequiresOptIn"
+    }
+    /*kotlinOptions.jvmTarget = "11"
+    kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"*/
+}
 
 dependencies {
     implementation(kotlin("stdlib"))

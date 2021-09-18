@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 ./gradlew installDist
-./build/install/monkey.kt/bin/monkey.kt
+./build/install/monkey.kt/bin/monkey.kt "$1"

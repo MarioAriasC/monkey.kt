@@ -1,7 +1,8 @@
 package org.marioarias.monkey.lexer
 
 import org.marioarias.monkey.token.TokenType.*
-import kotlin.test.Test
+import org.testng.annotations.Test
+
 import kotlin.test.assertEquals
 
 
@@ -32,7 +33,6 @@ if (5 < 10) {
 "foo bar"     
 [1,2];
 {"foo":"bar"}
-macro(x, y){x + y;};
          """.trimIndent()
 
         val lexer = Lexer(code)
@@ -123,19 +123,6 @@ macro(x, y){x + y;};
             COLON to ":",
             STRING to "bar",
             RBRACE to "}",
-            MACRO to "macro",
-            LPAREN to "(",
-            IDENT to "x",
-            COMMA to ",",
-            IDENT to "y",
-            RPAREN to ")",
-            LBRACE to "{",
-            IDENT to "x",
-            PLUS to "+",
-            IDENT to "y",
-            SEMICOLON to ";",
-            RBRACE to "}",
-            SEMICOLON to ";",
             EOF to ""
         )
 

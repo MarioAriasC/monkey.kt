@@ -123,10 +123,15 @@ class IfExpression(
     }
 }
 
-class FunctionLiteral(override val token: Token, val parameters: List<Identifier>?, val body: BlockStatement?) :
+class FunctionLiteral(
+    override val token: Token,
+    val parameters: List<Identifier>?,
+    val body: BlockStatement?,
+    var name: String = ""
+) :
     NodeAdapter(), ExpressionWithToken {
     override fun toString(): String {
-        return "${tokenLiteral()}(${parameters?.joinToString()}) $body"
+        return "${tokenLiteral()}${if (name.isNotEmpty()) "<$name>" else ""}(${parameters?.joinToString()}) $body"
     }
 }
 
@@ -153,12 +158,5 @@ class HashLiteral(override val token: Token, val pairs: Map<Expression, Expressi
     ExpressionWithToken {
     override fun toString(): String {
         return "{${pairs.keys.joinToString { key -> "$key:${pairs[key]}" }}}"
-    }
-}
-
-class MacroLiteral(override val token: Token, val parameters: List<Identifier>?, val body: BlockStatement) :
-    NodeAdapter(), ExpressionWithToken {
-    override fun toString(): String {
-        return "${token.literal} (${parameters?.joinToString()}) $body"
     }
 }

@@ -4,7 +4,8 @@ import org.marioarias.monkey.checkType
 import org.marioarias.monkey.lexer.Lexer
 import org.marioarias.monkey.objects.*
 import org.marioarias.monkey.parser.Parser
-import kotlin.test.Test
+import org.testng.annotations.Test
+
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.fail
@@ -157,31 +158,31 @@ class EvaluatorTests {
         val tests = listOf(
             TestData(
                 "5 + true;",
-                "type mismatch: INTEGER + BOOLEAN",
+                "type mismatch: MInteger + MBoolean",
             ),
             TestData(
                 "5 + true; 5;",
-                "type mismatch: INTEGER + BOOLEAN",
+                "type mismatch: MInteger + MBoolean",
             ),
             TestData(
                 "-true",
-                "unknown operator: -BOOLEAN",
+                "unknown operator: -MBoolean",
             ),
             TestData(
                 "true + false;",
-                "unknown operator: BOOLEAN + BOOLEAN",
+                "unknown operator: MBoolean + MBoolean",
             ),
             TestData(
                 "true + false + true + false;",
-                "unknown operator: BOOLEAN + BOOLEAN",
+                "unknown operator: MBoolean + MBoolean",
             ),
             TestData(
                 "5; true + false; 5",
-                "unknown operator: BOOLEAN + BOOLEAN",
+                "unknown operator: MBoolean + MBoolean",
             ),
             TestData(
                 "if (10 > 1) { true + false; }",
-                "unknown operator: BOOLEAN + BOOLEAN",
+                "unknown operator: MBoolean + MBoolean",
             ),
             TestData(
                 """
@@ -193,7 +194,7 @@ class EvaluatorTests {
               return 1;
             }
             """,
-                "unknown operator: BOOLEAN + BOOLEAN",
+                "unknown operator: MBoolean + MBoolean",
             ),
             TestData(
                 "foobar",
@@ -201,11 +202,11 @@ class EvaluatorTests {
             ),
             TestData(
                 """"Hello" - "World"""",
-                "unknown operator: STRING - STRING"
+                "unknown operator: MString - MString"
             ),
             TestData(
                 """{"name": "Monkey"}[fn(x) {x}];""",
-                "unusable as a hash key: FUNCTION"
+                "unusable as a hash key: MFunction"
             )
         )
 
@@ -295,21 +296,22 @@ class EvaluatorTests {
             TestData("""len("")""", 0),
             TestData("""len("four")""", 4),
             TestData("""len("hello world")""", 11),
-            TestData("len(1)", "argument to `len` not supported, got INTEGER"),
+            TestData("len(1)", "argument to `len` not supported, got MInteger"),
             TestData("""len("one", "two")""", "wrong number of arguments. got=2, want=1"),
             TestData("len([1, 2, 3])", 3),
             TestData("len([])", 0),
             TestData("push([], 1)", intArrayOf(1)),
-            TestData("push(1, 1)", "argument to `push` must be ARRAY, got INTEGER"),
+            TestData("push(1, 1)", "argument to `push` must be ARRAY, got MInteger"),
             TestData("first([1, 2, 3])", 1),
             TestData("first([])", null),
-            TestData("first(1)", "argument to `first` must be ARRAY, got INTEGER"),
+            TestData("first(1)", "argument to `first` must be ARRAY, got MInteger"),
             TestData("last([1, 2, 3])", 3),
             TestData("last([])", null),
-            TestData("last(1)", "argument to `last` must be ARRAY, got INTEGER"),
+            TestData("last(1)", "argument to `last` must be ARRAY, got MInteger"),
             TestData("rest([1, 2, 3])", intArrayOf(2, 3)),
             TestData("rest([])", null),
         ).forEach { (input, expected) ->
+            println("input = ${input}")
             val evaluated = testEval(input)
             when (expected) {
                 null -> testNullObject(evaluated)
@@ -455,7 +457,7 @@ class EvaluatorTests {
 
     private fun testNullObject(obj: MObject?): Boolean {
         return if (obj != Evaluator.NULL) {
-            fail("object is not NULL, got=${obj!!::class.java} ($obj)")
+            fail("object is not NULL, got=${obj.typeDesc()} ($obj)")
 
         } else {
             true
@@ -474,7 +476,7 @@ class EvaluatorTests {
                 }
             }
             else -> {
-                fail("obj is not ${T::class.java}, got=${if (obj != null) obj::class.java else "null"}, ($obj)")
+                fail("obj is not ${T::class.java}, got=${obj.typeDesc()}, ($obj)")
             }
         }
     }

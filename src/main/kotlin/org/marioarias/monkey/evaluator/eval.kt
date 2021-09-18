@@ -46,16 +46,12 @@ object Evaluator {
             is Identifier -> evalIdentifier(node, env)
             is FunctionLiteral -> MFunction(node.parameters, node.body, env)
             is CallExpression -> {
-                if (node.function?.tokenLiteral() == "quote") {
-                    quote(node.arguments?.first()!!, env)
-                } else {
-                    eval(node.function, env).ifNotError { function ->
-                        val args = evalExpressions(node.arguments, env)
-                        if (args.size == 1 && args.first().isError()) {
-                            args.first()
-                        } else {
-                            applyFunction(function, args)
-                        }
+                eval(node.function, env).ifNotError { function ->
+                    val args = evalExpressions(node.arguments, env)
+                    if (args.size == 1 && args.first().isError()) {
+                        args.first()
+                    } else {
+                        applyFunction(function, args)
                     }
                 }
             }
@@ -105,7 +101,7 @@ object Evaluator {
                     }
                     pairs[key.hashKey()] = HashPair(key, value!!)
                 }
-                else -> return MError("unusable as hash key: ${key?.type()}")
+                else -> return MError("unusable as hash key: ${key.typeDesc()}")
             }
         }
         return MHash(pairs)
@@ -113,29 +109,28 @@ object Evaluator {
 
     private fun evalIndexExpression(left: MObject?, index: MObject?): MObject? {
         return when {
-            left?.type() == ObjectType.ARRAY && index?.type() == ObjectType.INTEGER -> evalArrayIndexExpression(
+            left is MArray && index is MInteger -> evalArrayIndexExpression(
                 left,
                 index
             )
-            left?.type() == ObjectType.HASH -> evalHashIndexExpression(left, index!!)
-            else -> MError("index operator not supported: ${left?.type()}")
+            left is MHash -> evalHashIndexExpression(left, index!!)
+            else -> MError("index operator not supported: ${left.typeDesc()}")
         }
     }
 
-    private fun evalHashIndexExpression(hash: MObject, index: MObject): MObject {
-        val hashObject = hash as MHash
+    private fun evalHashIndexExpression(hash: MHash, index: MObject): MObject {
         return when (index) {
             is Hashable<*> -> {
-                val pair = hashObject.pairs[index.hashKey()]
+                val pair = hash.pairs[index.hashKey()]
                 pair?.value ?: NULL
             }
-            else -> MError("unusable as a hash key: ${index.type()}")
+            else -> MError("unusable as a hash key: ${index.typeDesc()}")
         }
     }
 
-    private fun evalArrayIndexExpression(array: MObject, index: MObject): MObject? {
-        val mArray = (array as MArray).elements
-        val i = (index as MInteger).value
+    private fun evalArrayIndexExpression(array: MArray, index: MInteger): MObject? {
+        val mArray = array.elements
+        val i = index.value
         val max = mArray.size - 1
 
         if (i < 0 || i > max) {
@@ -153,8 +148,10 @@ object Evaluator {
                 val evaluated = eval(function.body, extendEnv)
                 unwrapReturnValue(evaluated)
             }
-            is MBuiltinFunction -> function.fn(args)
-            else -> MError("not a function: ${function.type()}")
+            is MBuiltinFunction -> {
+                function.fn(args) ?: MNull
+            }
+            else -> MError("not a function: ${function.typeDesc()}")
         }
     }
 
@@ -174,7 +171,7 @@ object Evaluator {
     }
 
     private fun MObject?.isError() = if (this != null) {
-        this.type() == ObjectType.ERROR
+        this is MError
     } else {
         false
     }
@@ -209,8 +206,8 @@ object Evaluator {
             result = eval(statement, env)
 
             if (result != null) {
-                val type = (result as MObject).type()
-                if (type == ObjectType.RETURN || type == ObjectType.ERROR) {
+                val type = (result as MObject)
+                if (type is MReturnValue || type is MError) {
                     return result
                 }
             }
@@ -241,44 +238,42 @@ object Evaluator {
 
     private fun evalInfixExpression(operator: String, left: MObject, right: MObject): MObject {
         return when {
-            left.type() == ObjectType.INTEGER && right.type() == ObjectType.INTEGER -> evalIntegerInfixExpression(
+            left is MInteger && right is MInteger -> evalIntegerInfixExpression(
                 operator,
                 left,
                 right
             )
             operator == "==" -> (left == right).toMonkey()
             operator == "!=" -> (left != right).toMonkey()
-            left.type() != right.type() -> MError("type mismatch: ${left.type()} $operator ${right.type()}")
-            left.type() == ObjectType.STRING && right.type() == ObjectType.STRING -> evalStringInfixExpression(
+            left.typeDesc() != right.typeDesc() -> MError("type mismatch: ${left.typeDesc()} $operator ${right.typeDesc()}")
+            left is MString && right is MString -> evalStringInfixExpression(
                 operator,
                 left,
                 right
             )
-            else -> MError("unknown operator: ${left.type()} $operator ${right.type()}")
+            else -> MError("unknown operator: ${left.typeDesc()} $operator ${right.typeDesc()}")
         }
     }
 
-    private fun evalStringInfixExpression(operator: String, left: MObject, right: MObject): MObject {
+    private fun evalStringInfixExpression(operator: String, left: MString, right: MString): MObject {
         return if (operator != "+") {
-            MError("unknown operator: ${left.type()} $operator ${right.type()}")
+            MError("unknown operator: ${left.typeDesc()} $operator ${right.typeDesc()}")
         } else {
-            (left as MString) + (right as MString)
+            left + right
         }
     }
 
-    private fun evalIntegerInfixExpression(operator: String, left: MObject, right: MObject): MObject {
-        val leftVal = left as MInteger
-        val rightVal = right as MInteger
+    private fun evalIntegerInfixExpression(operator: String, left: MInteger, right: MInteger): MObject {
         return when (operator) {
-            "+" -> leftVal + rightVal
-            "-" -> leftVal - rightVal
-            "*" -> leftVal * rightVal
-            "/" -> leftVal / rightVal
-            "<" -> (leftVal < rightVal).toMonkey()
-            ">" -> (leftVal > rightVal).toMonkey()
-            "==" -> (leftVal == rightVal).toMonkey()
-            "!=" -> (leftVal != rightVal).toMonkey()
-            else -> MError("unknown operator: ${left.type()} $operator ${right.type()}")
+            "+" -> left + right
+            "-" -> left - right
+            "*" -> left * right
+            "/" -> left / right
+            "<" -> (left < right).toMonkey()
+            ">" -> (left > right).toMonkey()
+            "==" -> (left == right).toMonkey()
+            "!=" -> (left != right).toMonkey()
+            else -> MError("unknown operator: ${left.typeDesc()} $operator ${right.typeDesc()}")
         }
     }
 
@@ -286,16 +281,16 @@ object Evaluator {
         return when (operator) {
             "!" -> evalBangOperatorExpression(right)
             "-" -> evalMinusPrefixOperatorExpression(right)
-            else -> MError("Unknown operator: $operator${right?.type()}")
+            else -> MError("Unknown operator: $operator${right.typeDesc()}")
         }
     }
 
     private fun evalMinusPrefixOperatorExpression(right: MObject?): MObject? {
         return if (right != null) {
-            if (right.type() != ObjectType.INTEGER) {
-                MError("unknown operator: -${right.type()}")
+            if (right !is MInteger) {
+                MError("unknown operator: -${right.typeDesc()}")
             } else {
-                return -(right as MInteger)
+                return -right
 
             }
         } else {
@@ -314,14 +309,12 @@ object Evaluator {
 
 
     private fun MObject?.ifNotError(body: (MObject) -> MObject?): MObject? {
-        return if (this != null) {
-            if (this.type() == ObjectType.ERROR) {
-                this
-            } else {
-                body(this)
+        return when {
+            this != null -> when (this) {
+                is MError -> this
+                else -> body(this)
             }
-        } else {
-            this
+            else -> this
         }
     }
 

@@ -4,7 +4,7 @@ import org.marioarias.monkey.ast.*
 import org.marioarias.monkey.checkType
 import org.marioarias.monkey.isType
 import org.marioarias.monkey.lexer.Lexer
-import kotlin.test.Test
+import org.testng.annotations.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.fail
@@ -544,24 +544,15 @@ class ParserTests {
     }
 
     @Test
-    fun `macro literal parsing`() {
-        val input = "macro(x, y){x + y;}"
+    fun `function literal with name`() {
+        val input = "let myFunction = fn() {};"
         val program = createProgram(input)
-        countStatements(1, program)
-        checkType(program.statements.first()) { statement: ExpressionStatement ->
-            checkType(statement.expression) { macro: MacroLiteral ->
-                val parameters = macro.parameters!!
-                assertEquals(parameters.size, 2)
-                testLiteralExpression(parameters[0], "x")
-                testLiteralExpression(parameters[1], "y")
-                assertEquals(macro.body.statements?.size, 1)
-                checkType(macro.body.statements?.first()) { body: ExpressionStatement ->
-                    testInfixExpression(body.expression, "x", "+", "y")
-                }
+        checkType(program.statements.first()) { statement: LetStatement ->
+            checkType(statement.value) { function: FunctionLiteral ->
+                assertEquals("myFunction", function.name)
             }
         }
     }
-
 
     private fun <L, R> testInfixExpression(
         expression: Expression?,
