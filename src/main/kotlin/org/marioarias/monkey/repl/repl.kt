@@ -31,8 +31,6 @@ const val PROMPT = ">>>"
 fun start(`in`: InputStream, out: PrintStream) {
     val scanner = Scanner(`in`)
     out.print("$PROMPT ")
-//    val env = Environment.newEnvironment()
-//    val macroEnv = Environment.newEnvironment()
     var constants = mutableListOf<MObject>()
     val globals = mutableListOf<MObject>()
     val symbolTable = SymbolTable()
@@ -50,13 +48,6 @@ fun start(`in`: InputStream, out: PrintStream) {
             printParserErrors(out, parser.errors())
             continue
         }
-        /*val macroProgram = defineMacros(program, macroEnv)
-        val expanded = expandMacros(macroProgram, macroEnv)
-        val evaluated = Evaluator.eval(expanded, env)
-
-        if (evaluated != null) {
-            out.println(evaluated.inspect())
-        }*/
 
         try {
             val compiler = MCompiler(constants, symbolTable)

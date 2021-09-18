@@ -52,7 +52,6 @@ class Parser(private val lexer: Lexer) {
         prefixParsers[TokenType.STRING] = ::parseStringLiteral
         prefixParsers[TokenType.LBRACKET] = ::parseArrayLiteral
         prefixParsers[TokenType.LBRACE] = ::parseHashLiteral
-        prefixParsers[TokenType.MACRO] = ::parseMacroLiteral
 
         infixParsers[TokenType.PLUS] = ::parseInfixExpression
         infixParsers[TokenType.MINUS] = ::parseInfixExpression
@@ -64,19 +63,6 @@ class Parser(private val lexer: Lexer) {
         infixParsers[TokenType.GT] = ::parseInfixExpression
         infixParsers[TokenType.LPAREN] = ::parseCallExpression
         infixParsers[TokenType.LBRACKET] = ::parseIndexExpression
-    }
-
-    private fun parseMacroLiteral(): Expression? {
-        val token = curToken
-        if (!expectPeek(TokenType.LPAREN)) {
-            return null
-        }
-        val parameters = parseFunctionParameters()
-        if (!expectPeek(TokenType.LBRACE)) {
-            return null
-        }
-        val body = parseBlockStatement()
-        return MacroLiteral(token, parameters, body)
     }
 
     private fun parseHashLiteral(): Expression? {

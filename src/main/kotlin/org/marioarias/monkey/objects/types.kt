@@ -4,7 +4,6 @@ package org.marioarias.monkey.objects
 
 import org.marioarias.monkey.ast.BlockStatement
 import org.marioarias.monkey.ast.Identifier
-import org.marioarias.monkey.ast.Node
 import org.marioarias.monkey.code.Instructions
 import org.marioarias.monkey.evaluator.Environment
 
@@ -158,19 +157,6 @@ class MHash(val pairs: Map<HashKey, HashPair>) : MObject {
 
     override fun inspect(): String {
         return "{${pairs.values.joinToString { (key, value) -> "${key.inspect()}: ${value.inspect()}" }}}"
-    }
-}
-
-class MQuote(val node: Node?) : MObject {
-
-    override fun inspect(): String {
-        return "QUOTE($node)"
-    }
-}
-
-class MMacro(val parameters: List<Identifier>?, val body: BlockStatement?, val env: Environment) : MObject {
-    override fun inspect(): String {
-        return "macro(${parameters?.joinToString()}) {\n$body\n}"
     }
 }
 

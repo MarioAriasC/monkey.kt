@@ -46,16 +46,12 @@ object Evaluator {
             is Identifier -> evalIdentifier(node, env)
             is FunctionLiteral -> MFunction(node.parameters, node.body, env)
             is CallExpression -> {
-                if (node.function?.tokenLiteral() == "quote") {
-                    quote(node.arguments?.first()!!, env)
-                } else {
-                    eval(node.function, env).ifNotError { function ->
-                        val args = evalExpressions(node.arguments, env)
-                        if (args.size == 1 && args.first().isError()) {
-                            args.first()
-                        } else {
-                            applyFunction(function, args)
-                        }
+                eval(node.function, env).ifNotError { function ->
+                    val args = evalExpressions(node.arguments, env)
+                    if (args.size == 1 && args.first().isError()) {
+                        args.first()
+                    } else {
+                        applyFunction(function, args)
                     }
                 }
             }

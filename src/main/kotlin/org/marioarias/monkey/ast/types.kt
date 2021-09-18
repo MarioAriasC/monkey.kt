@@ -160,10 +160,3 @@ class HashLiteral(override val token: Token, val pairs: Map<Expression, Expressi
         return "{${pairs.keys.joinToString { key -> "$key:${pairs[key]}" }}}"
     }
 }
-
-class MacroLiteral(override val token: Token, val parameters: List<Identifier>?, val body: BlockStatement) :
-    NodeAdapter(), ExpressionWithToken {
-    override fun toString(): String {
-        return "${token.literal} (${parameters?.joinToString()}) $body"
-    }
-}
