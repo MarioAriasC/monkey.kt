@@ -2,6 +2,10 @@
 
 Kotlin's implementation of the [Monkey Language](https://monkeylang.org/)
 
+## Articles
+
+https://medium.com/@mario.arias.c/comparing-kotlin-and-golang-implementations-of-the-monkey-language-3a41122ea732
+
 ## Status
 
 The two books ([Writing An Interpreter In Go](https://interpreterbook.com/) and [Writing A Compiler in Go](https://compilerbook.com/)) are implemented.
@@ -35,7 +39,7 @@ To run the standard Monkey language benchmarks (`fibonacci(35);`) add a paramete
 
 ```shell
 $ ./monkey.sh vm
-engine=vm, result=9227465, duration=11.367100494s
+engine=vm, result=9227465, duration=8.048564955s
 ```
 
 ```shell

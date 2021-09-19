@@ -457,9 +457,7 @@ class ParserTests {
                 if (!testIdentifier(exp.function, "add")) {
                     return
                 }
-
-
-
+                
                 assertEquals(exp.arguments?.size, 3, "wrong length of arguments. got=${exp.arguments?.size}")
 
                 testLiteralExpression(exp.arguments?.get(0), 1)

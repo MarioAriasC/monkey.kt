@@ -21,56 +21,12 @@ fun Instructions.inspect(): String {
     return builder.toString()
 }
 
-
-private inline fun Instructions.takeBase(n: Int, body: (size: Int) -> Instructions): Instructions {
-    if (n < 0) {
-        throw IllegalArgumentException("Requested element count $n is less than zero.")
-    }
-    if (n == 0) {
-        return ubyteArrayOf()
-    }
-    val size = size
-    if (n >= size) {
-        return this
-    }
-    return body(size)
-}
-
-
 fun Instructions.offset(offset: Int): Instructions {
-    fun takeLast(n: Int): Instructions {
-        return takeBase(n) { size ->
-            if (n == 1) {
-                ubyteArrayOf(this[size - 1])
-            }
-            val returned = UByteArray(n)
-            for ((i, v) in (size - n until size).withIndex()) {
-                returned[i] = this[v]
-            }
-            returned
-        }
-    }
-    return takeLast(size - offset)
+    return copyOfRange(offset, size)
 }
 
 fun Instructions.onset(onset: Int): Instructions {
-    fun take(n: Int): Instructions {
-        return takeBase(n) {
-            if (n == 1) {
-                ubyteArrayOf(first())
-            }
-            val returned = UByteArray(n)
-            for ((i, ubyte) in this.withIndex()) {
-                returned[i] = ubyte
-                if (i + 1 == n) {
-                    break
-                }
-            }
-            returned
-        }
-    }
-
-    return take(onset)
+    return copyOfRange(0, onset)
 }
 
 fun Instructions.readInt(offset: Int): Int {

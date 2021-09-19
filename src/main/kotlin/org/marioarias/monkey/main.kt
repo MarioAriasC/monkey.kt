@@ -1,6 +1,6 @@
 package org.marioarias.monkey
 
-import org.marioarias.monkey.benchmark.Bencharmarks
+import org.marioarias.monkey.benchmark.Benchmarks
 import org.marioarias.monkey.repl.start
 
 fun main(args: Array<String>) {
@@ -11,8 +11,9 @@ fun main(args: Array<String>) {
         start(System.`in`, System.out)
     } else {
         when (args.first()) {
-            "vm" -> Bencharmarks.vm()
-            "eval" -> Bencharmarks.eval()
+            "vm" -> Benchmarks.vm()
+            "eval" -> Benchmarks.eval()
+            "kotlin" -> Benchmarks.kotlin()
         }
     }
 }
