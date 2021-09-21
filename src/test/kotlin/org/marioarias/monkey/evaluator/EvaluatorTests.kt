@@ -4,7 +4,7 @@ import org.marioarias.monkey.checkType
 import org.marioarias.monkey.lexer.Lexer
 import org.marioarias.monkey.objects.*
 import org.marioarias.monkey.parser.Parser
-import org.testng.annotations.Test
+import kotlin.test.Test
 
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

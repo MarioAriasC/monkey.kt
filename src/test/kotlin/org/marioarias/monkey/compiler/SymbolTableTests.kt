@@ -1,7 +1,7 @@
 package org.marioarias.monkey.compiler
 
 
-import org.testng.annotations.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.fail
 

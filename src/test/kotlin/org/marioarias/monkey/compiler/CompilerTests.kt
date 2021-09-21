@@ -7,8 +7,7 @@ import org.marioarias.monkey.code.*
 import org.marioarias.monkey.objects.MCompiledFunction
 import org.marioarias.monkey.objects.MObject
 import org.marioarias.monkey.objects.typeDesc
-import org.testng.annotations.Test
-//import kotlin.test.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.fail

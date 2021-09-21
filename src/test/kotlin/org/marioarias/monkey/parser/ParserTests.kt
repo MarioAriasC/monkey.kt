@@ -4,7 +4,7 @@ import org.marioarias.monkey.ast.*
 import org.marioarias.monkey.checkType
 import org.marioarias.monkey.isType
 import org.marioarias.monkey.lexer.Lexer
-import org.testng.annotations.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.fail
@@ -457,7 +457,7 @@ class ParserTests {
                 if (!testIdentifier(exp.function, "add")) {
                     return
                 }
-                
+
                 assertEquals(exp.arguments?.size, 3, "wrong length of arguments. got=${exp.arguments?.size}")
 
                 testLiteralExpression(exp.arguments?.get(0), 1)

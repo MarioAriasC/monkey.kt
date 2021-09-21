@@ -35,17 +35,27 @@ $ ./monkey.sh
 
 # Benchmarks
 
-To run the standard Monkey language benchmarks (`fibonacci(35);`) add a parameter `vm` or `eval` to the script
+To run the standard Monkey language benchmarks (`fibonacci(35);`) add a parameter `vm` or `eval` to the script.
+
+Example
 
 ```shell
 $ ./monkey.sh vm
-engine=vm, result=9227465, duration=8.048564955s
+engine=vm, result=9227465, duration=7.516433414s
 ```
 
 ```shell
 $ ./monkey.sh eval
 engine=eval, result=9227465, duration=11.931564613s
 ```
+ 
+All the benchmarks tested on a MBP 15-inch 2019. Intel Core i9 2.3Ghz 8-Core, 32 GB 2400 MHZ DDR4
+ 
+| Environment | Eval | VM |
+|---|---|---|
+|openjdk 11.0.12 Zulu| 11.93ms | 7.51ms |
+|openjdk 11.0.12 GraalVM| 7.29ms | 6.82ms |
+
 
 ## Test
 

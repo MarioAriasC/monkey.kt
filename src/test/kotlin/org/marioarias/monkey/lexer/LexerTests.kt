@@ -1,7 +1,7 @@
 package org.marioarias.monkey.lexer
 
 import org.marioarias.monkey.token.TokenType.*
-import org.testng.annotations.Test
+import kotlin.test.Test
 
 import kotlin.test.assertEquals
 

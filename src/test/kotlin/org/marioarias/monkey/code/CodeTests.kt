@@ -1,8 +1,9 @@
 @file:OptIn(ExperimentalUnsignedTypes::class)
+
 package org.marioarias.monkey.code
 
 import org.marioarias.monkey.concat
-import org.testng.annotations.Test
+import kotlin.test.Test
 
 import kotlin.test.assertEquals
 import kotlin.test.fail
