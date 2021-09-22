@@ -1,0 +1,9 @@
+[
+  {
+    "name": "java.lang.Class",
+    "methods": [
+      {"name": "getEnclosingMethod"},
+      {"name": "getEnclosingConstructor"}
+    ]
+  }
+]

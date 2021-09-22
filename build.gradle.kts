@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "1.5.31"
     application
+    id("org.mikeneck.graalvm-native-image") version "v1.4.0"
 }
 
 group = "org.marioarias"
@@ -21,8 +22,6 @@ tasks.withType<KotlinCompile> {
         jvmTarget = "11"
         freeCompilerArgs = freeCompilerArgs + "-Xopt-in=kotlin.RequiresOptIn"
     }
-    /*kotlinOptions.jvmTarget = "11"
-    kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"*/
 }
 
 dependencies {
@@ -34,4 +33,18 @@ dependencies {
 
 application {
     mainClassName = "org.marioarias.monkey.MainKt"
+}
+
+nativeImage {
+    graalVmHome = System.getenv("GRAALVM_HOME")
+    buildType { build ->
+        build.executable("org.marioarias.monkey.MainKt")
+    }
+    executableName = "monkey-grl"
+    outputDirectory = file(".")
+/*    arguments(
+        "--no-fallback"
+//      this option is equivalent to --no-fallback
+//      "-H:ReflectionConfigurationFiles=./graal-reflect.json"
+    )*/
 }
