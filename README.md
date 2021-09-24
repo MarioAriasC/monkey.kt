@@ -6,6 +6,8 @@ Kotlin's implementation of the [Monkey Language](https://monkeylang.org/)
 
 https://medium.com/@mario.arias.c/comparing-kotlin-and-golang-implementations-of-the-monkey-language-3a41122ea732
 
+https://medium.com/@mario.arias.c/comparing-kotlin-and-go-implementations-of-the-monkey-language-ii-raiders-of-the-lost-performance-b9aa09945281
+
 ## Status
 
 The two books ([Writing An Interpreter In Go](https://interpreterbook.com/) and [Writing A Compiler in Go](https://compilerbook.com/)) are implemented.
