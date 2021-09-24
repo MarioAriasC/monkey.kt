@@ -58,7 +58,9 @@ class VM(bytecode: Bytecode) {
         var ip: Int
         var ins: Instructions
         var op: Opcode
+//        var cycles = 0
         while (currentFrame().ip < currentFrame().instructions().size - 1) {
+//            cycles++
             currentFrame().ip++
             ip = currentFrame().ip
             ins = currentFrame().instructions()
@@ -179,6 +181,7 @@ class VM(bytecode: Bytecode) {
                 }
             }
         }
+//        println("cycles = $cycles")
     }
 
     private fun pushClosure(constIndex: Int, numFree: Int) {

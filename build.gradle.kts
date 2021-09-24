@@ -40,11 +40,9 @@ nativeImage {
     buildType { build ->
         build.executable("org.marioarias.monkey.MainKt")
     }
-    executableName = "monkey-grl"
+    executableName = "monkey-native"
     outputDirectory = file(".")
-/*    arguments(
+    arguments(
         "--no-fallback"
-//      this option is equivalent to --no-fallback
-//      "-H:ReflectionConfigurationFiles=./graal-reflect.json"
-    )*/
+    )
 }

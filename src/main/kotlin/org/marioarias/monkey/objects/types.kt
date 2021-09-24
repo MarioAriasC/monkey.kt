@@ -9,16 +9,13 @@ import org.marioarias.monkey.evaluator.Environment
 
 interface MObject {
     fun inspect(): String
-
-    fun typeDesc(): String
 }
 
 fun MObject?.typeDesc(): String {
     return if (this == null) {
         "null"
     } else {
-//        this::class.simpleName!!
-        this.typeDesc()
+        this::class.simpleName!!
     }
 }
 
@@ -73,10 +70,6 @@ class MInteger(override val value: Long) : MValue<Long>, Hashable<Long> {
     }
 
     override fun hashType(): HashType = HashType.INTEGER
-
-    override fun typeDesc(): String = "MInteger"
-
-
 }
 
 class MBoolean(override val value: Boolean) : MValue<Boolean>, Hashable<Boolean> {
@@ -91,8 +84,6 @@ class MBoolean(override val value: Boolean) : MValue<Boolean>, Hashable<Boolean>
     override fun hashCode(): Int {
         return value.hashCode()
     }
-
-    override fun typeDesc(): String = "MBoolean"
 }
 
 class MReturnValue(val value: MObject) : MObject {
@@ -100,8 +91,6 @@ class MReturnValue(val value: MObject) : MObject {
     override fun inspect(): String {
         return value.inspect()
     }
-
-    override fun typeDesc(): String = "MReturnValue"
 }
 
 class MError(val message: String) : MObject {
@@ -112,24 +101,18 @@ class MError(val message: String) : MObject {
     override fun toString(): String {
         return "MError(message='$message')"
     }
-
-    override fun typeDesc(): String = "MError"
 }
 
 object MNull : MObject {
     override fun inspect(): String {
         return "null"
     }
-
-    override fun typeDesc(): String = "MNull"
 }
 
 class MFunction(val parameters: List<Identifier>?, val body: BlockStatement?, val env: Environment) : MObject {
     override fun inspect(): String {
         return "fn(${parameters?.joinToString(transform = Identifier::toString) ?: ""}) {\n\t$body\n}"
     }
-
-    override fun typeDesc(): String = "MFunction"
 }
 
 class MString(override val value: String) : MValue<String>, Hashable<String> {
@@ -138,24 +121,18 @@ class MString(override val value: String) : MValue<String>, Hashable<String> {
     }
 
     override fun hashType(): HashType = HashType.STRING
-
-    override fun typeDesc(): String = "MString"
 }
 
 typealias BuiltinFunction = (List<MObject?>) -> MObject?
 
 class MBuiltinFunction(val fn: BuiltinFunction) : MObject {
     override fun inspect(): String = "builtin function"
-
-    override fun typeDesc(): String = "MBuiltinFunction"
 }
 
 class MArray(val elements: List<MObject?>) : MObject {
     override fun inspect(): String {
         return "[${elements.joinToString(separator = ", ")}]"
     }
-
-    override fun typeDesc(): String = "MArray"
 }
 
 enum class HashType {
@@ -178,22 +155,16 @@ class MHash(val pairs: Map<HashKey, HashPair>) : MObject {
     override fun inspect(): String {
         return "{${pairs.values.joinToString { (key, value) -> "${key.inspect()}: ${value.inspect()}" }}}"
     }
-
-    override fun typeDesc(): String = "MHash"
 }
 
 class MCompiledFunction(val instructions: Instructions, val numLocals: Int = 0, val numParameters: Int = 0) : MObject {
     override fun inspect(): String {
         return "CompiledFunction[$this]"
     }
-
-    override fun typeDesc(): String = "MCompiledFunction"
 }
 
 class MClosure(val fn: MCompiledFunction, val free: List<MObject> = emptyList()) : MObject {
     override fun inspect(): String {
         return "Closure[$this]"
     }
-
-    override fun typeDesc(): String = "MClosure"
 }

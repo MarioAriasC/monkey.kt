@@ -14,7 +14,7 @@ import kotlin.time.measureTimedValue
 
 @OptIn(ExperimentalTime::class)
 object Benchmarks {
-    private const val input = """
+    private const val slowInput = """
 let fibonacci = fn(x) {    
 	if (x == 0) {
 		return 0;	
@@ -29,7 +29,7 @@ let fibonacci = fn(x) {
 fibonacci(35);        
     """
 
-    private const val fastInput = """
+    const val fastInput = """
 let fibonacci = fn(x) {    	
     if (x < 2) {
     	return x;
@@ -40,7 +40,7 @@ let fibonacci = fn(x) {
 fibonacci(35);        
     """
 
-    private fun parse(): Program {
+    private fun parse(input: String): Program {
         val lexer = Lexer(input)
         val parser = Parser(lexer)
         return parser.parseProgram()
@@ -52,9 +52,9 @@ fibonacci(35);
         println("engine=$engine, result=${result.value.inspect()}, duration=${result.duration}")
     }
 
-    fun vm() {
+    fun vm(input: String = this.slowInput) {
         val compiler = MCompiler()
-        compiler.compile(parse())
+        compiler.compile(parse(input))
         val machine = VM(compiler.bytecode())
         measure("vm") {
             machine.run()
@@ -62,10 +62,12 @@ fibonacci(35);
         }
     }
 
-    fun eval() {
+
+
+    fun eval(input: String = this.slowInput) {
         val end = Environment.newEnvironment()
         measure("eval") {
-            eval(parse(), end)!!
+            eval(parse(input), end)!!
         }
     }
 

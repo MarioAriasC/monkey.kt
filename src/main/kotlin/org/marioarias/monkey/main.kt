@@ -12,7 +12,9 @@ fun main(args: Array<String>) {
     } else {
         when (args.first()) {
             "vm" -> Benchmarks.vm()
+            "vm-fast" -> Benchmarks.vm(Benchmarks.fastInput)
             "eval" -> Benchmarks.eval()
+            "eval-fast" -> Benchmarks.eval(Benchmarks.fastInput)
             "kotlin" -> Benchmarks.kotlin()
         }
     }

@@ -2,5 +2,6 @@
 .idea
 build
 out
-monkey-grl
-monkey-grl.build_artifacts.txt
+monkey-native
+monkey-native.build_artifacts.txt
+.sdkmanrc
