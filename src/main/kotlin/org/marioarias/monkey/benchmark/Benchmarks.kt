@@ -5,6 +5,7 @@ import org.marioarias.monkey.compiler.MCompiler
 import org.marioarias.monkey.evaluator.Environment
 import org.marioarias.monkey.evaluator.Evaluator.eval
 import org.marioarias.monkey.lexer.Lexer
+import org.marioarias.monkey.objects.MInteger
 import org.marioarias.monkey.objects.MObject
 import org.marioarias.monkey.parser.Parser
 import org.marioarias.monkey.vm.VM
@@ -12,8 +13,8 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
 @OptIn(ExperimentalTime::class)
-object Bencharmarks {
-    const val input = """
+object Benchmarks {
+    private const val slowInput = """
 let fibonacci = fn(x) {    
 	if (x == 0) {
 		return 0;	
@@ -28,7 +29,18 @@ let fibonacci = fn(x) {
 fibonacci(35);        
     """
 
-    private fun parse(): Program {
+    const val fastInput = """
+let fibonacci = fn(x) {    	
+    if (x < 2) {
+    	return x;
+    } else {
+    	fibonacci(x - 1) + fibonacci(x - 2);
+    }
+};
+fibonacci(35);        
+    """
+
+    private fun parse(input: String): Program {
         val lexer = Lexer(input)
         val parser = Parser(lexer)
         return parser.parseProgram()
@@ -40,9 +52,9 @@ fibonacci(35);
         println("engine=$engine, result=${result.value.inspect()}, duration=${result.duration}")
     }
 
-    fun vm() {
+    fun vm(input: String = this.slowInput) {
         val compiler = MCompiler()
-        compiler.compile(parse())
+        compiler.compile(parse(input))
         val machine = VM(compiler.bytecode())
         measure("vm") {
             machine.run()
@@ -50,10 +62,29 @@ fibonacci(35);
         }
     }
 
-    fun eval() {
+
+
+    fun eval(input: String = this.slowInput) {
         val end = Environment.newEnvironment()
         measure("eval") {
-            eval(parse(), end)!!
+            eval(parse(input), end)!!
         }
+    }
+
+    fun kotlin() {
+        measure("kotlin") {
+            fibonacci()
+        }
+    }
+
+    private fun fibonacci(): MInteger {
+        fun step(x: Long): Long {
+            return when (x) {
+                0L -> 0L
+                1L -> 1L
+                else -> step(x - 1) + step(x - 2)
+            }
+        }
+        return MInteger(step(35))
     }
 }

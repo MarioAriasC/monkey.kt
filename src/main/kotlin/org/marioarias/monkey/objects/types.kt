@@ -70,8 +70,6 @@ class MInteger(override val value: Long) : MValue<Long>, Hashable<Long> {
     }
 
     override fun hashType(): HashType = HashType.INTEGER
-
-
 }
 
 class MBoolean(override val value: Boolean) : MValue<Boolean>, Hashable<Boolean> {
@@ -115,7 +113,6 @@ class MFunction(val parameters: List<Identifier>?, val body: BlockStatement?, va
     override fun inspect(): String {
         return "fn(${parameters?.joinToString(transform = Identifier::toString) ?: ""}) {\n\t$body\n}"
     }
-
 }
 
 class MString(override val value: String) : MValue<String>, Hashable<String> {
@@ -170,5 +167,4 @@ class MClosure(val fn: MCompiledFunction, val free: List<MObject> = emptyList())
     override fun inspect(): String {
         return "Closure[$this]"
     }
-
 }

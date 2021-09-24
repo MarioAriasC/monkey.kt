@@ -6,7 +6,7 @@ import org.marioarias.monkey.objects.*
 import org.marioarias.monkey.parse
 import org.marioarias.monkey.testIntegerObject
 import org.marioarias.monkey.testStringObject
-import org.testng.annotations.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.fail

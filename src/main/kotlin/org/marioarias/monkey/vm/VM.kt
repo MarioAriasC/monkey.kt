@@ -23,6 +23,7 @@ class VM(bytecode: Bytecode) {
         val mainClosure = MClosure(mainFn)
         val mainFrame = Frame(mainClosure, 0)
         frames[0] = mainFrame
+//        println("constant = ${constant}")
     }
 
     constructor(bytecode: Bytecode, globals: MutableList<MObject>) : this(bytecode) {
@@ -57,10 +58,14 @@ class VM(bytecode: Bytecode) {
         var ip: Int
         var ins: Instructions
         var op: Opcode
+//        var cycles = 0
         while (currentFrame().ip < currentFrame().instructions().size - 1) {
+//            cycles++
             currentFrame().ip++
             ip = currentFrame().ip
             ins = currentFrame().instructions()
+//            println("--")
+//            println(ins.inspect())
             op = ins[ip]
 
             when (op) {
@@ -176,6 +181,7 @@ class VM(bytecode: Bytecode) {
                 }
             }
         }
+//        println("cycles = $cycles")
     }
 
     private fun pushClosure(constIndex: Int, numFree: Int) {
