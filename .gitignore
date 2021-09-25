@@ -3,3 +3,5 @@
 build
 out
 .sdkmanrc
+**/monkey-graal
+**/monkey-graal.build_artifacts.txt

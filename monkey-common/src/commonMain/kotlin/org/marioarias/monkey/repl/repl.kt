@@ -9,14 +9,11 @@ import org.marioarias.monkey.objects.builtins
 import org.marioarias.monkey.parser.Parser
 import org.marioarias.monkey.vm.VM
 import org.marioarias.monkey.vm.VMException
-import java.io.InputStream
-import java.io.PrintStream
-import java.util.Scanner
 
 
 const val MONKEY_FACE = """            __,__
    .--.  .-"     "-.  .--.
-  / .. \/  .-. .-.  \/ .. \                             '
+  / .. \/  .-. .-.  \/ .. \                             
  | |  '|  /   Y   \  |'  | |
  | \   \  \ 0 | 0 /  /   / |
   \ '- ,\.-""${'"'}${'"'}${'"'}${'"'}${'"'}-./, -' /
@@ -29,24 +26,22 @@ const val MONKEY_FACE = """            __,__
 
 const val PROMPT = ">>>"
 
-fun start(`in`: InputStream, out: PrintStream) {
-    val scanner = Scanner(`in`)
-    out.print("$PROMPT ")
+fun start(readLine: () -> String?, write: (String?) -> Unit) {
     var constants = mutableListOf<MObject>()
     val globals = mutableListOf<MObject>()
     val symbolTable = SymbolTable()
     builtins.forEachIndexed { i, (name, _) ->
         symbolTable.defineBuiltin(i, name)
     }
-    while (scanner.hasNext()) {
-
-        val code = scanner.nextLine()
+    while (true) {
+        write("$PROMPT ")
+        val code = readLine().takeIf { it != "" } ?: return
         val lexer = Lexer(code)
         val parser = Parser(lexer)
         val program = parser.parseProgram()
 
         if (parser.errors().isNotEmpty()) {
-            printParserErrors(out, parser.errors())
+            printParserErrors(write, parser.errors())
             continue
         }
 
@@ -58,26 +53,24 @@ fun start(`in`: InputStream, out: PrintStream) {
             val machine = VM(bytecode, globals)
             machine.run()
             val stackTop = machine.lastPoppedStackElem()
-            out.println(stackTop?.inspect())
+            write(stackTop?.inspect())
         } catch (e: MCompilerException) {
-            out.println("Woops! Compilation failed:\n ${e.message}")
-            out.print("$PROMPT ")
+            write("Woops! Compilation failed:\n ${e.message}")
+            write("$PROMPT ")
             continue
         } catch (e: VMException) {
-            out.println("Woops! Execution bytecode failed:\n ${e.message}")
-            out.print("$PROMPT ")
+            write("Woops! Execution bytecode failed:\n ${e.message}")
+            write("$PROMPT ")
             continue
         }
-
-        out.print("$PROMPT ")
     }
 }
 
-fun printParserErrors(out: PrintStream, errors: List<String>) {
-    out.println(MONKEY_FACE)
-    out.println("Woops! we ran into some monkey business here!")
-    out.println(" parser errors:")
+fun printParserErrors(write: (String) -> Unit, errors: List<String>) {
+    write(MONKEY_FACE)
+    write("Woops! we ran into some monkey business here!")
+    write(" parser errors:")
     errors.forEach { error ->
-        out.println("\t$error")
+        write("\t$error")
     }
 }
