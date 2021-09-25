@@ -2,6 +2,4 @@
 .idea
 build
 out
-monkey-native
-monkey-native.build_artifacts.txt
 .sdkmanrc

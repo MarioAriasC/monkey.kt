@@ -11,7 +11,8 @@ import org.marioarias.monkey.vm.VM
 import org.marioarias.monkey.vm.VMException
 import java.io.InputStream
 import java.io.PrintStream
-import java.util.*
+import java.util.Scanner
+
 
 const val MONKEY_FACE = """            __,__
    .--.  .-"     "-.  .--.
