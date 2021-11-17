@@ -83,13 +83,13 @@ $ ./repl-graal.sh
 For *nix systems, run the following command:
 
 ```shell
-$ ./build-jvm.sh
+$ ./build-native.sh
 ```
 
 And then:
 
 ```shell
-$ ./repl-jvm.sh
+$ ./repl-native.sh
 ```
 
 # Benchmarks
