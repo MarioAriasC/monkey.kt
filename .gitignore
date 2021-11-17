@@ -2,6 +2,6 @@
 .idea
 build
 out
-monkey-native
-monkey-native.build_artifacts.txt
 .sdkmanrc
+**/monkey-graal
+**/monkey-graal.build_artifacts.txt

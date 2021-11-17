@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-./gradlew clean test
+./gradlew clean monkey-common:jvmTest
