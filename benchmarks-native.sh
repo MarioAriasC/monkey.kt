@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-./build/bin/native/debugExecutable/monkey-native.kexe "$1"
+./monkey-native/build/bin/native/releaseExecutable/monkey-native.kexe "$1"
