@@ -5,14 +5,9 @@ package org.marioarias.monkey.code
 typealias Instructions = UByteArray
 
 
+fun Instructions.offset(offset: Int): Instructions = copyOfRange(offset, size)
 
-fun Instructions.offset(offset: Int): Instructions {
-    return copyOfRange(offset, size)
-}
-
-fun Instructions.onset(onset: Int): Instructions {
-    return copyOfRange(0, onset)
-}
+fun Instructions.onset(onset: Int): Instructions = copyOfRange(0, onset)
 
 fun Instructions.readInt(offset: Int): Int {
     return offset(offset).readChar().code
@@ -22,11 +17,7 @@ fun Instructions.readByte(offset: Int): UByte {
     return offset(offset).readByte()
 }
 
-
-
-fun Instructions.read(position: Int): Int {
-    return (this[position] and 255u).toInt()
-}
+fun Instructions.read(position: Int): Int = (this[position] and 255u).toInt()
 
 fun Instructions.readChar(): Char {
     val ch1 = read(0)
@@ -47,7 +38,7 @@ fun Instructions.readByte(): UByte {
     }
 }
 
-fun Instructions.writeChar(offset: Int, i: Int) {
+private fun Instructions.writeChar(offset: Int, i: Int) {
     this[offset] = ((i ushr 8) and 255).toUByte()
     this[offset + 1] = ((i ushr 0) and 255).toUByte()
 }
@@ -137,18 +128,6 @@ data class Definition(val name: String, val operandsWidths: IntArray = intArrayO
         result = 31 * result + operandsWidths.contentHashCode()
         return result
     }
-}
-
-fun readOperands(def: Definition, ins: Instructions): Pair<IntArray, Int> {
-    var offset = 0
-    val operands = def.operandsWidths.map { width ->
-        when (width) {
-            2 -> ins.readInt(offset)
-            1 -> ins.offset(offset).readByte().toInt()
-            else -> width
-        }.also { offset += width }
-    }
-    return operands.toIntArray() to offset
 }
 
 fun lookup(op: Opcode): Definition {

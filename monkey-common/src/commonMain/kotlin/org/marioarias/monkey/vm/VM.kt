@@ -10,12 +10,11 @@ val True = MBoolean(true)
 val False = MBoolean(false)
 val Null = MNull
 
-class VM(bytecode: Bytecode) {
-    private var constant: List<MObject> = bytecode.constants
-    private var stack = Array<MObject?>(STACK_SIZE) { null }
+class VM(bytecode: Bytecode, private val globals: MutableList<MObject> = mutableListOf()) {
+    private val constants: List<MObject> = bytecode.constants
+    private val stack = Array<MObject?>(STACK_SIZE) { null }
+    private val frames = Array<Frame?>(MAX_FRAME_SIZE) { null }
     private var sp: Int = 0
-    private var globals: MutableList<MObject> = mutableListOf()
-    private var frames = Array<Frame?>(MAX_FRAME_SIZE) { null }
     private var frameIndex: Int = 1
 
     init {
@@ -26,9 +25,6 @@ class VM(bytecode: Bytecode) {
 //        println("constant = ${constant}")
     }
 
-    constructor(bytecode: Bytecode, globals: MutableList<MObject>) : this(bytecode) {
-        this.globals = globals
-    }
 
     private fun currentFrame(): Frame = frames[frameIndex - 1]!!
 
@@ -50,9 +46,7 @@ class VM(bytecode: Bytecode) {
         }
     }
 
-    fun lastPoppedStackElem(): MObject? {
-        return stack.getOrNull(sp)
-    }
+    fun lastPoppedStackElem(): MObject? = stack.getOrNull(sp)
 
     fun run() {
         var ip: Int
@@ -72,18 +66,19 @@ class VM(bytecode: Bytecode) {
                 OpConstant -> {
                     val constIndex = ins.readInt(ip + 1)
                     currentFrame().ip += 2
-                    push(constant[constIndex])
+                    push(constants[constIndex])
                 }
-                OpAdd, OpSub, OpMul, OpDiv -> {
-                    executeBinaryOperation(op)
-                }
+                OpAdd, OpSub, OpMul, OpDiv -> executeBinaryOperation(op)
                 OpTrue -> push(True)
                 OpFalse -> push(False)
                 OpPop -> pop()
-                OpEqual, OpNotEqual, OpGreaterThan -> {
-                    executeComparison(op)
+                OpEqual, OpNotEqual, OpGreaterThan -> executeComparison(op)
+                OpBang -> when (pop()) {
+                    True -> push(False)
+                    False -> push(True)
+                    Null -> push(True)
+                    else -> push(False)
                 }
-                OpBang -> executeBangOperator()
                 OpMinus -> executeMinusOperator()
                 OpJump -> {
                     val pos = ins.readInt(ip + 1)
@@ -97,9 +92,7 @@ class VM(bytecode: Bytecode) {
                         currentFrame().ip = pos - 1
                     }
                 }
-                OpNull -> {
-                    push(Null)
-                }
+                OpNull -> push(Null)
                 OpSetGlobal -> {
                     val globalIndex = ins.readInt(ip + 1)
                     currentFrame().ip += 2
@@ -110,20 +103,8 @@ class VM(bytecode: Bytecode) {
                     currentFrame().ip += 2
                     push(globals[globalIndex])
                 }
-                OpArray -> {
-                    val numElements = ins.readInt(ip + 1)
-                    currentFrame().ip += 2
-                    val array = buildArray(sp - numElements, sp)
-                    sp -= numElements
-                    push(array)
-                }
-                OpHash -> {
-                    val numElements = ins.readInt(ip + 1)
-                    currentFrame().ip += 2
-                    val hash = buildHash(sp - numElements, sp)
-                    sp -= numElements
-                    push(hash)
-                }
+                OpArray -> buildAndPush(ins, ip, ::buildArray)
+                OpHash -> buildAndPush(ins, ip, ::buildHash)
                 OpIndex -> {
                     val index = pop()
                     val left = pop()
@@ -184,8 +165,17 @@ class VM(bytecode: Bytecode) {
 //        println("cycles = $cycles")
     }
 
+    private fun buildAndPush(ins: Instructions, ip: Int, build: (Int, Int) -> MObject) {
+        val numElements = ins.readInt(ip + 1)
+        currentFrame().ip += 2
+        val col = build(sp - numElements, sp)
+        sp -= numElements
+        push(col)
+    }
+
+
     private fun pushClosure(constIndex: Int, numFree: Int) {
-        when (val constant = constant[constIndex]) {
+        when (val constant = constants[constIndex]) {
             is MCompiledFunction -> {
                 val free = Array(numFree) { i ->
                     stack[sp - numFree - i]!!
@@ -288,19 +278,8 @@ class VM(bytecode: Bytecode) {
         if (operand !is MInteger) {
             throw VMException("unsupported type for negation: ${operand.typeDesc()}")
         }
-        val value = operand.value
-        push(MInteger(-value))
+        push(-operand)
     }
-
-    private fun executeBangOperator() {
-        when (pop()) {
-            True -> push(False)
-            False -> push(True)
-            Null -> push(True)
-            else -> push(False)
-        }
-    }
-
 
 
     private fun executeComparison(op: Opcode) {
@@ -309,7 +288,7 @@ class VM(bytecode: Bytecode) {
 
         when {
             left is MInteger && right is MInteger -> executeBinaryIntegerComparison(op, left, right)
-            else -> when(op){
+            else -> when (op) {
                 OpEqual -> push((left == right).toMBoolean())
                 OpNotEqual -> push((left != right).toMBoolean())
                 else -> throw VMException("unknown operator $op (${left.typeDesc()} ${right.typeDesc()})")
@@ -341,17 +320,16 @@ class VM(bytecode: Bytecode) {
 
         when {
             left is MInteger && right is MInteger -> executeBinaryIntegerOperation(op, left, right)
-            left is MString  && right is MString -> executeBinaryStringOperation(op, left, right)
+            left is MString && right is MString -> executeBinaryStringOperation(op, left, right)
             else -> throw VMException("unsupported types for binary operation: ${left.typeDesc()} ${right.typeDesc()}")
         }
     }
 
     private fun executeBinaryStringOperation(op: Opcode, left: MString, right: MString) {
-        val result = when (op) {
-            OpAdd -> MString(left.value + right.value)
+        when (op) {
+            OpAdd -> push(MString(left.value + right.value))
             else -> throw VMException("unknown string operator: $op")
         }
-        push(result)
     }
 
     private fun executeBinaryIntegerOperation(op: Opcode, left: MInteger, right: MInteger) {

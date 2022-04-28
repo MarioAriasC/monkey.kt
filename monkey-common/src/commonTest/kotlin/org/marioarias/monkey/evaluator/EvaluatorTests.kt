@@ -25,7 +25,6 @@ class EvaluatorTests {
 
     @Test
     fun `eval integer expression`() {
-
         listOf(
             TestData("5", 5),
             TestData("10", 10),
@@ -155,7 +154,8 @@ class EvaluatorTests {
 
     @Test
     fun `error handling`() {
-        val tests = listOf(
+
+        listOf(
             TestData(
                 "5 + true;",
                 "type mismatch: MInteger + MBoolean",
@@ -208,9 +208,7 @@ class EvaluatorTests {
                 """{"name": "Monkey"}[fn(x) {x}];""",
                 "unusable as a hash key: MFunction"
             )
-        )
-
-        tests.forEach { (input, expected) ->
+        ).forEach { (input, expected) ->
             val evaluated = testEval(input)
 
             checkType(evaluated) { error: MError ->
@@ -316,17 +314,13 @@ class EvaluatorTests {
             when (expected) {
                 null -> testNullObject(evaluated)
                 is Int -> testObject<MInteger, Long>(evaluated, expected.toLong())
-                is String -> {
-                    checkType(evaluated) { error: MError ->
-                        assertEquals(error.message, expected)
-                    }
+                is String -> checkType(evaluated) { error: MError ->
+                    assertEquals(error.message, expected)
                 }
-                is IntArray -> {
-                    checkType(evaluated) { array: MArray ->
-                        assertEquals(expected.size, array.elements.size)
-                        expected.forEachIndexed { i, element ->
-                            testObject<MInteger, Long>(array.elements[i], element.toLong())
-                        }
+                is IntArray -> checkType(evaluated) { array: MArray ->
+                    assertEquals(expected.size, array.elements.size)
+                    expected.forEachIndexed { i, element ->
+                        testObject<MInteger, Long>(array.elements[i], element.toLong())
                     }
                 }
             }

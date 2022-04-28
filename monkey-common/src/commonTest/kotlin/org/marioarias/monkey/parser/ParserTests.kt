@@ -29,14 +29,10 @@ class ParserTests {
 
             val statement = program.statements.first()
 
-            if (!testLetStatement(statement, expectedIdentifier)) {
-                return
-            }
+            testLetStatement(statement, expectedIdentifier)
 
             val value = (statement as LetStatement).value
-            if (!testLiteralExpression(value, expectedValue)) {
-                return
-            }
+            testLiteralExpression(value, expectedValue)
         }
     }
 
@@ -103,7 +99,7 @@ class ParserTests {
                     }
                 }
                 else -> {
-                    fail("statement.expression not Identifier. got=${identifier!!::class.simpleName}")
+                    fail("statement.expression not IntegerLiteral. got=${identifier!!::class.simpleName}")
                 }
             }
         }
@@ -436,7 +432,7 @@ class ParserTests {
                         "length of parameters is wrong. want ${expectedParams.size}. got=${function.parameters?.size}"
                     )
 
-                    expectedParams.forEachIndexed() { i, param ->
+                    expectedParams.forEachIndexed { i, param ->
                         testLiteralExpression(function.parameters?.get(i), param)
                     }
                 }
@@ -514,7 +510,6 @@ class ParserTests {
                     return
                 }
             }
-
         }
     }
 
@@ -552,11 +547,11 @@ class ParserTests {
         }
     }
 
-    private fun <L, R> testInfixExpression(
+    private fun <T> testInfixExpression(
         expression: Expression?,
-        leftValue: L,
+        leftValue: T,
         operator: String,
-        rightValue: R
+        rightValue: T
     ): Boolean {
         return isType(expression) { exp: InfixExpression ->
             when {
@@ -576,15 +571,11 @@ class ParserTests {
             is Int -> testLongLiteral(value, expectedValue.toLong())
             is String -> testIdentifier(value, expectedValue)
             is Boolean -> testBooleanLiteral(value, expectedValue)
-            else -> {
-                fail("type of value not handled. got=${expectedValue!!::class.simpleName}")
-            }
+            else -> fail("type of value not handled. got=${expectedValue!!::class.simpleName}")
         }
     }
 
     private fun testBooleanLiteral(expression: Expression?, b: Boolean): Boolean {
-
-
         return isType(expression) { exp: BooleanLiteral ->
             when {
                 exp.value != b -> {
@@ -596,11 +587,9 @@ class ParserTests {
                 else -> true
             }
         }
-
     }
 
     private fun testIdentifier(expression: Expression?, string: String): Boolean {
-
         return isType(expression) { exp: Identifier ->
             when {
                 exp.value != string -> {

@@ -91,9 +91,21 @@ fun Instructions.inspect(): String {
             i += 1 + read
         } catch (e: IllegalArgumentException) {
             builder.append("ERROR:${e.message}")
-            continue
+//            continue
         }
     }
     return builder.toString()
+}
+
+fun readOperands(def: Definition, ins: Instructions): Pair<IntArray, Int> {
+    var offset = 0
+    val operands = def.operandsWidths.map { width ->
+        when (width) {
+            2 -> ins.readInt(offset)
+            1 -> ins.offset(offset).readByte().toInt()
+            else -> width
+        }.also { offset += width }
+    }
+    return operands.toIntArray() to offset
 }
 

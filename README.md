@@ -34,11 +34,11 @@ branch [eval-macros](https://github.com/MarioAriasC/monkey.kt/tree/eval-macros)
 There are three different executable environments, JVM, GraalVM Native Image and Native. Each executable has 3 different
 shell scripts, `build`, `repl`, `benchmarks`
 
-| Executable environment | Build | REPL | Benchmarks
-|---|---|---|---|
-|JVM|`build-jvm.sh`|`repl-jvm.sh`|`benchmarks-jvm.sh`|
-|Graal|`build-graal.sh`|`repl-graal.sh`|`benchmarks-graal.sh`|
-|Native|`build-native.sh`|`repl-native.sh`|`benchmarks-native.sh`|
+| Executable environment | Build             | REPL             | Benchmarks             |
+|------------------------|-------------------|------------------|------------------------|
+| JVM                    | `build-jvm.sh`    | `repl-jvm.sh`    | `benchmarks-jvm.sh`    |
+| Graal                  | `build-graal.sh`  | `repl-graal.sh`  | `benchmarks-graal.sh`  |
+| Native                 | `build-native.sh` | `repl-native.sh` | `benchmarks-native.sh` |
 
 You must run the `build-[ENV].sh` before running `repl-[ENV].sh` or `benchmarks-[ENV].sh`
 

@@ -3,7 +3,7 @@ package org.marioarias.monkey.objects
 private fun argSizeCheck(expectedSize: Int, args: List<MObject?>, body: BuiltinFunction): MObject? {
     val length = args.size
     return if (length != expectedSize) {
-        MError("wrong number of arguments. got=$length, want=1")
+        MError("wrong number of arguments. got=$length, want=$expectedSize")
     } else {
         body(args)
     }

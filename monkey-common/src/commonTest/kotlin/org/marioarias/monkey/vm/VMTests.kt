@@ -624,28 +624,22 @@ fibonacci(15);
             is Boolean -> testBooleanObject(expected, actual)
             is MNull -> assertEquals(MNull, actual, "object is not Null")
             is String -> testStringObject(expected, actual)
-            is List<*> -> {
-                checkType(actual) { array: MArray ->
-                    assertEquals(array.elements.size, expected.size)
-                    expected.forEachIndexed { i, any ->
-                        testIntegerObject(any as Long, array.elements[i]!!)
-                    }
+            is List<*> -> checkType(actual) { array: MArray ->
+                assertEquals(array.elements.size, expected.size)
+                expected.forEachIndexed { i, any ->
+                    testIntegerObject(any as Long, array.elements[i]!!)
                 }
             }
-            is Map<*, *> -> {
-                checkType(actual) { hash: MHash ->
-                    assertEquals(expected.size, hash.pairs.size)
-                    expected.forEach { (expectedKey, expectedValue) ->
-                        val pair = hash.pairs[expectedKey]
-                        assertNotNull(pair, "no pair for give key in pairs")
-                        testIntegerObject(expectedValue as Long, pair.value)
-                    }
+            is Map<*, *> -> checkType(actual) { hash: MHash ->
+                assertEquals(expected.size, hash.pairs.size)
+                expected.forEach { (expectedKey, expectedValue) ->
+                    val pair = hash.pairs[expectedKey]
+                    assertNotNull(pair, "no pair for give key in pairs")
+                    testIntegerObject(expectedValue as Long, pair.value)
                 }
             }
-            is MError -> {
-                checkType(actual) { error: MError ->
-                    assertEquals(error.message, expected.message)
-                }
+            is MError -> checkType(actual) { error: MError ->
+                assertEquals(error.message, expected.message)
             }
         }
     }

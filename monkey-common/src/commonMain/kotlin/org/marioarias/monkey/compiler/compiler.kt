@@ -33,10 +33,10 @@ data class CompilationScope(
 }
 
 class MCompiler(
-    private var constants: MutableList<MObject> = mutableListOf(),
+    private val constants: MutableList<MObject> = mutableListOf(),
     var symbolTable: SymbolTable = SymbolTable()
 ) {
-    var scopes = mutableListOf(CompilationScope())
+    private val scopes = mutableListOf(CompilationScope())
     var scopeIndex = 0
 
 
@@ -49,6 +49,8 @@ class MCompiler(
 
     @Throws(MCompilerException::class)
     fun compile(node: Node) {
+//        println("node = ${node::class.simpleName}")
+//        println(currentInstructions())
         when (node) {
             is Program -> node.statements.forEach(this::compile)
             is ExpressionStatement -> {
@@ -84,13 +86,7 @@ class MCompiler(
                 }
             }
             is IntegerLiteral -> emit(OpConstant, addConstant(MInteger(node.value)))
-            is BooleanLiteral -> {
-                if (node.value) {
-                    emit(OpTrue)
-                } else {
-                    emit(OpFalse)
-                }
-            }
+            is BooleanLiteral -> if (node.value) emit(OpTrue) else emit(OpFalse)
             is IfExpression -> {
                 compile(node.condition!!)
                 val jumpNotTruthyPos = emit(OpJumpNotTruthy, 9999)

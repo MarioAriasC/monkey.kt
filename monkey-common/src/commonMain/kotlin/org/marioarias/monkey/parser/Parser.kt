@@ -20,8 +20,32 @@ class Parser(private val lexer: Lexer) {
     private lateinit var curToken: Token
     private lateinit var peekToken: Token
 
-    private val prefixParsers = mutableMapOf<TokenType, PrefixParse>()
-    private val infixParsers = mutableMapOf<TokenType, InfixParse>()
+    private val prefixParsers = mapOf<TokenType, PrefixParse>(
+        TokenType.INT to ::parseIntegerLiteral,
+        TokenType.TRUE to ::parseBooleanLiteral,
+        TokenType.FALSE to ::parseBooleanLiteral,
+        TokenType.IDENT to ::parseIdentifier,
+        TokenType.BANG to ::parsePrefixExpression,
+        TokenType.MINUS to ::parsePrefixExpression,
+        TokenType.LPAREN to ::parseGroupExpression,
+        TokenType.IF to ::parseIfExpression,
+        TokenType.FUNCTION to ::parseFunctionLiteral,
+        TokenType.STRING to ::parseStringLiteral,
+        TokenType.LBRACKET to ::parseArrayLiteral,
+        TokenType.LBRACE to ::parseHashLiteral,
+    )
+    private val infixParsers = mapOf<TokenType, InfixParse>(
+        TokenType.PLUS to ::parseInfixExpression,
+        TokenType.MINUS to ::parseInfixExpression,
+        TokenType.SLASH to ::parseInfixExpression,
+        TokenType.ASTERISK to ::parseInfixExpression,
+        TokenType.EQ to ::parseInfixExpression,
+        TokenType.NOT_EQ to ::parseInfixExpression,
+        TokenType.LT to ::parseInfixExpression,
+        TokenType.GT to ::parseInfixExpression,
+        TokenType.LPAREN to ::parseCallExpression,
+        TokenType.LBRACKET to ::parseIndexExpression,
+    )
 
     private val precedences = mapOf(
         TokenType.EQ to Precedence.EQUALS,
@@ -40,29 +64,6 @@ class Parser(private val lexer: Lexer) {
     init {
         nextToken()
         nextToken()
-        prefixParsers[TokenType.INT] = ::parseIntegerLiteral
-        prefixParsers[TokenType.TRUE] = ::parseBooleanLiteral
-        prefixParsers[TokenType.FALSE] = ::parseBooleanLiteral
-        prefixParsers[TokenType.IDENT] = ::parseIdentifier
-        prefixParsers[TokenType.BANG] = ::parsePrefixExpression
-        prefixParsers[TokenType.MINUS] = ::parsePrefixExpression
-        prefixParsers[TokenType.LPAREN] = ::parseGroupExpression
-        prefixParsers[TokenType.IF] = ::parseIfExpression
-        prefixParsers[TokenType.FUNCTION] = ::parseFunctionLiteral
-        prefixParsers[TokenType.STRING] = ::parseStringLiteral
-        prefixParsers[TokenType.LBRACKET] = ::parseArrayLiteral
-        prefixParsers[TokenType.LBRACE] = ::parseHashLiteral
-
-        infixParsers[TokenType.PLUS] = ::parseInfixExpression
-        infixParsers[TokenType.MINUS] = ::parseInfixExpression
-        infixParsers[TokenType.SLASH] = ::parseInfixExpression
-        infixParsers[TokenType.ASTERISK] = ::parseInfixExpression
-        infixParsers[TokenType.EQ] = ::parseInfixExpression
-        infixParsers[TokenType.NOT_EQ] = ::parseInfixExpression
-        infixParsers[TokenType.LT] = ::parseInfixExpression
-        infixParsers[TokenType.GT] = ::parseInfixExpression
-        infixParsers[TokenType.LPAREN] = ::parseCallExpression
-        infixParsers[TokenType.LBRACKET] = ::parseIndexExpression
     }
 
     private fun parseHashLiteral(): Expression? {
@@ -81,10 +82,11 @@ class Parser(private val lexer: Lexer) {
                 return null
             }
         }
-        if (!expectPeek(TokenType.RBRACE)) {
-            return null
+        return if (!expectPeek(TokenType.RBRACE)) {
+            null
+        } else {
+            HashLiteral(token, pairs)
         }
-        return HashLiteral(token, pairs)
     }
 
     private fun parseIndexExpression(left: Expression?): Expression? {
@@ -93,11 +95,11 @@ class Parser(private val lexer: Lexer) {
 
         val index = parseExpression(Precedence.LOWEST)
 
-        if (!expectPeek(TokenType.RBRACKET)) {
-            return null
+        return if (!expectPeek(TokenType.RBRACKET)) {
+            null
+        } else {
+            IndexExpression(token, left, index)
         }
-
-        return IndexExpression(token, left, index)
     }
 
     private fun parseArrayLiteral(): Expression {
@@ -124,16 +126,14 @@ class Parser(private val lexer: Lexer) {
             arguments.add(parseExpression(Precedence.LOWEST))
         }
 
-        if (!expectPeek(end)) {
-            return null
+        return if (!expectPeek(end)) {
+            null
+        } else {
+            arguments
         }
-
-        return arguments
     }
 
-    private fun parseStringLiteral(): Expression {
-        return StringLiteral(curToken, curToken.literal)
-    }
+    private fun parseStringLiteral(): Expression = StringLiteral(curToken, curToken.literal)
 
     private fun nextToken() {
         try {
@@ -190,9 +190,7 @@ class Parser(private val lexer: Lexer) {
         return ReturnStatement(token, returnValue)
     }
 
-    private fun curTokenIs(type: TokenType): Boolean {
-        return curToken.type == type
-    }
+    private fun curTokenIs(type: TokenType): Boolean = curToken.type == type
 
     private fun parseLetStatement(): Statement? {
         val token = curToken
@@ -248,14 +246,12 @@ class Parser(private val lexer: Lexer) {
         errors.add("no prefix parser for $type function")
     }
 
-    private fun expectPeek(type: TokenType): Boolean {
-        return if (peekTokenIs(type)) {
-            nextToken()
-            true
-        } else {
-            peekError(type)
-            false
-        }
+    private fun expectPeek(type: TokenType): Boolean = if (peekTokenIs(type)) {
+        nextToken()
+        true
+    } else {
+        peekError(type)
+        false
     }
 
     private fun peekError(type: TokenType) {
@@ -279,13 +275,9 @@ class Parser(private val lexer: Lexer) {
         }
     }
 
-    private fun parseBooleanLiteral(): Expression {
-        return BooleanLiteral(curToken, curTokenIs(TokenType.TRUE))
-    }
+    private fun parseBooleanLiteral(): Expression = BooleanLiteral(curToken, curTokenIs(TokenType.TRUE))
 
-    private fun parseIdentifier(): Expression {
-        return Identifier(curToken, curToken.literal)
-    }
+    private fun parseIdentifier(): Expression = Identifier(curToken, curToken.literal)
 
     private fun parsePrefixExpression(): Expression {
         val token = curToken
@@ -295,7 +287,7 @@ class Parser(private val lexer: Lexer) {
 
         val right = parseExpression(Precedence.PREFIX)
 
-        return PrefixExpression(token, operator, right!!)
+        return PrefixExpression(token, operator, right)
 
     }
 
@@ -315,11 +307,11 @@ class Parser(private val lexer: Lexer) {
 
         val exp = parseExpression(Precedence.LOWEST)
 
-        if (!expectPeek(TokenType.RPAREN)) {
-            return null
+        return if (!expectPeek(TokenType.RPAREN)) {
+            null
+        } else {
+            exp
         }
-
-        return exp
     }
 
     private fun parseIfExpression(): Expression? {
@@ -430,15 +422,9 @@ class Parser(private val lexer: Lexer) {
         return parameters
     }
 
-    private fun curPrecedence(): Precedence {
-        return findPrecedence(curToken.type)
-    }
+    private fun curPrecedence(): Precedence = findPrecedence(curToken.type)
 
-    private fun peekPrecedence(): Precedence {
-        return findPrecedence(peekToken.type)
-    }
+    private fun peekPrecedence(): Precedence = findPrecedence(peekToken.type)
 
-    private fun findPrecedence(type: TokenType): Precedence {
-        return precedences[type] ?: Precedence.LOWEST
-    }
+    private fun findPrecedence(type: TokenType): Precedence = precedences[type] ?: Precedence.LOWEST
 }

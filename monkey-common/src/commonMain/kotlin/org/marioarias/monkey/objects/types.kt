@@ -29,45 +29,27 @@ interface MValue<T> : MObject {
 
 class MInteger(override val value: Long) : MValue<Long>, Hashable<Long> {
 
-    operator fun compareTo(other: MInteger): Int {
-        return value.compareTo(other.value)
+    operator fun compareTo(other: MInteger): Int = value.compareTo(other.value)
+
+    operator fun plus(other: MInteger): MInteger = MInteger(value + other.value)
+
+    operator fun minus(other: MInteger): MInteger = MInteger(value - other.value)
+
+    operator fun times(other: MInteger): MInteger = MInteger(value * other.value)
+
+    operator fun div(other: MInteger): MInteger = MInteger(value / other.value)
+
+    operator fun unaryMinus(): MInteger = MInteger(-value)
+
+    override fun equals(other: Any?): Boolean = if (other is MInteger) {
+        value == other.value
+    } else {
+        false
     }
 
-    operator fun plus(other: MInteger): MInteger {
-        return MInteger(value + other.value)
-    }
+    override fun hashCode(): Int = value.hashCode()
 
-    operator fun minus(other: MInteger): MInteger {
-        return MInteger(value - other.value)
-    }
-
-    operator fun times(other: MInteger): MInteger {
-        return MInteger(value * other.value)
-    }
-
-    operator fun div(other: MInteger): MInteger {
-        return MInteger(value / other.value)
-    }
-
-    operator fun unaryMinus(): MInteger {
-        return MInteger(-value)
-    }
-
-    override fun equals(other: Any?): Boolean {
-        return if (other is MInteger) {
-            value == other.value
-        } else {
-            false
-        }
-    }
-
-    override fun hashCode(): Int {
-        return value.hashCode()
-    }
-
-    override fun toString(): String {
-        return "MInteger(value=$value)"
-    }
+    override fun toString(): String = "MInteger(value=$value)"
 
     override fun hashType(): HashType = HashType.INTEGER
 }
@@ -110,15 +92,12 @@ object MNull : MObject {
 }
 
 class MFunction(val parameters: List<Identifier>?, val body: BlockStatement?, val env: Environment) : MObject {
-    override fun inspect(): String {
-        return "fn(${parameters?.joinToString(transform = Identifier::toString) ?: ""}) {\n\t$body\n}"
-    }
+    override fun inspect(): String =
+        "fn(${parameters?.joinToString(transform = Identifier::toString) ?: ""}) {\n\t$body\n}"
 }
 
 class MString(override val value: String) : MValue<String>, Hashable<String> {
-    operator fun plus(other: MString): MString {
-        return MString(value + other.value)
-    }
+    operator fun plus(other: MString): MString = MString(value + other.value)
 
     override fun hashType(): HashType = HashType.STRING
 }
@@ -130,9 +109,7 @@ class MBuiltinFunction(val fn: BuiltinFunction) : MObject {
 }
 
 class MArray(val elements: List<MObject?>) : MObject {
-    override fun inspect(): String {
-        return "[${elements.joinToString(separator = ", ")}]"
-    }
+    override fun inspect(): String = "[${elements.joinToString(separator = ", ")}]"
 }
 
 enum class HashType {
@@ -164,7 +141,5 @@ class MCompiledFunction(val instructions: Instructions, val numLocals: Int = 0, 
 }
 
 class MClosure(val fn: MCompiledFunction, val free: List<MObject> = emptyList()) : MObject {
-    override fun inspect(): String {
-        return "Closure[$this]"
-    }
+    override fun inspect(): String = "Closure[$this]"
 }

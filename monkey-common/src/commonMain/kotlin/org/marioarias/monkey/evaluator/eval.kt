@@ -129,15 +129,15 @@ object Evaluator {
     }
 
     private fun evalArrayIndexExpression(array: MArray, index: MInteger): MObject? {
-        val mArray = array.elements
+        val elements = array.elements
         val i = index.value
-        val max = mArray.size - 1
+        val max = elements.size - 1
 
         if (i < 0 || i > max) {
             return NULL
         }
 
-        return mArray[i.toInt()]
+        return elements[i.toInt()]
 
     }
 
@@ -277,7 +277,7 @@ object Evaluator {
         }
     }
 
-    private fun evalPrefixExpression(operator: String, right: MObject?): MObject? {
+    private fun evalPrefixExpression(operator: String, right: MObject): MObject {
         return when (operator) {
             "!" -> evalBangOperatorExpression(right)
             "-" -> evalMinusPrefixOperatorExpression(right)
@@ -285,20 +285,13 @@ object Evaluator {
         }
     }
 
-    private fun evalMinusPrefixOperatorExpression(right: MObject?): MObject? {
-        return if (right != null) {
-            if (right !is MInteger) {
-                MError("unknown operator: -${right.typeDesc()}")
-            } else {
-                return -right
-
-            }
-        } else {
-            null
-        }
+    private fun evalMinusPrefixOperatorExpression(right: MObject): MObject = if (right !is MInteger) {
+        MError("unknown operator: -${right.typeDesc()}")
+    } else {
+        -right
     }
 
-    private fun evalBangOperatorExpression(right: MObject?): MObject {
+    private fun evalBangOperatorExpression(right: MObject): MObject {
         return when (right) {
             TRUE -> FALSE
             FALSE -> TRUE

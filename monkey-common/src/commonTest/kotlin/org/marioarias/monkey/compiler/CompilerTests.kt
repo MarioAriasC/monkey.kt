@@ -973,10 +973,9 @@ push([], 1);
                 is String -> testStringObject(constant, actual[i])
                 is List<*> -> {
                     when (val act = actual[i]) {
-                        is MCompiledFunction -> {
+                        is MCompiledFunction ->
                             @Suppress("UNCHECKED_CAST")
                             testInstructions(constant as List<Instructions>, act.instructions)
-                        }
                         else -> fail("constant $act - not a function, got = ${act.typeDesc()}")
                     }
 

@@ -9,17 +9,13 @@ interface Node {
 
 
 abstract class NodeAdapter {
-    override fun equals(other: Any?): Boolean {
-        return if (other != null) {
-            other.toString() == toString()
-        } else {
-            false
-        }
+    override fun equals(other: Any?): Boolean = if (other != null) {
+        other.toString() == toString()
+    } else {
+        false
     }
 
-    override fun hashCode(): Int {
-        return this.toString().hashCode()
-    }
+    override fun hashCode(): Int = this.toString().hashCode()
 }
 
 interface Statement : Node
@@ -55,10 +51,7 @@ class Identifier(override val token: Token, val value: String) : NodeAdapter(), 
 
 class LetStatement(override val token: Token, val name: Identifier, val value: Expression?) : NodeAdapter(),
     StatementWithToken {
-    override fun toString(): String {
-
-        return "${tokenLiteral()} $name = ${value?.toString() ?: ""};"
-    }
+    override fun toString(): String = "${tokenLiteral()} $name = ${value?.toString() ?: ""};"
 }
 
 
@@ -71,11 +64,11 @@ abstract class LiteralExpression<T>(override val token: Token, val value: T) : N
 class IntegerLiteral(token: Token, value: Long) : LiteralExpression<Long>(token, value)
 class BooleanLiteral(token: Token, value: Boolean) : LiteralExpression<Boolean>(token, value)
 
+class StringLiteral(override val token: Token, val value: String) : NodeAdapter(), ExpressionWithToken {
+    override fun toString(): String = value
+}
 class ReturnStatement(override val token: Token, val returnValue: Expression?) : NodeAdapter(), StatementWithToken {
-    override fun toString(): String {
-        return "${tokenLiteral()} ${returnValue?.toString() ?: ""};"
-
-    }
+    override fun toString(): String = "${tokenLiteral()} ${returnValue?.toString() ?: ""};"
 }
 
 class ExpressionStatement(override val token: Token, val expression: Expression?) : NodeAdapter(), StatementWithToken {
@@ -86,9 +79,7 @@ class ExpressionStatement(override val token: Token, val expression: Expression?
 
 class PrefixExpression(override val token: Token, val operator: String, val right: Expression?) : NodeAdapter(),
     ExpressionWithToken {
-    override fun toString(): String {
-        return "($operator$right)"
-    }
+    override fun toString(): String = "($operator$right)"
 }
 
 class InfixExpression(override val token: Token, val left: Expression?, val operator: String, val right: Expression?) :
@@ -135,16 +126,10 @@ class FunctionLiteral(
     }
 }
 
-class StringLiteral(override val token: Token, val value: String) : NodeAdapter(), ExpressionWithToken {
-    override fun toString(): String {
-        return value
-    }
-}
+
 
 class ArrayLiteral(override val token: Token, val elements: List<Expression?>?) : NodeAdapter(), ExpressionWithToken {
-    override fun toString(): String {
-        return "[${elements?.joinToString(separator = ", ")}]"
-    }
+    override fun toString(): String = "[${elements?.joinToString()}]"
 }
 
 class IndexExpression(override val token: Token, val left: Expression?, val index: Expression?) : NodeAdapter(),

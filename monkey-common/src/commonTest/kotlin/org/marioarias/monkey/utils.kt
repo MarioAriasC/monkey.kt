@@ -17,6 +17,7 @@ inline fun <reified T> checkType(value: Any?, body: (T) -> Unit) = when (value) 
     else -> fail("$value is not ${T::class.simpleName}. got=${value!!::class.simpleName}")
 }
 
+@Deprecated("use checkType", ReplaceWith("checkType"))
 inline fun <reified T> isType(value: Any?, body: (T) -> Boolean): Boolean {
     return when (value) {
         is T -> {
