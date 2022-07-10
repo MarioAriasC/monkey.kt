@@ -2,7 +2,6 @@ package org.marioarias.monkey.parser
 
 import org.marioarias.monkey.ast.*
 import org.marioarias.monkey.checkType
-import org.marioarias.monkey.isType
 import org.marioarias.monkey.lexer.Lexer
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -14,12 +13,10 @@ class ParserTests {
 
     @Test
     fun `let statements`() {
-        data class TestData<T>(val input: String, val expectedIdentifier: String, val expectedValue: T)
-
         val tests = listOf(
-            TestData("let x = 5;", "x", 5),
-            TestData("let y = true;", "y", true),
-            TestData("let foobar = y;", "foobar", "y")
+            Triple("let x = 5;", "x", 5),
+            Triple("let y = true;", "y", true),
+            Triple("let foobar = y;", "foobar", "y")
         )
 
         tests.forEach { (input, expectedIdentifier, expectedValue) ->
@@ -38,12 +35,10 @@ class ParserTests {
 
     @Test
     fun `return statements`() {
-        data class TestData<T>(val input: String, val expectedValue: T)
-
         val tests = listOf(
-            TestData("return 5;", 5),
-            TestData("return true;", true),
-            TestData("return foobar;", "foobar")
+            "return 5;" to 5,
+            "return true;" to true,
+            "return foobar;" to "foobar"
         )
 
         tests.forEach { (input, expectedValue) ->
@@ -52,12 +47,12 @@ class ParserTests {
             countStatements(1, program)
 
             checkType(program.statements.first()) { statement: ReturnStatement ->
-                if (statement.tokenLiteral() != "return") {
-                    fail("statement.tokenLiteral() not 'return', got=${statement.tokenLiteral()}")
-                }
-                if (testLiteralExpression(statement.returnValue, expectedValue)) {
-                    return
-                }
+                assertEquals(
+                    "return",
+                    statement.tokenLiteral(),
+                    "statement.tokenLiteral() not 'return', got=${statement.tokenLiteral()}"
+                )
+                testLiteralExpression(statement.returnValue, expectedValue)
             }
         }
     }
@@ -73,10 +68,12 @@ class ParserTests {
 
         checkType(program.statements.first()) { statement: ExpressionStatement ->
             checkType(statement.expression) { identifier: Identifier ->
-                when {
-                    identifier.value != "foobar" -> fail("identifier.value not 'foobar'. got=${identifier.value}")
-                    identifier.tokenLiteral() != "foobar" -> fail("identifier.tokenLiteral() not 'foobar'. got=${identifier.tokenLiteral()}")
-                }
+                assertEquals("foobar", identifier.value, "identifier.value not 'foobar'. got=${identifier.value}")
+                assertEquals(
+                    "foobar",
+                    identifier.tokenLiteral(),
+                    "identifier.tokenLiteral() not 'foobar'. got=${identifier.tokenLiteral()}"
+                )
             }
 
         }
@@ -91,29 +88,29 @@ class ParserTests {
         countStatements(1, program)
 
         checkType(program.statements.first()) { statement: ExpressionStatement ->
-            when (val identifier = statement.expression) {
+            when (val literal = statement.expression) {
                 is IntegerLiteral -> {
-                    when {
-                        identifier.value != 5.toLong() -> fail("identifier.value not 5. got=${identifier.value}")
-                        identifier.tokenLiteral() != "5" -> fail("identifier.tokenLiteral() not '5'. got=${identifier.tokenLiteral()}")
-                    }
+                    assertEquals(5.toLong(), literal.value, "identifier.value not 5. got=${literal.value}")
+                    assertEquals(
+                        "5",
+                        literal.tokenLiteral(),
+                        "identifier.tokenLiteral() not '5'. got=${literal.tokenLiteral()}"
+                    )
                 }
                 else -> {
-                    fail("statement.expression not IntegerLiteral. got=${identifier!!::class.simpleName}")
+                    fail("statement.expression not IntegerLiteral. got=${literal!!::class.simpleName}")
                 }
             }
         }
     }
 
     @Test
-    fun `parsing prefix expressions`() {
-        data class TestData<T>(val input: String, val operator: String, val value: T)
-
+    fun `parsing prefix expressions`() {      
         val tests = listOf(
-            TestData("!5;", "!", 5),
-            TestData("-15;", "-", 15),
-            TestData("!true;", "!", true),
-            TestData("!false;", "!", false),
+            Triple("!5;", "!", 5),
+            Triple("-15;", "-", 15),
+            Triple("!true;", "!", true),
+            Triple("!false;", "!", false),
         )
 
         tests.forEach { (input, operator, value) ->
@@ -124,13 +121,11 @@ class ParserTests {
             checkType(program.statements.first()) { statement: ExpressionStatement ->
                 checkType(statement.expression) { expression: PrefixExpression ->
                     assertEquals(
-                        expression.operator,
                         operator,
+                        expression.operator,
                         "expression.operator is not ${operator}. got=${expression.operator}"
                     )
-                    if (!testLiteralExpression(expression.right, value)) {
-                        return@forEach
-                    }
+                    testLiteralExpression(expression.right, value)
                 }
             }
         }
@@ -167,118 +162,36 @@ class ParserTests {
 
     @Test
     fun `operator precedence`() {
-        data class TestData(val input: String, val expected: String)
-
         val tests = listOf(
-            TestData(
-                "-a * b",
-                "((-a) * b)",
-            ),
-            TestData(
-                "!-a",
-                "(!(-a))",
-            ),
-            TestData(
-                "a + b + c",
-                "((a + b) + c)",
-            ),
-            TestData(
-                "a + b - c",
-                "((a + b) - c)",
-            ),
-            TestData(
-                "a * b * c",
-                "((a * b) * c)",
-            ),
-            TestData(
-                "a * b / c",
-                "((a * b) / c)",
-            ),
-            TestData(
-                "a + b / c",
-                "(a + (b / c))",
-            ),
-            TestData(
-                "a + b * c + d / e - f",
-                "(((a + (b * c)) + (d / e)) - f)",
-            ),
-            TestData(
-                "3 + 4; -5 * 5",
-                "(3 + 4)((-5) * 5)",
-            ),
-            TestData(
-                "5 > 4 == 3 < 4",
-                "((5 > 4) == (3 < 4))",
-            ),
-            TestData(
-                "5 < 4 != 3 > 4",
-                "((5 < 4) != (3 > 4))",
-            ),
-            TestData(
-                "3 + 4 * 5 == 3 * 1 + 4 * 5",
-                "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
-            ),
-            TestData(
-                "true",
-                "true",
-            ),
-            TestData(
-                "false",
-                "false",
-            ),
-            TestData(
-                "3 > 5 == false",
-                "((3 > 5) == false)",
-            ),
-            TestData(
-                "3 < 5 == true",
-                "((3 < 5) == true)",
-            ),
-            TestData(
-                "1 + (2 + 3) + 4",
-                "((1 + (2 + 3)) + 4)",
-            ),
-            TestData(
-                "(5 + 5) * 2",
-                "((5 + 5) * 2)",
-            ),
-            TestData(
-                "2 / (5 + 5)",
-                "(2 / (5 + 5))",
-            ),
-            TestData(
-                "(5 + 5) * 2 * (5 + 5)",
-                "(((5 + 5) * 2) * (5 + 5))",
-            ),
-            TestData(
-                "-(5 + 5)",
-                "(-(5 + 5))",
-            ),
-            TestData(
-                "!(true == true)",
-                "(!(true == true))",
-            ),
-            TestData(
-                "a + add(b * c) + d",
-                "((a + add((b * c))) + d)",
-            ),
-            TestData(
-                "add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
-                "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))",
-            ),
-            TestData(
-                "add(a + b + c * d / f + g)",
-                "add((((a + b) + ((c * d) / f)) + g))",
-            ),
-            TestData(
-                "a * [1, 2, 3, 4][b * c] * d",
-                "((a * ([1, 2, 3, 4][(b * c)])) * d)",
-            ),
-            TestData(
-                "add(a * b[2], b[1], 2 * [1, 2][1])",
-                "add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))",
-            ),
-        )
+            "-a * b" to "((-a) * b)",
+            "!-a" to "(!(-a))",
+            "a + b + c" to "((a + b) + c)",
+            "a + b - c" to "((a + b) - c)",
+            "a * b * c" to "((a * b) * c)",
+            "a * b / c" to "((a * b) / c)",
+            "a + b / c" to "(a + (b / c))",
+            "a + b * c + d / e - f" to "(((a + (b * c)) + (d / e)) - f)",
+            "3 + 4; -5 * 5" to "(3 + 4)((-5) * 5)",
+            "5 > 4 == 3 < 4" to "((5 > 4) == (3 < 4))",
+            "5 < 4 != 3 > 4" to "((5 < 4) != (3 > 4))",
+            "3 + 4 * 5 == 3 * 1 + 4 * 5" to "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
+            "true" to "true",
+            "false" to "false",
+            "3 > 5 == false" to "((3 > 5) == false)",
+            "3 < 5 == true" to "((3 < 5) == true)",
+            "1 + (2 + 3) + 4" to "((1 + (2 + 3)) + 4)",
+            "(5 + 5) * 2" to "((5 + 5) * 2)",
+            "2 / (5 + 5)" to "(2 / (5 + 5))",
+            "(5 + 5) * 2 * (5 + 5)" to "(((5 + 5) * 2) * (5 + 5))",
+            "-(5 + 5)" to "(-(5 + 5))",
+            "!(true == true)" to "(!(true == true))",
+            "a + add(b * c) + d" to "((a + add((b * c))) + d)",
+            "add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))" to "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))",
+            "add(a + b + c * d / f + g)" to "add((((a + b) + ((c * d) / f)) + g))",
+            "a * [1, 2, 3, 4][b * c] * d" to "((a * ([1, 2, 3, 4][(b * c)])) * d)",
+            "add(a * b[2], b[1], 2 * [1, 2][1])" to "add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))",
+
+            )
 
         tests.forEach { (input, expected) ->
             val program = createProgram(input)
@@ -290,11 +203,9 @@ class ParserTests {
 
     @Test
     fun `boolean expression`() {
-        data class TestData(val input: String, val expectedBoolean: Boolean)
-
         val tests = listOf(
-            TestData("true", true),
-            TestData("false", false),
+            "true" to true,
+            "false" to false,
         )
 
         tests.forEach { (input, expectedBoolean) ->
@@ -323,9 +234,7 @@ class ParserTests {
 
         checkType(program.statements.first()) { statement: ExpressionStatement ->
             checkType(statement.expression) { exp: IfExpression ->
-                if (!testInfixExpression(exp.condition, "x", "<", "y")) {
-                    return
-                }
+                testInfixExpression(exp.condition, "x", "<", "y")
 
                 assertEquals(
                     exp.consequence?.statements?.size,
@@ -334,9 +243,7 @@ class ParserTests {
                 )
 
                 checkType(exp.consequence?.statements?.first()) { consequence: ExpressionStatement ->
-                    if (!testIdentifier(consequence.expression, "x")) {
-                        return
-                    }
+                    testIdentifier(consequence.expression, "x")
                 }
 
                 assertNull(exp.alternative, "exp.alternative was not nil got=${exp.alternative}")
@@ -353,9 +260,7 @@ class ParserTests {
 
         checkType(program.statements.first()) { statement: ExpressionStatement ->
             checkType(statement.expression) { exp: IfExpression ->
-                if (!testInfixExpression(exp.condition, "x", "<", "y")) {
-                    return
-                }
+                testInfixExpression(exp.condition, "x", "<", "y")
 
                 assertEquals(
                     exp.consequence?.statements?.size,
@@ -364,9 +269,7 @@ class ParserTests {
                 )
 
                 checkType(exp.consequence?.statements?.first()) { consequence: ExpressionStatement ->
-                    if (!testIdentifier(consequence.expression, "x")) {
-                        return
-                    }
+                    testIdentifier(consequence.expression, "x")
                 }
 
                 assertEquals(
@@ -376,9 +279,7 @@ class ParserTests {
                 )
 
                 checkType(exp.alternative?.statements?.first()) { alternative: ExpressionStatement ->
-                    if (!testIdentifier(alternative.expression, "y")) {
-                        return
-                    }
+                    testIdentifier(alternative.expression, "y")
                 }
             }
         }
@@ -413,12 +314,10 @@ class ParserTests {
 
     @Test
     fun `function parameter parsing`() {
-        data class TestData(val input: String, val expectedParams: List<String>)
-
         val tests = listOf(
-            TestData("fn() {}", emptyList()),
-            TestData("fn(x) {}", listOf("x")),
-            TestData("fn(x, y, z) {}", listOf("x", "y", "z")),
+            "fn() {}" to emptyList(),
+            "fn(x) {}" to listOf("x"),
+            "fn(x, y, z) {}" to listOf("x", "y", "z"),
         )
 
         tests.forEach { (input, expectedParams) ->
@@ -450,9 +349,7 @@ class ParserTests {
 
         checkType(program.statements.first()) { statement: ExpressionStatement ->
             checkType(statement.expression) { exp: CallExpression ->
-                if (!testIdentifier(exp.function, "add")) {
-                    return
-                }
+                testIdentifier(exp.function, "add")
 
                 assertEquals(exp.arguments?.size, 3, "wrong length of arguments. got=${exp.arguments?.size}")
 
@@ -503,12 +400,8 @@ class ParserTests {
 
         checkType(program.statements.first()) { statement: ExpressionStatement ->
             checkType(statement.expression) { index: IndexExpression ->
-                if (!testIdentifier(index.left, "myArray")) {
-                    return
-                }
-                if (!testInfixExpression(index.index, 1, "+", 1)) {
-                    return
-                }
+                testIdentifier(index.left, "myArray")
+                testInfixExpression(index.index, 1, "+", 1)
             }
         }
     }
@@ -552,21 +445,16 @@ class ParserTests {
         leftValue: T,
         operator: String,
         rightValue: T
-    ): Boolean {
-        return isType(expression) { exp: InfixExpression ->
-            when {
-                !testLiteralExpression(exp.left, leftValue) -> false
-                exp.operator != operator -> {
-                    fail("exp.operator is not $operator. got=${exp.operator}")
-                }
-                !testLiteralExpression(exp.right, rightValue) -> false
-                else -> true
-            }
+    ) {
+        checkType(expression) { exp: InfixExpression ->
+            testLiteralExpression(exp.left, leftValue)
+            assertEquals(operator, exp.operator, "exp.operator is not $operator. got=${exp.operator}")
+            testLiteralExpression(exp.right, rightValue)
         }
     }
 
-    private fun <T> testLiteralExpression(value: Expression?, expectedValue: T): Boolean {
-        return when (expectedValue) {
+    private fun <T> testLiteralExpression(value: Expression?, expectedValue: T) {
+        when (expectedValue) {
             is Long -> testLongLiteral(value, expectedValue)
             is Int -> testLongLiteral(value, expectedValue.toLong())
             is String -> testIdentifier(value, expectedValue)
@@ -575,68 +463,41 @@ class ParserTests {
         }
     }
 
-    private fun testBooleanLiteral(expression: Expression?, b: Boolean): Boolean {
-        return isType(expression) { exp: BooleanLiteral ->
-            when {
-                exp.value != b -> {
-                    fail("exp.value not $b. got=${exp.value}")
-                }
-                exp.tokenLiteral() != b.toString() -> {
-                    fail("exp.tokenLiteral() not $b. got=${exp.tokenLiteral()}")
-                }
-                else -> true
-            }
+    private fun testBooleanLiteral(expression: Expression?, b: Boolean) =
+        checkType(expression) { exp: BooleanLiteral ->
+            assertEquals(b, exp.value, "exp.value not $b. got=${exp.value}")
+            assertEquals(b.toString(), exp.tokenLiteral(), "exp.tokenLiteral() not $b. got=${exp.tokenLiteral()}")
         }
+
+    private fun testIdentifier(expression: Expression?, string: String) = checkType(expression) { exp: Identifier ->
+        assertEquals(string, exp.value, "exp.value no $string. got=${exp.value}")
+        assertEquals(string, exp.tokenLiteral(), "exp.tokenLiteral() no $string. got=${exp.tokenLiteral()}")
     }
 
-    private fun testIdentifier(expression: Expression?, string: String): Boolean {
-        return isType(expression) { exp: Identifier ->
-            when {
-                exp.value != string -> {
-                    fail("exp.value no $string. got=${exp.value}")
-                }
-                exp.tokenLiteral() != string -> {
-                    fail("exp.tokenLiteral() no $string. got=${exp.tokenLiteral()}")
-                }
-                else -> true
-            }
-        }
-
+    private fun testLongLiteral(expression: Expression?, l: Long) = checkType(expression) { exp: IntegerLiteral ->
+        assertEquals(l, exp.value, "exp.value not $l. got=${exp.value}")
+        assertEquals(l.toString(), exp.tokenLiteral(), "exp.tokenLiteral() not $l. got=${exp.tokenLiteral()}")
     }
 
-    private fun testLongLiteral(expression: Expression?, l: Long): Boolean {
+    private fun testLetStatement(statement: Statement, expectedIdentifier: String) {
+        assertEquals(
+            "let",
+            statement.tokenLiteral(),
+            "statement.tokenLiteral() not 'let'. got=${statement.tokenLiteral()}"
+        )
 
-        return isType(expression) { exp: IntegerLiteral ->
-            when {
-                exp.value != l -> {
-                    fail("exp.value not $l. got=${exp.value}")
-                }
-                exp.tokenLiteral() != l.toString() -> {
-                    fail("exp.tokenLiteral() not $l. got=${exp.tokenLiteral()}")
-                }
-                else -> true
-            }
+        checkType(statement) { letStatement: LetStatement ->
+            assertEquals(
+                expectedIdentifier,
+                letStatement.name.value,
+                "letStatement.name.value not $expectedIdentifier. got=${letStatement.name.value}"
+            )
+            assertEquals(
+                expectedIdentifier,
+                letStatement.name.tokenLiteral(),
+                "letStatement.name.tokenLiteral() not $expectedIdentifier. got=${letStatement.name.tokenLiteral()}"
+            )
         }
-
-    }
-
-    private fun testLetStatement(statement: Statement, expectedIdentifier: String): Boolean {
-        if (statement.tokenLiteral() != "let") {
-            fail("statement.tokenLiteral() not 'let'. got=${statement.tokenLiteral()}")
-        }
-
-        return isType(statement) { letStatement: LetStatement ->
-            when {
-                letStatement.name.value != expectedIdentifier -> {
-                    fail("letStatement.name.value not $expectedIdentifier. got=${letStatement.name.value}")
-                }
-                letStatement.name.tokenLiteral() != expectedIdentifier -> {
-                    fail("letStatement.name.tokenLiteral() not $expectedIdentifier. got=${letStatement.name.tokenLiteral()}")
-                }
-                else -> true
-            }
-        }
-
     }
 
     private fun countStatements(i: Int, program: Program) {
@@ -654,10 +515,10 @@ class ParserTests {
 
     private fun checkParserErrors(parser: Parser) {
         val errors = parser.errors()
-        if (errors.isEmpty()) {
-            return
+        if (errors.isNotEmpty()) {
+            fail("parser has ${errors.size} errors: \n${errors.joinToString(" \n")}")
         }
-        fail("parser has ${errors.size} errors: \n${errors.joinToString(" \n")}")
+
 
     }
 }

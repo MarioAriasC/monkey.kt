@@ -1,4 +1,5 @@
 @file:OptIn(ExperimentalUnsignedTypes::class)
+
 package org.marioarias.monkey
 
 import org.marioarias.monkey.ast.Program
@@ -17,17 +18,6 @@ inline fun <reified T> checkType(value: Any?, body: (T) -> Unit) = when (value) 
     else -> fail("$value is not ${T::class.simpleName}. got=${value!!::class.simpleName}")
 }
 
-@Deprecated("use checkType", ReplaceWith("checkType"))
-inline fun <reified T> isType(value: Any?, body: (T) -> Boolean): Boolean {
-    return when (value) {
-        is T -> {
-            body(value)
-        }
-        else -> {
-            fail("$value is not ${T::class.simpleName}. got=${value!!::class.simpleName}")
-        }
-    }
-}
 
 fun parse(input: String): Program {
     return Parser(Lexer(input)).parseProgram()

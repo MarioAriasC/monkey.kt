@@ -41,7 +41,7 @@ enum class TokenType(val value: String) {
     STRING("STRING");
 
     companion object {
-        val keyboards = mapOf(
+        val keywords = mapOf(
             "fn" to FUNCTION,
             "let" to LET,
             "true" to TRUE,
@@ -53,8 +53,9 @@ enum class TokenType(val value: String) {
     }
 }
 
+
 fun String.lookupIdent(): TokenType {
-    return TokenType.keyboards[this] ?: TokenType.IDENT
+    return TokenType.keywords[this] ?: TokenType.IDENT
 }
 
 data class Token(val type: TokenType, val literal: String) {

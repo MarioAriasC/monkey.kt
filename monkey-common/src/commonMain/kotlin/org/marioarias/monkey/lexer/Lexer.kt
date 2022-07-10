@@ -9,7 +9,7 @@ import org.marioarias.monkey.token.lookupIdent
 class Lexer(private val input: String) {
     private var position = 0
     private var readPosition = 0
-    private var ch = 0.toChar()
+    private var ch = ZERO
 
     init {
         readChar()
@@ -23,7 +23,7 @@ class Lexer(private val input: String) {
 
     private fun peakChar(): Char {
         return if (readPosition >= input.length) {
-            0.toChar()
+            ZERO
         } else {
             input[readPosition]
         }
@@ -45,7 +45,7 @@ class Lexer(private val input: String) {
         val start = position + 1
         while (true) {
             readChar()
-            if (ch == '"' || ch == 0.toChar()) {
+            if (ch == '"' || ch == ZERO) {
                 break
             }
         }
@@ -89,7 +89,7 @@ class Lexer(private val input: String) {
             '>' -> GT.token()
             '!' -> endsWithEqual(BANG, NOT_EQ, duplicateChars = false)
             '"' -> Token(STRING, readString())
-            0.toChar() -> Token(EOF, "")
+            ZERO -> Token(EOF, "")
             else -> {
                 when {
                     ch.isIdentifier() -> {
@@ -130,7 +130,8 @@ class Lexer(private val input: String) {
     private fun Char.isIdentifier() = this.isLetter() || this == '_'
 
     companion object {
-        val whiteSpaces = listOf(' ', '\t', '\n', '\r')
+        val whiteSpaces = charArrayOf(' ', '\t', '\n', '\r')
+        const val ZERO = 0.toChar()
     }
 
 

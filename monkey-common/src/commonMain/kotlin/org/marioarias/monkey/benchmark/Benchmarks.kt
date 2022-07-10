@@ -40,6 +40,16 @@ let fibonacci = fn(x) {
 fibonacci(35);        
     """
 
+    const val fastInput2 = """
+let fibonacci = fn(x) {    	
+    if (x < 2) {
+    	return x;
+    }
+    fibonacci(x - 1) + fibonacci(x - 2);    
+};
+fibonacci(35);        
+    """
+
     private fun parse(input: String): Program {
         val lexer = Lexer(input)
         val parser = Parser(lexer)

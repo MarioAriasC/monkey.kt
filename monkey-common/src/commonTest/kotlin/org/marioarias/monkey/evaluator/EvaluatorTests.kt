@@ -309,7 +309,7 @@ class EvaluatorTests {
             TestData("rest([1, 2, 3])", intArrayOf(2, 3)),
             TestData("rest([])", null),
         ).forEach { (input, expected) ->
-            println("input = ${input}")
+//            println("input = ${input}")
             val evaluated = testEval(input)
             when (expected) {
                 null -> testNullObject(evaluated)

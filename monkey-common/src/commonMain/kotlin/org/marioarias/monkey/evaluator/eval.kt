@@ -4,82 +4,95 @@ import org.marioarias.monkey.ast.*
 import org.marioarias.monkey.objects.*
 
 object Evaluator {
-
+    //engine=eval, result=9227465, duration=6.199426516s
     val NULL = MNull
     val TRUE = MBoolean(true)
     val FALSE = MBoolean(false)
 
     private fun Boolean.toMonkey(): MBoolean = if (this) TRUE else FALSE
 
-    fun eval(node: Node?, env: Environment): MObject? {
-        return when (node) {
-            is Program -> evalProgram(node.statements, env)
-            is ExpressionStatement -> eval(node.expression, env)
-            is IntegerLiteral -> MInteger(node.value)
-            is PrefixExpression -> {
-                eval(node.right, env).ifNotError { right ->
-                    evalPrefixExpression(node.operator, right)
-                }
+    fun eval(program: Program, env: Environment) = evalProgram(program.statements, env)
 
-            }
-            is InfixExpression -> {
-                eval(node.left, env).ifNotError { left ->
-                    eval(node.right, env).ifNotError { right ->
-                        evalInfixExpression(node.operator, left, right)
-                    }
-                }
-            }
-            is BooleanLiteral -> node.value.toMonkey()
-            is IfExpression -> evalIfExpression(node, env)
-            is BlockStatement -> evalBlockStatement(node, env)
-            is ReturnStatement -> {
-                eval(node.returnValue, env).ifNotError { value ->
-                    MReturnValue(value)
-                }
-            }
-            is LetStatement -> {
-                eval(node.value, env).ifNotError { value ->
-                    env.put(node.name.value, value)
-                }
+//    private fun eval(statement: ExpressionStatement, env: Environment) = eval(statement.expression, env)
 
-            }
-            is Identifier -> evalIdentifier(node, env)
-            is FunctionLiteral -> MFunction(node.parameters, node.body, env)
-            is CallExpression -> {
-                eval(node.function, env).ifNotError { function ->
-                    val args = evalExpressions(node.arguments, env)
-                    if (args.size == 1 && args.first().isError()) {
-                        args.first()
-                    } else {
-                        applyFunction(function, args)
-                    }
-                }
-            }
-            is StringLiteral -> MString(node.value)
-            is ArrayLiteral -> {
-                val elements = evalExpressions(node.elements, env)
-                if (elements.size == 1 && elements.first().isError()) {
-                    elements.first()
-                } else {
-                    MArray(elements)
-                }
-            }
-            is IndexExpression -> {
-                val left = eval(node.left, env)
+    private fun eval(statement: ReturnStatement, env: Environment) =
+        eval(statement.returnValue, env).ifNotError { value ->
+            MReturnValue(value)
+        }
 
-                if (left.isError()) {
-                    return left
-                }
+    private fun eval(statement: Statement?, env: Environment): MObject? = when (statement) {
+        is ExpressionStatement -> eval(statement.expression, env)
+        is LetStatement -> eval(statement, env)
+        is BlockStatement -> evalBlockStatement(statement, env)
+        is ReturnStatement -> eval(statement, env)
+        else -> null
+    }
 
-                val index = eval(node.index, env)
+    private fun eval(statement: LetStatement, env: Environment) = eval(statement.value, env).ifNotError { value ->
+        env.put(statement.name.value, value)
+    }
 
-                if (index.isError()) {
-                    return index
-                }
+    private fun eval(expression: PrefixExpression, env: Environment) = eval(expression.right, env).ifNotError { right ->
+        evalPrefixExpression(expression.operator, right)
+    }
 
-                return evalIndexExpression(left, index)
+    private fun eval(expression: InfixExpression, env: Environment) = eval(expression.left, env).ifNotError { left ->
+        eval(expression.right, env).ifNotError { right ->
+            evalInfixExpression(expression.operator, left, right)
+        }
+    }
+
+
+    private fun eval(expression: CallExpression, env: Environment) =
+        eval(expression.function, env).ifNotError { function ->
+            val args = evalExpressions(expression.arguments, env)
+            if (args.size == 1 && args.first().isError()) {
+                args.first()
+            } else {
+                applyFunction(function, args)
             }
-            is HashLiteral -> evalHashLiteral(node, env)
+        }
+
+    private fun eval(literal: ArrayLiteral, env: Environment): MObject? {
+        val elements = evalExpressions(literal.elements, env)
+        return if (elements.size == 1 && elements.first().isError()) {
+            elements.first()
+        } else {
+            MArray(elements)
+        }
+    }
+
+    private fun eval(expression: IndexExpression, env: Environment): MObject? {
+        val left = eval(expression.left, env)
+
+        if (left.isError()) {
+            return left
+        }
+
+        val index = eval(expression.index, env)
+
+        if (index.isError()) {
+            return index
+        }
+
+        return evalIndexExpression(left, index)
+    }
+
+
+    private fun eval(expression: Expression?, env: Environment): MObject? {
+        return when (expression) {
+            is IntegerLiteral -> MInteger(expression.value)
+            is PrefixExpression -> eval(expression, env)
+            is InfixExpression -> eval(expression, env)
+            is BooleanLiteral -> expression.value.toMonkey()
+            is IfExpression -> evalIfExpression(expression, env)
+            is Identifier -> evalIdentifier(expression, env)
+            is FunctionLiteral -> MFunction(expression.parameters, expression.body, env)
+            is CallExpression -> eval(expression, env)
+            is StringLiteral -> MString(expression.value)
+            is ArrayLiteral -> eval(expression, env)
+            is IndexExpression -> eval(expression, env)
+            is HashLiteral -> evalHashLiteral(expression, env)
             else -> null
         }
     }
@@ -229,7 +242,7 @@ object Evaluator {
         return eval(ifExpression.condition, env).ifNotError { condition ->
             when {
                 isTruthy(condition) -> eval(ifExpression.consequence, env)
-                ifExpression.alternative != null -> eval(ifExpression.alternative, env)
+                ifExpression.alternative != null -> evalBlockStatement(ifExpression.alternative, env)
                 else -> NULL
             }
         }

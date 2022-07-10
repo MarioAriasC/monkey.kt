@@ -14,8 +14,10 @@ fun main(args: Array<String>) {
         when (args.first()) {
             "vm" -> Benchmarks.vm()
             "vm-fast" -> Benchmarks.vm(Benchmarks.fastInput)
+            "vm-fast2" -> Benchmarks.vm(Benchmarks.fastInput2)
             "eval" -> Benchmarks.eval()
             "eval-fast" -> Benchmarks.eval(Benchmarks.fastInput)
+            "eval-fast2" -> Benchmarks.eval(Benchmarks.fastInput2)
             "kotlin" -> Benchmarks.kotlin()
         }
     }

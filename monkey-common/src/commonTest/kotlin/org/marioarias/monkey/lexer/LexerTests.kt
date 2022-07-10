@@ -1,5 +1,6 @@
 package org.marioarias.monkey.lexer
 
+import org.marioarias.monkey.token.TokenType
 import org.marioarias.monkey.token.TokenType.*
 import kotlin.test.Test
 
@@ -126,10 +127,10 @@ if (5 < 10) {
             EOF to ""
         )
 
-        expected.forEachIndexed { i, (type, literal) ->
+        expected.forEach { (type, literal) ->
             val token = lexer.nextToken()
-            assertEquals(token.type, type, "[$i]")
-            assertEquals(token.literal, literal, "[$i]")
+            assertEquals(token.type, type)
+            assertEquals(token.literal, literal)
         }
     }
 
