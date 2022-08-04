@@ -46,149 +46,186 @@ class MCompiler(
         }
     }
 
+    @Throws(MCompilerException::class)
+    fun compile(program: Program) = program.statements.forEach(this::compile)
 
     @Throws(MCompilerException::class)
-    fun compile(node: Node) {
-//        println("node = ${node::class.simpleName}")
-//        println(currentInstructions())
-        when (node) {
-            is Program -> node.statements.forEach(this::compile)
-            is ExpressionStatement -> {
-                compile(node.expression!!)
-                emit(OpPop)
-            }
-            is InfixExpression -> {
-                if (node.operator == "<") {
-                    compile(node.right!!)
-                    compile(node.left!!)
-                    emit(OpGreaterThan)
-                    return
-                }
-                compile(node.left!!)
-                compile(node.right!!)
-                when (node.operator) {
-                    "+" -> emit(OpAdd)
-                    "-" -> emit(OpSub)
-                    "*" -> emit(OpMul)
-                    "/" -> emit(OpDiv)
-                    ">" -> emit(OpGreaterThan)
-                    "==" -> emit(OpEqual)
-                    "!=" -> emit(OpNotEqual)
-                    else -> throw MCompilerException("unknown operator ${node.operator}")
-                }
-            }
-            is PrefixExpression -> {
-                compile(node.right!!)
-                when (node.operator) {
-                    "!" -> emit(OpBang)
-                    "-" -> emit(OpMinus)
-                    else -> throw MCompilerException("unknown operator ${node.operator}")
-                }
-            }
-            is IntegerLiteral -> emit(OpConstant, addConstant(MInteger(node.value)))
-            is BooleanLiteral -> if (node.value) emit(OpTrue) else emit(OpFalse)
-            is IfExpression -> {
-                compile(node.condition!!)
-                val jumpNotTruthyPos = emit(OpJumpNotTruthy, 9999)
-                compile(node.consequence!!)
-                if (isLastInstructionPop()) {
-                    removeLastPop()
-                }
-                val jumpPos = emit(OpJump, 9999)
+    private fun compile(statement: Statement) {
+        when (statement) {
+            is ExpressionStatement -> compile(statement)
+            is BlockStatement -> compile(statement)
+            is LetStatement -> compile(statement)
+            is ReturnStatement -> compile(statement)
+        }
+    }
 
-                val afterConsequencePos = currentInstructions().size
-                changeOperand(jumpNotTruthyPos, afterConsequencePos)
-                if (node.alternative == null) {
-                    emit(OpNull)
-                } else {
-                    compile(node.alternative)
-                    if (isLastInstructionPop()) {
-                        removeLastPop()
-                    }
-                }
-                val afterAlternativePos = currentInstructions().size
-                changeOperand(jumpPos, afterAlternativePos)
-            }
-            is BlockStatement -> node.statements!!.forEach { statement ->
-                compile(statement!!)
-            }
-            is LetStatement -> {
-                val symbol = symbolTable.define(node.name.value)
-                compile(node.value!!)
-                if (symbol.scope == SymbolScope.GLOBAL) {
-                    emit(OpSetGlobal, symbol.index)
-                } else {
-                    emit(OpSetLocal, symbol.index)
-                }
-            }
-            is Identifier -> {
-                val symbol = symbolTable.resolve(node.value)
-                loadSymbol(symbol)
-            }
-            is StringLiteral -> {
-                val str = MString(node.value)
-                emit(OpConstant, addConstant(str))
-            }
-            is ArrayLiteral -> {
-                node.elements!!.forEach { element ->
-                    compile(element!!)
-                }
-                emit(OpArray, node.elements.size)
-            }
-            is HashLiteral -> {
-                val keys = node.pairs.keys.sortedBy { key -> key.toString() }
-                keys.forEach { key ->
-                    compile(key)
-                    compile(node.pairs[key]!!)
-                }
-                emit(OpHash, node.pairs.size * 2)
-            }
-            is IndexExpression -> {
-                compile(node.left!!)
-                compile(node.index!!)
-                emit(OpIndex)
-            }
-            is FunctionLiteral -> {
-                enterScope()
-                if (node.name.isNotEmpty()) {
-                    symbolTable.defineFunctionName(node.name)
-                }
-                node.parameters?.forEach { parameter ->
-                    symbolTable.define(parameter.value)
-                }
-                compile(node.body!!)
-                if (isLastInstructionPop()) {
-                    replaceLastPopWithReturn()
-                }
-                if (!lastInstructionIs(OpReturnValue)) {
-                    emit(OpReturn)
-                }
+    @Throws(MCompilerException::class)
+    private fun compile(statement: ExpressionStatement) {
+        compile(statement.expression!!)
+        emit(OpPop)
+    }
 
-                val freeSymbols = symbolTable.freeSymbols
+    @Throws(MCompilerException::class)
+    private fun compile(block: BlockStatement) {
+        block.statements!!.forEach { statement ->
+            compile(statement!!)
+        }
+    }
 
-                val numLocals = symbolTable.numDefinitions
-                val instructions = leaveScope()
-                
-                freeSymbols.forEach(this::loadSymbol)
+    @Throws(MCompilerException::class)
+    private fun compile(let: LetStatement) {
+        val symbol = symbolTable.define(let.name.value)
+        compile(let.value!!)
+        if (symbol.scope == SymbolScope.GLOBAL) {
+            emit(OpSetGlobal, symbol.index)
+        } else {
+            emit(OpSetLocal, symbol.index)
+        }
+    }
 
-                val compiledFn = MCompiledFunction(
-                    instructions = instructions,
-                    numLocals = numLocals,
-                    numParameters = node.parameters!!.size
-                )
-                emit(OpClosure, addConstant(compiledFn), freeSymbols.size)
+    @Throws(MCompilerException::class)
+    private fun compile(statement: ReturnStatement) {
+        compile(statement.returnValue!!)
+        emit(OpReturnValue)
+    }
+
+    @Throws(MCompilerException::class)
+    private fun compile(expression: InfixExpression) {
+        if (expression.operator == "<") {
+            compile(expression.right!!)
+            compile(expression.left!!)
+            emit(OpGreaterThan)
+            return
+        }
+        compile(expression.left!!)
+        compile(expression.right!!)
+        when (expression.operator) {
+            "+" -> emit(OpAdd)
+            "-" -> emit(OpSub)
+            "*" -> emit(OpMul)
+            "/" -> emit(OpDiv)
+            ">" -> emit(OpGreaterThan)
+            "==" -> emit(OpEqual)
+            "!=" -> emit(OpNotEqual)
+            else -> throw MCompilerException("unknown operator ${expression.operator}")
+        }
+    }
+
+    @Throws(MCompilerException::class)
+    private fun compile(expression: PrefixExpression) {
+        compile(expression.right!!)
+        when (expression.operator) {
+            "!" -> emit(OpBang)
+            "-" -> emit(OpMinus)
+            else -> throw MCompilerException("unknown operator ${expression.operator}")
+        }
+    }
+
+    @Throws(MCompilerException::class)
+    private fun compile(expression: IfExpression) {
+        compile(expression.condition!!)
+        val jumpNotTruthyPos = emit(OpJumpNotTruthy, 9999)
+        compile(expression.consequence!!)
+        if (isLastInstructionPop()) {
+            removeLastPop()
+        }
+        val jumpPos = emit(OpJump, 9999)
+
+        val afterConsequencePos = currentInstructions().size
+        changeOperand(jumpNotTruthyPos, afterConsequencePos)
+        if (expression.alternative == null) {
+            emit(OpNull)
+        } else {
+            compile(expression.alternative)
+            if (isLastInstructionPop()) {
+                removeLastPop()
             }
-            is ReturnStatement -> {
-                compile(node.returnValue!!)
-                emit(OpReturnValue)
-            }
-            is CallExpression -> {
-                compile(node.function!!)
-                node.arguments!!.forEach { arg ->
-                    compile(arg!!)
-                }
-                emit(OpCall, node.arguments.size)
-            }
+        }
+        val afterAlternativePos = currentInstructions().size
+        changeOperand(jumpPos, afterAlternativePos)
+    }
+
+    @Throws(MCompilerException::class)
+    private fun compile(expression: ArrayLiteral) {
+        expression.elements!!.forEach { element ->
+            compile(element!!)
+        }
+        emit(OpArray, expression.elements.size)
+    }
+
+    @Throws(MCompilerException::class)
+    private fun compile(expression: HashLiteral) {
+        val keys = expression.pairs.keys.sortedBy { key -> key.toString() }
+        keys.forEach { key ->
+            compile(key)
+            compile(expression.pairs[key]!!)
+        }
+        emit(OpHash, expression.pairs.size * 2)
+    }
+
+    @Throws(MCompilerException::class)
+    private fun compile(expression: IndexExpression) {
+        compile(expression.left!!)
+        compile(expression.index!!)
+        emit(OpIndex)
+    }
+
+    @Throws(MCompilerException::class)
+    private fun compile(expression: FunctionLiteral) {
+        enterScope()
+        if (expression.name.isNotEmpty()) {
+            symbolTable.defineFunctionName(expression.name)
+        }
+        expression.parameters?.forEach { parameter ->
+            symbolTable.define(parameter.value)
+        }
+        compile(expression.body!!)
+        if (isLastInstructionPop()) {
+            replaceLastPopWithReturn()
+        }
+        if (!lastInstructionIs(OpReturnValue)) {
+            emit(OpReturn)
+        }
+
+        val freeSymbols = symbolTable.freeSymbols
+
+        val numLocals = symbolTable.numDefinitions
+        val instructions = leaveScope()
+
+        freeSymbols.forEach(this::loadSymbol)
+
+        val compiledFn = MCompiledFunction(
+            instructions = instructions,
+            numLocals = numLocals,
+            numParameters = expression.parameters!!.size
+        )
+        emit(OpClosure, addConstant(compiledFn), freeSymbols.size)
+    }
+
+    @Throws(MCompilerException::class)
+    private fun compile(expression: CallExpression) {
+        compile(expression.function!!)
+        expression.arguments!!.forEach { arg ->
+            compile(arg!!)
+        }
+        emit(OpCall, expression.arguments.size)
+    }
+
+    @Throws(MCompilerException::class)
+    private fun compile(expression: Expression) {
+        when (expression) {
+            is InfixExpression -> compile(expression)
+            is PrefixExpression -> compile(expression)
+            is IntegerLiteral -> emit(OpConstant, addConstant(MInteger(expression.value)))
+            is BooleanLiteral -> if (expression.value) emit(OpTrue) else emit(OpFalse)
+            is IfExpression -> compile(expression)
+            is Identifier -> loadSymbol(symbolTable.resolve(expression.value))
+            is StringLiteral -> emit(OpConstant, addConstant(MString(expression.value)))
+            is ArrayLiteral -> compile(expression)
+            is HashLiteral -> compile(expression)
+            is IndexExpression -> compile(expression)
+            is FunctionLiteral -> compile(expression)
+            is CallExpression -> compile(expression)
         }
     }
 

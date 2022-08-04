@@ -30,11 +30,7 @@ interface Expression : Node {
     override fun tokenLiteral(): String = token.literal
 }
 
-class Program(val statements: List<Statement>) : NodeAdapter(), Node {
-    override fun tokenLiteral(): String {
-        return if (statements.isEmpty()) "" else statements.first().tokenLiteral()
-    }
-
+class Program(val statements: List<Statement>) /*: NodeAdapter(), Node*/ {
     override fun toString(): String {
         return statements.joinToString(separator = "")
     }
