@@ -49,7 +49,7 @@ class MCompiler(
     @Throws(MCompilerException::class)
     fun compile(program: Program) = program.statements.forEach(this::compile)
 
-    @Throws(MCompilerException::class)
+    /*@Throws(MCompilerException::class)
     private fun compile(statement: Statement) {
         when (statement) {
             is ExpressionStatement -> compile(statement)
@@ -57,7 +57,7 @@ class MCompiler(
             is LetStatement -> compile(statement)
             is ReturnStatement -> compile(statement)
         }
-    }
+    }*/
 
     @Throws(MCompilerException::class)
     private fun compile(statement: ExpressionStatement) {
@@ -214,6 +214,10 @@ class MCompiler(
     @Throws(MCompilerException::class)
     private fun compile(expression: Expression) {
         when (expression) {
+            is ExpressionStatement -> compile(expression)
+            is BlockStatement -> compile(expression)
+            is LetStatement -> compile(expression)
+            is ReturnStatement -> compile(expression)
             is InfixExpression -> compile(expression)
             is PrefixExpression -> compile(expression)
             is IntegerLiteral -> emit(OpConstant, addConstant(MInteger(expression.value)))

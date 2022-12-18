@@ -24,11 +24,14 @@ interface Statement : Node {
     override fun tokenLiteral(): String = token.literal
 }
 
-interface Expression : Node {
+/*interface Expression : Node {
     val token: Token
 
     override fun tokenLiteral(): String = token.literal
-}
+}*/
+
+typealias Expression = Statement
+//val let = 1;
 
 class Program(val statements: List<Statement>) /*: NodeAdapter(), Node*/ {
     override fun toString(): String {
@@ -36,11 +39,11 @@ class Program(val statements: List<Statement>) /*: NodeAdapter(), Node*/ {
     }
 }
 
-class Identifier(override val token: Token, val value: String) : NodeAdapter(), Expression {
+/*class Identifier(override val token: Token, val value: String) : NodeAdapter(), Expression {
     override fun toString(): String {
         return value
     }
-}
+}*/
 
 class LetStatement(override val token: Token, val name: Identifier, val value: Expression?) : NodeAdapter(),
     Statement {
@@ -57,9 +60,11 @@ abstract class LiteralExpression<T>(override val token: Token, val value: T) : N
 class IntegerLiteral(token: Token, value: Long) : LiteralExpression<Long>(token, value)
 class BooleanLiteral(token: Token, value: Boolean) : LiteralExpression<Boolean>(token, value)
 
-class StringLiteral(override val token: Token, val value: String) : NodeAdapter(), Expression {
+abstract class StringValue(override val token: Token, val value: String) : NodeAdapter(), Expression {
     override fun toString(): String = value
 }
+class StringLiteral(token: Token, value: String) : StringValue(token, value)
+class Identifier(token: Token, value: String) : StringValue(token, value)
 
 class ReturnStatement(override val token: Token, val returnValue: Expression?) : NodeAdapter(), Statement {
     override fun toString(): String = "${tokenLiteral()} ${returnValue?.toString() ?: ""};"
@@ -104,7 +109,7 @@ class IfExpression(
     val alternative: BlockStatement?
 ) : NodeAdapter(), Expression {
     override fun toString(): String {
-        return "if$condition $consequence ${if (alternative != null) "else $alternative" else ""}"
+        return "if $condition $consequence ${if (alternative != null) "else $alternative" else ""}"
     }
 }
 

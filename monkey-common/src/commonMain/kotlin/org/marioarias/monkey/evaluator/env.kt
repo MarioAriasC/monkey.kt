@@ -2,7 +2,7 @@ package org.marioarias.monkey.evaluator
 
 import org.marioarias.monkey.objects.MObject
 
-class Environment private constructor(val store: MutableMap<String, MObject>, val outer: Environment?) {
+class Environment private constructor(private val store: MutableMap<String, MObject>, private val outer: Environment?) {
     companion object {
         fun newEnvironment(): Environment {
             return Environment(mutableMapOf(), null)

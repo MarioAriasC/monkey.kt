@@ -11,7 +11,18 @@ object Evaluator {
 
     private fun Boolean.toMonkey(): MBoolean = if (this) TRUE else FALSE
 
-    fun eval(program: Program, env: Environment) = evalProgram(program.statements, env)
+    fun eval(program: Program, env: Environment): MObject? {
+        var result: MObject? = null
+        program.statements.forEach { statement ->
+            result = eval(statement, env)
+
+            when (result) {
+                is MReturnValue -> return (result as MReturnValue).value
+                is MError -> return result
+            }
+        }
+        return result
+    }
 
 //    private fun eval(statement: ExpressionStatement, env: Environment) = eval(statement.expression, env)
 
@@ -20,20 +31,24 @@ object Evaluator {
             MReturnValue(value)
         }
 
-    private fun eval(statement: Statement?, env: Environment): MObject? = when (statement) {
+    /*private fun eval(statement: Statement?, env: Environment): MObject? = when (statement) {
         is ExpressionStatement -> eval(statement.expression, env)
         is LetStatement -> eval(statement, env)
         is BlockStatement -> evalBlockStatement(statement, env)
         is ReturnStatement -> eval(statement, env)
         else -> null
-    }
+    }*/
 
     private fun eval(statement: LetStatement, env: Environment) = eval(statement.value, env).ifNotError { value ->
         env.put(statement.name.value, value)
     }
 
     private fun eval(expression: PrefixExpression, env: Environment) = eval(expression.right, env).ifNotError { right ->
-        evalPrefixExpression(expression.operator, right)
+        when (expression.operator) {
+            "!" -> evalBangOperatorExpression(right)
+            "-" -> evalMinusPrefixOperatorExpression(right)
+            else -> MError("Unknown operator: ${expression.operator}${right.typeDesc()}")
+        }
     }
 
     private fun eval(expression: InfixExpression, env: Environment) = eval(expression.left, env).ifNotError { left ->
@@ -79,22 +94,24 @@ object Evaluator {
     }
 
 
-    private fun eval(expression: Expression?, env: Environment): MObject? {
-        return when (expression) {
-            is IntegerLiteral -> MInteger(expression.value)
-            is PrefixExpression -> eval(expression, env)
-            is InfixExpression -> eval(expression, env)
-            is BooleanLiteral -> expression.value.toMonkey()
-            is IfExpression -> evalIfExpression(expression, env)
-            is Identifier -> evalIdentifier(expression, env)
-            is FunctionLiteral -> MFunction(expression.parameters, expression.body, env)
-            is CallExpression -> eval(expression, env)
-            is StringLiteral -> MString(expression.value)
-            is ArrayLiteral -> eval(expression, env)
-            is IndexExpression -> eval(expression, env)
-            is HashLiteral -> evalHashLiteral(expression, env)
-            else -> null
-        }
+    private fun eval(expression: Expression?, env: Environment): MObject? = when (expression) {
+        is ExpressionStatement -> eval(expression.expression, env)
+        is LetStatement -> eval(expression, env)
+        is BlockStatement -> evalBlockStatement(expression, env)
+        is ReturnStatement -> eval(expression, env)
+        is IntegerLiteral -> MInteger(expression.value)
+        is PrefixExpression -> eval(expression, env)
+        is InfixExpression -> eval(expression, env)
+        is BooleanLiteral -> expression.value.toMonkey()
+        is IfExpression -> evalIfExpression(expression, env)
+        is Identifier -> evalIdentifier(expression, env)
+        is StringLiteral -> MString(expression.value)
+        is FunctionLiteral -> MFunction(expression.parameters, expression.body, env)
+        is CallExpression -> eval(expression, env)
+        is ArrayLiteral -> eval(expression, env)
+        is IndexExpression -> eval(expression, env)
+        is HashLiteral -> evalHashLiteral(expression, env)
+        else -> null
     }
 
     private fun evalHashLiteral(node: HashLiteral, env: Environment): MObject? {
@@ -114,6 +131,7 @@ object Evaluator {
                     }
                     pairs[key.hashKey()] = HashPair(key, value!!)
                 }
+
                 else -> return MError("unusable as hash key: ${key.typeDesc()}")
             }
         }
@@ -126,6 +144,7 @@ object Evaluator {
                 left,
                 index
             )
+
             left is MHash -> evalHashIndexExpression(left, index!!)
             else -> MError("index operator not supported: ${left.typeDesc()}")
         }
@@ -137,6 +156,7 @@ object Evaluator {
                 val pair = hash.pairs[index.hashKey()]
                 pair?.value ?: NULL
             }
+
             else -> MError("unusable as a hash key: ${index.typeDesc()}")
         }
     }
@@ -158,20 +178,15 @@ object Evaluator {
         return when (function) {
             is MFunction -> {
                 val extendEnv = extendFunctionEnv(function, args)
-                val evaluated = eval(function.body, extendEnv)
-                unwrapReturnValue(evaluated)
+                when (val evaluated = eval(function.body, extendEnv)) {
+                    is MReturnValue -> evaluated.value
+                    else -> evaluated
+                }
             }
-            is MBuiltinFunction -> {
-                function.fn(args) ?: MNull
-            }
-            else -> MError("not a function: ${function.typeDesc()}")
-        }
-    }
 
-    private fun unwrapReturnValue(obj: MObject?): MObject? {
-        return when (obj) {
-            is MReturnValue -> obj.value
-            else -> obj
+            is MBuiltinFunction -> function.fn(args) ?: MNull
+
+            else -> MError("not a function: ${function.typeDesc()}")
         }
     }
 
@@ -189,16 +204,14 @@ object Evaluator {
         false
     }
 
-    private fun evalExpressions(arguments: List<Expression?>?, env: Environment): List<MObject?> {
-        return arguments!!.map { argument ->
+    private fun evalExpressions(arguments: List<Expression?>?, env: Environment): List<MObject?> =
+        arguments!!.map { argument ->
             val evaluated = eval(argument, env)
             if (evaluated.isError()) {
                 return listOf(evaluated)
             }
             evaluated
         }
-
-    }
 
     private fun evalIdentifier(node: Identifier, env: Environment): MObject {
         return when (val value = env[node.value]) {
@@ -208,6 +221,7 @@ object Evaluator {
                     else -> builtin
                 }
             }
+
             else -> value
         }
     }
@@ -219,8 +233,8 @@ object Evaluator {
             result = eval(statement, env)
 
             if (result != null) {
-                val type = (result as MObject)
-                if (type is MReturnValue || type is MError) {
+                //val type = (result as MObject)
+                if (result is MReturnValue || result is MError) {
                     return result
                 }
             }
@@ -230,7 +244,7 @@ object Evaluator {
 
     private fun evalIfExpression(ifExpression: IfExpression, env: Environment): MObject? {
 
-        fun isTruthy(obj: MObject?): Boolean {
+        fun isTruthy(obj: MObject): Boolean {
             return when (obj) {
                 NULL -> false
                 TRUE -> true
@@ -241,7 +255,7 @@ object Evaluator {
 
         return eval(ifExpression.condition, env).ifNotError { condition ->
             when {
-                isTruthy(condition) -> eval(ifExpression.consequence, env)
+                isTruthy(condition) -> evalBlockStatement(ifExpression.consequence!!, env)
                 ifExpression.alternative != null -> evalBlockStatement(ifExpression.alternative, env)
                 else -> NULL
             }
@@ -256,23 +270,12 @@ object Evaluator {
                 left,
                 right
             )
+
             operator == "==" -> (left == right).toMonkey()
             operator == "!=" -> (left != right).toMonkey()
             left.typeDesc() != right.typeDesc() -> MError("type mismatch: ${left.typeDesc()} $operator ${right.typeDesc()}")
-            left is MString && right is MString -> evalStringInfixExpression(
-                operator,
-                left,
-                right
-            )
+            left is MString && right is MString && operator == "+" -> left + right
             else -> MError("unknown operator: ${left.typeDesc()} $operator ${right.typeDesc()}")
-        }
-    }
-
-    private fun evalStringInfixExpression(operator: String, left: MString, right: MString): MObject {
-        return if (operator != "+") {
-            MError("unknown operator: ${left.typeDesc()} $operator ${right.typeDesc()}")
-        } else {
-            left + right
         }
     }
 
@@ -287,14 +290,6 @@ object Evaluator {
             "==" -> (left == right).toMonkey()
             "!=" -> (left != right).toMonkey()
             else -> MError("unknown operator: ${left.typeDesc()} $operator ${right.typeDesc()}")
-        }
-    }
-
-    private fun evalPrefixExpression(operator: String, right: MObject): MObject {
-        return when (operator) {
-            "!" -> evalBangOperatorExpression(right)
-            "-" -> evalMinusPrefixOperatorExpression(right)
-            else -> MError("Unknown operator: $operator${right.typeDesc()}")
         }
     }
 
@@ -320,22 +315,10 @@ object Evaluator {
                 is MError -> this
                 else -> body(this)
             }
+
             else -> this
         }
     }
 
 
-    private fun evalProgram(statements: List<Statement>, env: Environment): MObject? {
-        var result: MObject? = null
-
-        statements.forEach { statement ->
-            result = eval(statement, env)
-
-            when (result) {
-                is MReturnValue -> return (result as MReturnValue).value
-                is MError -> return result
-            }
-        }
-        return result
-    }
 }

@@ -606,6 +606,32 @@ fibonacci(15);
         ).runVmTests()
     }
 
+    @Test
+        fun `cached fibonacci`() {
+            listOf(
+                VTC(
+                    """
+let fibRec = fn(n, buf) {
+  if(n > 2) {
+    let res = buf[0] + buf[1];
+    return fibRec(n - 1, [res, buf[0]]);  
+  }
+  return buf;
+}                        
+                        
+                        
+let fibonacci = fn(x) {
+  let res = [1,1]
+  return fibRec(x, res)[0]
+}
+
+fibonacci(15);
+                            
+            """.trimIndent(), 610
+                )
+            ).runVmTests()
+        }
+
     private fun <T> List<VTC<out T>>.runVmTests() {
         forEach { (input, expected) ->
             val program = parse(input)

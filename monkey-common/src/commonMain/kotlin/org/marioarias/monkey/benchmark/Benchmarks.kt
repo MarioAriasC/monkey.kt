@@ -50,6 +50,23 @@ let fibonacci = fn(x) {
 fibonacci(35);        
     """
 
+    const val cached = """
+    let fibRec = fn(n, buf) {
+      if(n > 2) {
+        let res = buf[0] + buf[1];
+        return fibRec(n - 1, [res, buf[0]]);  
+      }
+      return buf;
+    }                        
+                            
+                            
+    let fibonacci = fn(x) {
+      let res = [1,1]
+      return fibRec(x, res)[0]
+    }
+    
+    fibonacci(35);"""
+
     private fun parse(input: String): Program {
         val lexer = Lexer(input)
         val parser = Parser(lexer)
@@ -73,7 +90,6 @@ fibonacci(35);
     }
 
 
-
     fun eval(input: String = this.slowInput) {
         val end = Environment.newEnvironment()
         measure("eval") {
@@ -87,14 +103,40 @@ fibonacci(35);
         }
     }
 
+    fun kotlinRec() {
+        measure("kotlin") {
+            fibonacci2()
+        }
+    }
+
     private fun fibonacci(): MInteger {
         fun step(x: Long): Long {
+//            println(x)
             return when (x) {
                 0L -> 0L
                 1L -> 1L
                 else -> step(x - 1) + step(x - 2)
             }
         }
+        return MInteger(step(35))
+    }
+
+    private fun fibonacci2(): MInteger {
+        fun stepRec(x: Long, buf: LongArray): LongArray {
+//            print(x)
+//            println(buf.toList())
+            if (x > 2) {
+                val res = buf[0] + buf[1]
+                return stepRec(x - 1, longArrayOf(res, buf[0]))
+            }
+            return buf
+        }
+
+
+        fun step(x: Long): Long {
+            return stepRec(x, longArrayOf(1, 1))[0]
+        }
+
         return MInteger(step(35))
     }
 }

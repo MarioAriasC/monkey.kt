@@ -232,9 +232,7 @@ class Parser(private val lexer: Lexer) {
 
         while (!peekTokenIs(TokenType.SEMICOLON) && precedence < peekPrecedence()) {
             val infix = infixParsers[peekToken.type] ?: return left
-
             nextToken()
-
             left = infix(left)
         }
 

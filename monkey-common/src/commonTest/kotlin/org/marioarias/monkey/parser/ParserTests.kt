@@ -88,24 +88,12 @@ class ParserTests {
         countStatements(1, program)
 
         checkType(program.statements.first()) { statement: ExpressionStatement ->
-            when (val literal = statement.expression) {
-                is IntegerLiteral -> {
-                    assertEquals(5.toLong(), literal.value, "identifier.value not 5. got=${literal.value}")
-                    assertEquals(
-                        "5",
-                        literal.tokenLiteral(),
-                        "identifier.tokenLiteral() not '5'. got=${literal.tokenLiteral()}"
-                    )
-                }
-                else -> {
-                    fail("statement.expression not IntegerLiteral. got=${literal!!::class.simpleName}")
-                }
-            }
+            testLongLiteral(statement.expression, 5.toLong())
         }
     }
 
     @Test
-    fun `parsing prefix expressions`() {      
+    fun `parsing prefix expressions`() {
         val tests = listOf(
             Triple("!5;", "!", 5),
             Triple("-15;", "-", 15),
@@ -133,7 +121,7 @@ class ParserTests {
 
     @Test
     fun `parsing infix expressions`() {
-        data class TestData<L, R>(val input: String, val leftValue: L, val operator: String, val rightValue: R)
+        data class TestData<T>(val input: String, val leftValue: T, val operator: String, val rightValue: T)
 
         val tests = listOf(
             TestData("5 + 5;", 5, "+", 5),
@@ -263,8 +251,8 @@ class ParserTests {
                 testInfixExpression(exp.condition, "x", "<", "y")
 
                 assertEquals(
-                    exp.consequence?.statements?.size,
                     1,
+                    exp.consequence?.statements?.size,
                     "Consequences does not contain 1 statement. got=${exp.consequence?.statements?.size}"
                 )
 
@@ -351,11 +339,12 @@ class ParserTests {
             checkType(statement.expression) { exp: CallExpression ->
                 testIdentifier(exp.function, "add")
 
-                assertEquals(exp.arguments?.size, 3, "wrong length of arguments. got=${exp.arguments?.size}")
+                val arguments = exp.arguments
+                assertEquals(arguments!!.size, 3, "wrong length of arguments. got=${exp.arguments?.size}")
 
-                testLiteralExpression(exp.arguments?.get(0), 1)
-                testInfixExpression(exp.arguments?.get(1), 2, "*", 3)
-                testInfixExpression(exp.arguments?.get(2), 4, "+", 5)
+                testLiteralExpression(arguments[0], 1)
+                testInfixExpression(arguments[1], 2, "*", 3)
+                testInfixExpression(arguments[2], 4, "+", 5)
 
             }
         }
@@ -506,6 +495,13 @@ class ParserTests {
     }
 
     private fun createProgram(input: String): Program {
+        fun checkParserErrors(parser: Parser) {
+            val errors = parser.errors()
+            if (errors.isNotEmpty()) {
+                fail("parser has ${errors.size} errors: \n${errors.joinToString(" \n")}")
+            }
+        }
+
         val lexer = Lexer(input)
         val parser = Parser(lexer)
         val program = parser.parseProgram()
@@ -513,12 +509,5 @@ class ParserTests {
         return program
     }
 
-    private fun checkParserErrors(parser: Parser) {
-        val errors = parser.errors()
-        if (errors.isNotEmpty()) {
-            fail("parser has ${errors.size} errors: \n${errors.joinToString(" \n")}")
-        }
 
-
-    }
 }

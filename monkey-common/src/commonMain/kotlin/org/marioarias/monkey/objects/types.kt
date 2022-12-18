@@ -109,7 +109,7 @@ class MBuiltinFunction(val fn: BuiltinFunction) : MObject {
 }
 
 class MArray(val elements: List<MObject?>) : MObject {
-    override fun inspect(): String = "[${elements.joinToString(separator = ", ")}]"
+    override fun inspect(): String = "[${elements.joinToString()}]"
 }
 
 enum class HashType {

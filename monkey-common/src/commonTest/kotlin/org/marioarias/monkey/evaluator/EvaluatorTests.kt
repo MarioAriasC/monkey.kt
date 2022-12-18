@@ -93,7 +93,8 @@ class EvaluatorTests {
 
     @Test
     fun `if else expression`() {
-        val tests = listOf(
+
+        listOf(
             TestData("if (true) { 10 }", 10),
             TestData("if (false) { 10 }", null),
             TestData("if (1) { 10 }", 10),
@@ -101,14 +102,12 @@ class EvaluatorTests {
             TestData("if (1 > 2) { 10 }", null),
             TestData("if (1 > 2) { 10 } else { 20 }", 20),
             TestData("if (1 < 2) { 10 } else { 20 }", 10),
-        )
-
-        tests.forEach { (input, expected) ->
+        ).forEach { (input, expected) ->
             val evaluated = testEval(input)
             if (expected != null) {
                 testObject<MInteger, Long>(evaluated, expected.toLong())
             } else {
-                testNullObject(evaluated)
+                assertEquals(Evaluator.NULL, evaluated)
             }
         }
     }
@@ -312,11 +311,15 @@ class EvaluatorTests {
 //            println("input = ${input}")
             val evaluated = testEval(input)
             when (expected) {
-                null -> testNullObject(evaluated)
+                null -> {
+                    assertEquals(Evaluator.NULL, evaluated)
+                }
+
                 is Int -> testObject<MInteger, Long>(evaluated, expected.toLong())
                 is String -> checkType(evaluated) { error: MError ->
                     assertEquals(error.message, expected)
                 }
+
                 is IntArray -> checkType(evaluated) { array: MArray ->
                     assertEquals(expected.size, array.elements.size)
                     expected.forEachIndexed { i, element ->
@@ -387,7 +390,9 @@ class EvaluatorTests {
             val evaluated = testEval(input)
             when (expected) {
                 is Int -> testObject<MInteger, Long>(evaluated, expected.toLong())
-                else -> testNullObject(evaluated)
+                else -> {
+                    assertEquals(Evaluator.NULL, evaluated)
+                }
             }
         }
     }
@@ -444,17 +449,10 @@ class EvaluatorTests {
             val evaluated = testEval(input)
             when (expected) {
                 is Long -> testObject(evaluated, expected)
-                else -> testNullObject(evaluated)
+                else -> {
+                    assertEquals(Evaluator.NULL, evaluated)
+                }
             }
-        }
-    }
-
-    private fun testNullObject(obj: MObject?): Boolean {
-        return if (obj != Evaluator.NULL) {
-            fail("object is not NULL, got=${obj.typeDesc()} ($obj)")
-
-        } else {
-            true
         }
     }
 

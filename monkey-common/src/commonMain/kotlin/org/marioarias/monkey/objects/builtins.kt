@@ -10,11 +10,11 @@ private fun argSizeCheck(expectedSize: Int, args: List<MObject?>, body: BuiltinF
 }
 
 private fun arrayCheck(builtinName: String, args: List<MObject?>, body: (MArray, Int) -> MObject?): MObject? {
-    return if (args.first() !is MArray) {
-        MError("argument to `$builtinName` must be ARRAY, got ${args.first().typeDesc()}")
+    val first = args.first()
+    return if (first !is MArray) {
+        MError("argument to `$builtinName` must be ARRAY, got ${first.typeDesc()}")
     } else {
-        val array = args.first() as MArray
-        body(array, array.elements.size)
+        body(first, first.elements.size)
     }
 }
 
