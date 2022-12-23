@@ -16,6 +16,7 @@ class VM(bytecode: Bytecode, private val globals: MutableList<MObject> = mutable
     private val frames = Array<Frame?>(MAX_FRAME_SIZE) { null }
     private var sp: Int = 0
     private var frameIndex: Int = 1
+    private var memoizedFrame: Frame? = null
 
     init {
         val mainFn = MCompiledFunction(bytecode.instructions)
@@ -26,15 +27,24 @@ class VM(bytecode: Bytecode, private val globals: MutableList<MObject> = mutable
     }
 
 
-    private fun currentFrame(): Frame = frames[frameIndex - 1]!!
+    private fun currentFrame(): Frame {
+        if (memoizedFrame != null) {
+            return memoizedFrame!!
+        }
+        val frame = frames[frameIndex - 1]!!
+        memoizedFrame = frame
+        return frame
+    }
 
     private fun pushFrame(frame: Frame) {
         frames[frameIndex] = frame
+        memoizedFrame = null
         frameIndex++
     }
 
     private fun popFrame(): Frame {
         frameIndex--
+        memoizedFrame = null
         return frames[frameIndex]!!
     }
 
@@ -68,6 +78,7 @@ class VM(bytecode: Bytecode, private val globals: MutableList<MObject> = mutable
                     currentFrame().ip += 2
                     push(constants[constIndex])
                 }
+
                 OpAdd, OpSub, OpMul, OpDiv -> executeBinaryOperation(op)
                 OpTrue -> push(True)
                 OpFalse -> push(False)
@@ -79,11 +90,13 @@ class VM(bytecode: Bytecode, private val globals: MutableList<MObject> = mutable
                     Null -> push(True)
                     else -> push(False)
                 }
+
                 OpMinus -> executeMinusOperator()
                 OpJump -> {
                     val pos = ins.readInt(ip + 1)
                     currentFrame().ip = pos - 1
                 }
+
                 OpJumpNotTruthy -> {
                     val pos = ins.readInt(ip + 1)
                     currentFrame().ip += 2
@@ -92,17 +105,20 @@ class VM(bytecode: Bytecode, private val globals: MutableList<MObject> = mutable
                         currentFrame().ip = pos - 1
                     }
                 }
+
                 OpNull -> push(Null)
                 OpSetGlobal -> {
                     val globalIndex = ins.readInt(ip + 1)
                     currentFrame().ip += 2
                     globals.add(globalIndex, pop()!!)
                 }
+
                 OpGetGlobal -> {
                     val globalIndex = ins.readInt(ip + 1)
                     currentFrame().ip += 2
                     push(globals[globalIndex])
                 }
+
                 OpArray -> buildAndPush(ins, ip, ::buildArray)
                 OpHash -> buildAndPush(ins, ip, ::buildHash)
                 OpIndex -> {
@@ -110,52 +126,61 @@ class VM(bytecode: Bytecode, private val globals: MutableList<MObject> = mutable
                     val left = pop()
                     executeIndexExpression(left!!, index!!)
                 }
+
                 OpCall -> {
                     val numArgs = ins.readByte(ip + 1)
                     currentFrame().ip++
                     executeCall(numArgs.toInt())
                 }
+
                 OpReturnValue -> {
                     val returnValue = pop()
                     val frame = popFrame()
                     sp = frame.basePointer - 1
                     push(returnValue!!)
                 }
+
                 OpReturn -> {
                     val frame = popFrame()
                     sp = frame.basePointer - 1
                     push(Null)
                 }
+
                 OpSetLocal -> {
                     val localIndex = ins.readByte(ip + 1)
                     currentFrame().ip++
                     val frame = currentFrame()
                     stack[frame.basePointer + localIndex.toInt()] = pop()
                 }
+
                 OpGetLocal -> {
                     val localIndex = ins.readByte(ip + 1)
                     currentFrame().ip++
                     val frame = currentFrame()
                     push(stack[frame.basePointer + localIndex.toInt()]!!)
                 }
+
                 OpGetBuiltin -> {
                     val builtIndex = ins.readByte(ip + 1)
                     currentFrame().ip++
                     val (_, definition) = builtins[builtIndex.toInt()]
                     push(definition)
                 }
+
                 OpClosure -> {
                     val constIndex = ins.readInt(ip + 1)
                     val numFree = ins.readByte(ip + 3)
                     currentFrame().ip += 3
                     pushClosure(constIndex, numFree.toInt())
                 }
+
                 OpGetFree -> {
                     val freeIndex = ins.readByte(ip + 1)
                     currentFrame().ip++
                     val currentClosure = currentFrame().cl
                     push(currentClosure.free[freeIndex.toInt()])
                 }
+
                 OpCurrentClosure -> {
                     val currentClosure = currentFrame().cl
                     push(currentClosure)
@@ -184,6 +209,7 @@ class VM(bytecode: Bytecode, private val globals: MutableList<MObject> = mutable
                 val closure = MClosure(constant, free)
                 push(closure)
             }
+
             else -> throw VMException("not a function $constant")
         }
     }
@@ -232,6 +258,7 @@ class VM(bytecode: Bytecode, private val globals: MutableList<MObject> = mutable
                     else -> push(pair.value)
                 }
             }
+
             else -> throw VMException("unusable as hash key: ${index.typeDesc()}")
         }
     }
