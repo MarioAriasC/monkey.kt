@@ -16,7 +16,8 @@ class VM(bytecode: Bytecode, private val globals: MutableList<MObject> = mutable
     private val frames = Array<Frame?>(MAX_FRAME_SIZE) { null }
     private var sp: Int = 0
     private var frameIndex: Int = 1
-    private var memoizedFrame: Frame? = null
+    private lateinit var memoizedFrame: Frame
+    private var memoized = false
 
     init {
         val mainFn = MCompiledFunction(bytecode.instructions)
@@ -28,23 +29,23 @@ class VM(bytecode: Bytecode, private val globals: MutableList<MObject> = mutable
 
 
     private fun currentFrame(): Frame {
-        if (memoizedFrame != null) {
-            return memoizedFrame!!
+        if (memoized) {
+            return memoizedFrame
         }
-        val frame = frames[frameIndex - 1]!!
-        memoizedFrame = frame
-        return frame
+        memoizedFrame = frames[frameIndex - 1]!!
+        memoized = true
+        return memoizedFrame
     }
 
     private fun pushFrame(frame: Frame) {
         frames[frameIndex] = frame
-        memoizedFrame = null
+        memoized = false
         frameIndex++
     }
 
     private fun popFrame(): Frame {
         frameIndex--
-        memoizedFrame = null
+        memoized = false
         return frames[frameIndex]!!
     }
 
