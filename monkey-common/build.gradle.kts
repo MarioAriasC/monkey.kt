@@ -27,7 +27,7 @@ kotlin {
     jvm {
         compilations.all {
             kotlinOptions {
-                jvmTarget = "11"
+                jvmTarget = "19"
                 freeCompilerArgs = freeCompilerArgs + "-opt-in=kotlin.RequiresOptIn"
             }
         }
