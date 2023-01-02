@@ -36,6 +36,10 @@ kotlin {
         }
     }
 
+    js(IR) {
+        nodejs()
+    }
+
     sourceSets {
         val jvmMain by getting
         val jvmTest by getting {
