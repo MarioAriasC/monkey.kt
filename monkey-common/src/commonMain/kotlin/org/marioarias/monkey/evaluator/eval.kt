@@ -13,11 +13,11 @@ object Evaluator {
 
     fun eval(program: Program, env: Environment): MObject? {
         var result: MObject? = null
-        program.statements.forEach { statement ->
+        for (statement in program.statements) {
             result = eval(statement, env)
 
             when (result) {
-                is MReturnValue -> return (result as MReturnValue).value
+                is MReturnValue -> return result.value
                 is MError -> return result
             }
         }
@@ -229,13 +229,15 @@ object Evaluator {
     private fun evalBlockStatement(node: BlockStatement, env: Environment): MObject? {
         var result: MObject? = null
 
-        node.statements?.forEach { statement ->
-            result = eval(statement, env)
+        if (node.statements != null) {
+            for (statement in node.statements) {
+                result = eval(statement, env)
 
-            if (result != null) {
-                //val type = (result as MObject)
-                if (result is MReturnValue || result is MError) {
-                    return result
+                if (result != null) {
+                    //val type = (result as MObject)
+                    if (result is MReturnValue || result is MError) {
+                        return result
+                    }
                 }
             }
         }
