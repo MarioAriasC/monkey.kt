@@ -1,12 +1,9 @@
 import org.marioarias.monkey.benchmark.Benchmarks
 
+external val process: dynamic
 fun main() {
-    Benchmarks.vm(Benchmarks.fastInput)
-    /*if (args.isEmpty()) {
-        println("Hello, this is the monkey.kt programming language")
-        println("Kotlin JS implementation")
-        println("REPL isn't implemented for JS")
-    } else {
+    val args = process.argv.slice(2) as Array<String>
+    if (args.isNotEmpty()) {
         when (args.first()) {
             "vm" -> Benchmarks.vm()
             "vm-fast" -> Benchmarks.vm(Benchmarks.fastInput)
@@ -14,5 +11,5 @@ fun main() {
             "eval-fast" -> Benchmarks.eval(Benchmarks.fastInput)
             "kotlin" -> Benchmarks.kotlin()
         }
-    }*/
+    }
 }

@@ -31,14 +31,15 @@ branch [eval-macros](https://github.com/MarioAriasC/monkey.kt/tree/eval-macros)
 
 ## Execution
 
-There are three different executable environments, JVM, GraalVM Native Image and Native. Each executable has 3 different
+There are four different executable environments, JVM, GraalVM Native Image, Native and JavaScript Each executable has 3 different
 shell scripts, `build`, `repl`, `benchmarks`
 
-| Executable environment | Build             | REPL             | Benchmarks             |
-|------------------------|-------------------|------------------|------------------------|
-| JVM                    | `build-jvm.sh`    | `repl-jvm.sh`    | `benchmarks-jvm.sh`    |
-| Graal                  | `build-graal.sh`  | `repl-graal.sh`  | `benchmarks-graal.sh`  |
-| Native                 | `build-native.sh` | `repl-native.sh` | `benchmarks-native.sh` |
+| Executable environment | Build             | REPL             | Benchmarks                                  |
+|------------------------|-------------------|------------------|---------------------------------------------|
+| JVM                    | `build-jvm.sh`    | `repl-jvm.sh`    | `benchmarks-jvm.sh`                         |
+| Graal                  | `build-graal.sh`  | `repl-graal.sh`  | `benchmarks-graal.sh`                       |
+| Native                 | `build-native.sh` | `repl-native.sh` | `benchmarks-native.sh`                      |
+| JavaScript             | `build-js.sh`     | NA               | `benchmarks-node.sh` or `benchmarks-bun.sh` |
 
 You must run the `build-[ENV].sh` before running `repl-[ENV].sh` or `benchmarks-[ENV].sh`
 
@@ -78,8 +79,6 @@ $ ./repl-graal.sh
                  
 ### Kotlin Native
 
-**WARNING:** The execution with Kotlin native is failing with a Segmentation Fault error. Once I managed to fix it I'll delete this note.
-
 For *nix systems, run the following command:
 
 ```shell
@@ -91,6 +90,16 @@ And then:
 ```shell
 $ ./repl-native.sh
 ```
+
+### Kotlin JS
+
+For *nix systems, run the following command:
+
+```shell
+$ ./build-js.sh
+```
+
+The JS REPL is not working at the moment. But you can still run the benchmarks using [Node](https://nodejs.org/en/) or [Bun](https://bun.sh/) (Must be installed before hand)
 
 # Benchmarks
 
