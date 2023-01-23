@@ -26,11 +26,6 @@ object Evaluator {
 
 //    private fun eval(statement: ExpressionStatement, env: Environment) = eval(statement.expression, env)
 
-    private fun eval(statement: ReturnStatement, env: Environment) =
-        eval(statement.returnValue, env).ifNotError { value ->
-            MReturnValue(value)
-        }
-
     /*private fun eval(statement: Statement?, env: Environment): MObject? = when (statement) {
         is ExpressionStatement -> eval(statement.expression, env)
         is LetStatement -> eval(statement, env)
@@ -39,43 +34,6 @@ object Evaluator {
         else -> null
     }*/
 
-    private fun eval(statement: LetStatement, env: Environment) = eval(statement.value, env).ifNotError { value ->
-        env.put(statement.name.value, value)
-    }
-
-    private fun eval(expression: PrefixExpression, env: Environment) = eval(expression.right, env).ifNotError { right ->
-        when (expression.operator) {
-            "!" -> evalBangOperatorExpression(right)
-            "-" -> evalMinusPrefixOperatorExpression(right)
-            else -> MError("Unknown operator: ${expression.operator}${right.typeDesc()}")
-        }
-    }
-
-    private fun eval(expression: InfixExpression, env: Environment) = eval(expression.left, env).ifNotError { left ->
-        eval(expression.right, env).ifNotError { right ->
-            evalInfixExpression(expression.operator, left, right)
-        }
-    }
-
-
-    private fun eval(expression: CallExpression, env: Environment) =
-        eval(expression.function, env).ifNotError { function ->
-            val args = evalExpressions(expression.arguments, env)
-            if (args.size == 1 && args.first().isError()) {
-                args.first()
-            } else {
-                applyFunction(function, args)
-            }
-        }
-
-    private fun eval(literal: ArrayLiteral, env: Environment): MObject? {
-        val elements = evalExpressions(literal.elements, env)
-        return if (elements.size == 1 && elements.first().isError()) {
-            elements.first()
-        } else {
-            MArray(elements)
-        }
-    }
 
     private fun eval(expression: IndexExpression, env: Environment): MObject? {
         val left = eval(expression.left, env)
@@ -95,47 +53,105 @@ object Evaluator {
 
 
     private fun eval(expression: Expression?, env: Environment): MObject? = when (expression) {
-        is ExpressionStatement -> eval(expression.expression, env)
-        is LetStatement -> eval(expression, env)
-        is BlockStatement -> evalBlockStatement(expression, env)
-        is ReturnStatement -> eval(expression, env)
-        is IntegerLiteral -> MInteger(expression.value)
-        is PrefixExpression -> eval(expression, env)
-        is InfixExpression -> eval(expression, env)
-        is BooleanLiteral -> expression.value.toMonkey()
-        is IfExpression -> evalIfExpression(expression, env)
-        is Identifier -> evalIdentifier(expression, env)
-        is StringLiteral -> MString(expression.value)
-        is FunctionLiteral -> MFunction(expression.parameters, expression.body, env)
-        is CallExpression -> eval(expression, env)
-        is ArrayLiteral -> eval(expression, env)
-        is IndexExpression -> eval(expression, env)
-        is HashLiteral -> evalHashLiteral(expression, env)
-        else -> null
-    }
-
-    private fun evalHashLiteral(node: HashLiteral, env: Environment): MObject? {
-
-        val pairs = mutableMapOf<HashKey, HashPair>()
-
-        node.pairs.forEach { (keyNode, valueNode) ->
-            val key = eval(keyNode, env)
-            if (key.isError()) {
-                return key
-            }
-            when (key) {
-                is Hashable<*> -> {
-                    val value = eval(valueNode, env)
-                    if (value.isError()) {
-                        return value
-                    }
-                    pairs[key.hashKey()] = HashPair(key, value!!)
+        is Identifier -> when (val value = env[expression.value]) {
+            null -> {
+                when (val builtin = builtins[expression.value]) {
+                    null -> MError("identifier not found: ${expression.value}")
+                    else -> builtin
                 }
+            }
 
-                else -> return MError("unusable as hash key: ${key.typeDesc()}")
+            else -> value
+        }
+
+        is IntegerLiteral -> MInteger(expression.value)
+        is InfixExpression -> eval(expression.left, env).ifNotError { left ->
+            eval(expression.right, env).ifNotError { right ->
+                evalInfixExpression(expression.operator, left, right)
             }
         }
-        return MHash(pairs)
+
+        is BlockStatement -> evalBlockStatement(expression, env)
+        is ExpressionStatement -> eval(expression.expression, env)
+        is IfExpression -> {
+            fun isTruthy(obj: MObject): Boolean {
+                return when (obj) {
+                    NULL -> false
+                    TRUE -> true
+                    FALSE -> false
+                    else -> true
+                }
+            }
+            eval(expression.condition, env).ifNotError { condition ->
+                when {
+                    isTruthy(condition) -> evalBlockStatement(expression.consequence!!, env)
+                    expression.alternative != null -> evalBlockStatement(expression.alternative, env)
+                    else -> NULL
+                }
+            }
+        }
+
+        is CallExpression -> eval(expression.function, env).ifNotError { function ->
+            val args = evalExpressions(expression.arguments, env)
+            if (args.size == 1 && args.first().isError()) {
+                args.first()
+            } else {
+                applyFunction(function, args)
+            }
+        }
+
+        is ReturnStatement -> eval(expression.returnValue, env).ifNotError { value ->
+            MReturnValue(value)
+        }
+
+        is PrefixExpression -> eval(expression.right, env).ifNotError { right ->
+            when (expression.operator) {
+                "!" -> evalBangOperatorExpression(right)
+                "-" -> evalMinusPrefixOperatorExpression(right)
+                else -> MError("Unknown operator: ${expression.operator}${right.typeDesc()}")
+            }
+        }
+
+        is BooleanLiteral -> expression.value.toMonkey()
+        is LetStatement -> eval(expression.value, env).ifNotError { value ->
+            env.put(expression.name.value, value)
+        }
+
+        is FunctionLiteral -> MFunction(expression.parameters, expression.body, env)
+        is StringLiteral -> MString(expression.value)
+        is ArrayLiteral -> {
+            val elements = evalExpressions(expression.elements, env)
+            if (elements.size == 1 && elements.first().isError()) {
+                elements.first()
+            } else {
+                MArray(elements)
+            }
+        }
+
+        is IndexExpression -> eval(expression, env)
+        is HashLiteral -> {
+            val pairs = mutableMapOf<HashKey, HashPair>()
+            expression.pairs.forEach { (keyNode, valueNode) ->
+                val key = eval(keyNode, env)
+                if (key.isError()) {
+                    return key
+                }
+                when (key) {
+                    is Hashable<*> -> {
+                        val value = eval(valueNode, env)
+                        if (value.isError()) {
+                            return value
+                        }
+                        pairs[key.hashKey()] = HashPair(key, value!!)
+                    }
+
+                    else -> return MError("unusable as hash key: ${key.typeDesc()}")
+                }
+            }
+            MHash(pairs)
+        }
+
+        else -> null
     }
 
     private fun evalIndexExpression(left: MObject?, index: MObject?): MObject? {
@@ -213,19 +229,6 @@ object Evaluator {
             evaluated
         }
 
-    private fun evalIdentifier(node: Identifier, env: Environment): MObject {
-        return when (val value = env[node.value]) {
-            null -> {
-                when (val builtin = builtins[node.value]) {
-                    null -> MError("identifier not found: ${node.value}")
-                    else -> builtin
-                }
-            }
-
-            else -> value
-        }
-    }
-
     private fun evalBlockStatement(node: BlockStatement, env: Environment): MObject? {
         var result: MObject? = null
 
@@ -242,26 +245,6 @@ object Evaluator {
             }
         }
         return result
-    }
-
-    private fun evalIfExpression(ifExpression: IfExpression, env: Environment): MObject? {
-
-        fun isTruthy(obj: MObject): Boolean {
-            return when (obj) {
-                NULL -> false
-                TRUE -> true
-                FALSE -> false
-                else -> true
-            }
-        }
-
-        return eval(ifExpression.condition, env).ifNotError { condition ->
-            when {
-                isTruthy(condition) -> evalBlockStatement(ifExpression.consequence!!, env)
-                ifExpression.alternative != null -> evalBlockStatement(ifExpression.alternative, env)
-                else -> NULL
-            }
-        }
     }
 
 
