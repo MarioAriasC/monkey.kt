@@ -20,32 +20,39 @@ class Parser(private val lexer: Lexer) {
     private lateinit var curToken: Token
     private lateinit var peekToken: Token
 
-    private val prefixParsers = mapOf<TokenType, PrefixParse>(
-        TokenType.INT to ::parseIntegerLiteral,
-        TokenType.TRUE to ::parseBooleanLiteral,
-        TokenType.FALSE to ::parseBooleanLiteral,
-        TokenType.IDENT to ::parseIdentifier,
-        TokenType.BANG to ::parsePrefixExpression,
-        TokenType.MINUS to ::parsePrefixExpression,
-        TokenType.LPAREN to ::parseGroupExpression,
-        TokenType.IF to ::parseIfExpression,
-        TokenType.FUNCTION to ::parseFunctionLiteral,
-        TokenType.STRING to ::parseStringLiteral,
-        TokenType.LBRACKET to ::parseArrayLiteral,
-        TokenType.LBRACE to ::parseHashLiteral,
-    )
-    private val infixParsers = mapOf<TokenType, InfixParse>(
-        TokenType.PLUS to ::parseInfixExpression,
-        TokenType.MINUS to ::parseInfixExpression,
-        TokenType.SLASH to ::parseInfixExpression,
-        TokenType.ASTERISK to ::parseInfixExpression,
-        TokenType.EQ to ::parseInfixExpression,
-        TokenType.NOT_EQ to ::parseInfixExpression,
-        TokenType.LT to ::parseInfixExpression,
-        TokenType.GT to ::parseInfixExpression,
-        TokenType.LPAREN to ::parseCallExpression,
-        TokenType.LBRACKET to ::parseIndexExpression,
-    )
+    private fun prefixParser(tokenType: TokenType): PrefixParse? {
+        return when (tokenType) {
+            TokenType.INT -> ::parseIntegerLiteral
+            TokenType.TRUE -> ::parseBooleanLiteral
+            TokenType.FALSE -> ::parseBooleanLiteral
+            TokenType.IDENT -> ::parseIdentifier
+            TokenType.BANG -> ::parsePrefixExpression
+            TokenType.MINUS -> ::parsePrefixExpression
+            TokenType.LPAREN -> ::parseGroupExpression
+            TokenType.IF -> ::parseIfExpression
+            TokenType.FUNCTION -> ::parseFunctionLiteral
+            TokenType.STRING -> ::parseStringLiteral
+            TokenType.LBRACKET -> ::parseArrayLiteral
+            TokenType.LBRACE -> ::parseHashLiteral
+            else -> null
+        }
+    }
+
+    private fun infixParser(tokenType: TokenType): InfixParse? {
+        return when (tokenType) {
+            TokenType.PLUS -> ::parseInfixExpression
+            TokenType.MINUS -> ::parseInfixExpression
+            TokenType.SLASH -> ::parseInfixExpression
+            TokenType.ASTERISK -> ::parseInfixExpression
+            TokenType.EQ -> ::parseInfixExpression
+            TokenType.NOT_EQ -> ::parseInfixExpression
+            TokenType.LT -> ::parseInfixExpression
+            TokenType.GT -> ::parseInfixExpression
+            TokenType.LPAREN -> ::parseCallExpression
+            TokenType.LBRACKET -> ::parseIndexExpression
+            else -> null
+        }
+    }
 
     private val precedences = mapOf(
         TokenType.EQ to Precedence.EQUALS,
@@ -222,7 +229,7 @@ class Parser(private val lexer: Lexer) {
     }
 
     private fun parseExpression(precedence: Precedence): Expression? {
-        val prefix = prefixParsers[curToken.type]
+        val prefix = prefixParser(curToken.type)
         if (prefix == null) {
             noPrefixParserError(curToken.type)
             return null
@@ -231,7 +238,7 @@ class Parser(private val lexer: Lexer) {
         var left = prefix()
 
         while (!peekTokenIs(TokenType.SEMICOLON) && precedence < peekPrecedence()) {
-            val infix = infixParsers[peekToken.type] ?: return left
+            val infix = infixParser(peekToken.type) ?: return left
             nextToken()
             left = infix(left)
         }
