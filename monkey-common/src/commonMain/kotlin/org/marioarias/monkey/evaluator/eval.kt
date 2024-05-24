@@ -301,25 +301,21 @@ object Evaluator {
         -right
     }
 
-    private fun evalBangOperatorExpression(right: MObject): MObject {
-        return when (right) {
-            TRUE -> FALSE
-            FALSE -> TRUE
-            NULL -> TRUE
-            else -> FALSE
-        }
+    private fun evalBangOperatorExpression(right: MObject): MObject = when (right) {
+        TRUE -> FALSE
+        FALSE -> TRUE
+        NULL -> TRUE
+        else -> FALSE
     }
 
 
-    private fun MObject?.ifNotError(body: (MObject) -> MObject?): MObject? {
-        return when {
-            this != null -> when (this) {
-                is MError -> this
-                else -> body(this)
-            }
-
-            else -> this
+    private fun MObject?.ifNotError(body: (MObject) -> MObject?): MObject? = when {
+        this != null -> when (this) {
+            is MError -> this
+            else -> body(this)
         }
+
+        else -> this
     }
 
 

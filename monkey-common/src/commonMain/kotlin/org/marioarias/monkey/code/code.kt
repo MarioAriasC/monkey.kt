@@ -77,38 +77,36 @@ const val OpGetFree: Opcode = 28u
 const val OpCurrentClosure: Opcode = 29u
 
 
-val definitions: Map<Opcode, Definition> = mapOf(
-    OpConstant to "OpConstant".toDefinition(2),
-    OpAdd to "OpAdd".toDefinition(),
-    OpPop to "OpPop".toDefinition(),
-    OpSub to "OpSub".toDefinition(),
-    OpMul to "OpMul".toDefinition(),
-    OpDiv to "OpDiv".toDefinition(),
-    OpTrue to "OpTrue".toDefinition(),
-    OpFalse to "OpFalse".toDefinition(),
-    OpEqual to "OpEqual".toDefinition(),
-    OpNotEqual to "OpNotEqual".toDefinition(),
-    OpGreaterThan to "OpGreaterThan".toDefinition(),
-    OpMinus to "OpMinus".toDefinition(),
-    OpBang to "OpBang".toDefinition(),
-    OpJumpNotTruthy to "OpJumpNotTruthy".toDefinition(2),
-    OpJump to "OpJump".toDefinition(2),
-    OpNull to "OpNull".toDefinition(),
-    OpGetGlobal to "OpGetGlobal".toDefinition(2),
-    OpSetGlobal to "OpSetGlobal".toDefinition(2),
-    OpArray to "OpArray".toDefinition(2),
-    OpHash to "OpHash".toDefinition(2),
-    OpIndex to "OpIndex".toDefinition(),
-    OpCall to "OpCall".toDefinition(1),
-    OpReturnValue to "OpReturnValue".toDefinition(),
-    OpReturn to "OpReturn".toDefinition(),
-    OpGetLocal to "OpGetLocal".toDefinition(1),
-    OpSetLocal to "OpSetLocal".toDefinition(1),
-    OpGetBuiltin to "OgGetBuiltin".toDefinition(1),
-    OpClosure to "OpClosure".toDefinition(2, 1),
-    OpGetFree to "OpGetFree".toDefinition(1),
-    OpCurrentClosure to "OpCurrentClosure".toDefinition()
-)
+val defOpConstant = "OpConstant".toDefinition(2)
+val defOpAdd = "OpAdd".toDefinition()
+val defOpPop = "OpPop".toDefinition()
+val defOpSub = "OpSub".toDefinition()
+val defOpMul = "OpMul".toDefinition()
+val defOpDiv = "OpDiv".toDefinition()
+val defOpTrue = "OpTrue".toDefinition()
+val defOpFalse = "OpFalse".toDefinition()
+val defOpEqual = "OpEqual".toDefinition()
+val defOpNotEqual = "OpNotEqual".toDefinition()
+val defOpGreaterThan = "OpGreaterThan".toDefinition()
+val defOpMinus = "OpMinus".toDefinition()
+val defOpBang = "OpBang".toDefinition()
+val defOpJumpNotTruthy = "OpJumpNotTruthy".toDefinition(2)
+val defOpJump = "OpJump".toDefinition(2)
+val defOpNull = "OpNull".toDefinition()
+val defOpGetGlobal = "OpGetGlobal".toDefinition(2)
+val defOpSetGlobal = "OpSetGlobal".toDefinition(2)
+val defOpArray = "OpArray".toDefinition(2)
+val defOpHash = "OpHash".toDefinition(2)
+val defOpIndex = "OpIndex".toDefinition()
+val defOpCall = "OpCall".toDefinition(1)
+val defOpReturnValue = "OpReturnValue".toDefinition()
+val defOpReturn = "OpReturn".toDefinition()
+val defOpGetLocal = "OpGetLocal".toDefinition(1)
+val defOpSetLocal = "OpSetLocal".toDefinition(1)
+val defOpGetBuiltin = "OgGetBuiltin".toDefinition(1)
+val defOpClosure = "OpClosure".toDefinition(2, 1)
+val defOpGetFree = "OpGetFree".toDefinition(1)
+val defOpCurrentClosure = "OpCurrentClosure".toDefinition()
 
 private fun String.toDefinition(vararg operandsWidths: Int) = Definition(this, intArrayOf(*operandsWidths))
 
@@ -131,7 +129,40 @@ data class Definition(val name: String, val operandsWidths: IntArray = intArrayO
 }
 
 fun lookup(op: Opcode): Definition {
-    return definitions.getOrElse(op) { throw IllegalArgumentException("opcode $op undefined") }
+//    return definitions.getOrElse(op) { throw IllegalArgumentException("opcode $op undefined") }
+    return when (op) {
+        OpConstant -> defOpConstant
+        OpAdd -> defOpAdd
+        OpPop -> defOpPop
+        OpSub -> defOpSub
+        OpMul -> defOpMul
+        OpDiv -> defOpDiv
+        OpTrue -> defOpTrue
+        OpFalse -> defOpFalse
+        OpEqual -> defOpEqual
+        OpNotEqual -> defOpNotEqual
+        OpGreaterThan -> defOpGreaterThan
+        OpMinus -> defOpMinus
+        OpBang -> defOpBang
+        OpJumpNotTruthy -> defOpJumpNotTruthy
+        OpJump -> defOpJump
+        OpNull -> defOpNull
+        OpGetGlobal -> defOpGetGlobal
+        OpSetGlobal -> defOpSetGlobal
+        OpArray -> defOpArray
+        OpHash -> defOpHash
+        OpIndex -> defOpIndex
+        OpCall -> defOpCall
+        OpReturnValue -> defOpReturnValue
+        OpReturn -> defOpReturn
+        OpGetLocal -> defOpGetLocal
+        OpSetLocal -> defOpSetLocal
+        OpGetBuiltin -> defOpGetBuiltin
+        OpClosure -> defOpClosure
+        OpGetFree -> defOpGetFree
+        OpCurrentClosure -> defOpCurrentClosure
+        else -> throw IllegalArgumentException("opcode $op undefined")
+    }
 }
 
 fun make(op: Opcode, vararg operands: Int): Instructions {
