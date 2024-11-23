@@ -97,12 +97,14 @@ class Lexer(private val input: String) {
                         readNextChar = false
                         Token(identifier.lookupIdent(), identifier)
                     }
+
                     ch.isDigit() -> {
                         readNextChar = false
                         Token(INT, readNumber())
                     }
+
                     else -> {
-                        Token(ILLEGAL, ch.toString())
+                        ILLEGAL.token()
                     }
                 }
             }
