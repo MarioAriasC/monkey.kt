@@ -6,3 +6,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "monkey.kt"
 include(":monkey")
+include(":jvm")
