@@ -1,3 +1,6 @@
+import org.gradle.kotlin.dsl.support.kotlinCompilerOptions
+import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
 }
@@ -8,9 +11,23 @@ kotlin {
             version = "21"
         }
     }
-    js()
-    macosX64()
-    linuxX64()
+    js() {
+        nodejs()
+        binaries.executable()
+        compilerOptions {
+            target = "es2015"
+        }
+    }
+
+    macosX64("native") {
+        binaries {
+            executable()
+        }
+    }
+    
+
+
+
     sourceSets {
         val commonMain by getting {}
         val commonTest by getting {
@@ -20,3 +37,4 @@ kotlin {
         }
     }
 }
+
