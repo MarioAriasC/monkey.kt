@@ -3,7 +3,11 @@ plugins {
 }
 
 kotlin {
-    jvm()
+    jvm() {
+        java {
+            version = "21"
+        }
+    }
     js()
     macosX64()
     linuxX64()
