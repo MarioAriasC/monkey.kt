@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":monkey"))
+    implementation(project(":monkey-common"))
 }
 
 application {

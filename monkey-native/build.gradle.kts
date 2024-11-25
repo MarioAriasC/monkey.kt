@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    commonMainImplementation(project(":monkey"))
+    commonMainImplementation(project(":monkey-common"))
 }
 
 kotlin {

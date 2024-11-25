@@ -5,6 +5,6 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "monkey.kt"
-include(":monkey")
-include(":jvm")
-include(":native")
+include(":monkey-common")
+include(":monkey-jvm")
+include(":monkey-native")
