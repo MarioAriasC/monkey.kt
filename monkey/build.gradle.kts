@@ -18,16 +18,7 @@ kotlin {
             target = "es2015"
         }
     }
-
-    macosX64("native") {
-        binaries {
-            executable()
-        }
-    }
-    
-
-
-
+    macosX64()
     sourceSets {
         val commonMain by getting {}
         val commonTest by getting {
