@@ -178,3 +178,138 @@ For *nix systems, run the following command:
 ```shell
 $ ./tests.sh
 ```
+
+## New benchmarks
+```
+
+❯ hyperfine -w 3 './benchmarks-bun.sh kotlin' './benchmarks-jvm.sh kotlin' './benchmarks-native.sh kotlin' './benchmarks-node.sh kotlin'
+Benchmark 1: ./benchmarks-bun.sh kotlin
+  Time (mean ± σ):      1.769 s ±  0.109 s    [User: 1.781 s, System: 0.090 s]
+  Range (min … max):    1.722 s …  2.080 s    10 runs
+
+  Warning: Statistical outliers were detected. Consider re-running this benchmark on a quiet system without any interferences from other programs. It might help to use the '--warmup' or '--prepare' options.
+
+Benchmark 2: ./benchmarks-jvm.sh kotlin
+  Time (mean ± σ):     101.8 ms ±   1.0 ms    [User: 104.0 ms, System: 31.4 ms]
+  Range (min … max):   100.2 ms … 103.7 ms    29 runs
+
+Benchmark 3: ./benchmarks-native.sh kotlin
+  Time (mean ± σ):      29.7 ms ±   0.4 ms    [User: 26.1 ms, System: 3.6 ms]
+  Range (min … max):    29.0 ms …  31.2 ms    99 runs
+
+Benchmark 4: ./benchmarks-node.sh kotlin
+  Time (mean ± σ):      1.823 s ±  0.098 s    [User: 1.822 s, System: 0.027 s]
+  Range (min … max):    1.558 s …  1.879 s    10 runs
+
+  Warning: Statistical outliers were detected. Consider re-running this benchmark on a quiet system without any interferences from other programs. It might help to use the '--warmup' or '--prepare' options.
+
+Summary
+  ./benchmarks-native.sh kotlin ran
+    3.43 ± 0.06 times faster than ./benchmarks-jvm.sh kotlin
+   59.56 ± 3.78 times faster than ./benchmarks-bun.sh kotlin
+   61.38 ± 3.43 times faster than ./benchmarks-node.sh kotlin
+
+monkey.kt on  new-gradle via 🅶 v8.7 via ☕ v21.0.5 via 🅺 took 53s
+❯ hyperfine -w 3 './benchmarks-bun.sh kotlin' './benchmarks-jvm.sh kotlin' './benchmarks-native.sh kotlin' './benchmarks-node.sh kotlin' --export-json ../kotlin.json
+Benchmark 1: ./benchmarks-bun.sh kotlin
+  Time (mean ± σ):      1.775 s ±  0.125 s    [User: 1.772 s, System: 0.089 s]
+  Range (min … max):    1.712 s …  2.129 s    10 runs
+
+  Warning: Statistical outliers were detected. Consider re-running this benchmark on a quiet system without any interferences from other programs. It might help to use the '--warmup' or '--prepare' options.
+
+Benchmark 2: ./benchmarks-jvm.sh kotlin
+  Time (mean ± σ):     102.4 ms ±   1.3 ms    [User: 105.4 ms, System: 30.7 ms]
+  Range (min … max):   100.4 ms … 105.1 ms    29 runs
+
+Benchmark 3: ./benchmarks-native.sh kotlin
+  Time (mean ± σ):      29.9 ms ±   0.5 ms    [User: 26.2 ms, System: 3.7 ms]
+  Range (min … max):    29.0 ms …  32.1 ms    98 runs
+
+Benchmark 4: ./benchmarks-node.sh kotlin
+  Time (mean ± σ):      1.871 s ±  0.207 s    [User: 1.874 s, System: 0.028 s]
+  Range (min … max):    1.542 s …  2.382 s    10 runs
+
+  Warning: Statistical outliers were detected. Consider re-running this benchmark on a quiet system without any interferences from other programs. It might help to use the '--warmup' or '--prepare' options.
+
+Summary
+  ./benchmarks-native.sh kotlin ran
+    3.42 ± 0.08 times faster than ./benchmarks-jvm.sh kotlin
+   59.35 ± 4.31 times faster than ./benchmarks-bun.sh kotlin
+   62.59 ± 7.00 times faster than ./benchmarks-node.sh kotlin
+
+monkey.kt on  new-gradle via 🅶 v8.7 via ☕ v21.0.5 via 🅺 took 53s
+❯ hyperfine -w 3 './benchmarks-bun.sh vm-fast' './benchmarks-jvm.sh vm-fast' './benchmarks-native.sh vm-fast' './benchmarks-node.sh vm-fast' --export-json ../vm-fast.json
+Benchmark 1: ./benchmarks-bun.sh vm-fast
+  Time (mean ± σ):     23.204 s ±  0.433 s    [User: 23.395 s, System: 0.291 s]
+  Range (min … max):   22.584 s … 23.896 s    10 runs
+
+Benchmark 2: ./benchmarks-jvm.sh vm-fast
+  Time (mean ± σ):      4.951 s ±  0.027 s    [User: 4.930 s, System: 0.195 s]
+  Range (min … max):    4.910 s …  5.002 s    10 runs
+
+Benchmark 3: ./benchmarks-native.sh vm-fast
+  Time (mean ± σ):     12.112 s ±  0.200 s    [User: 12.588 s, System: 0.056 s]
+  Range (min … max):   11.917 s … 12.538 s    10 runs
+
+Benchmark 4: ./benchmarks-node.sh vm-fast
+  Time (mean ± σ):     22.323 s ±  0.389 s    [User: 22.358 s, System: 0.080 s]
+  Range (min … max):   21.730 s … 23.067 s    10 runs
+
+Summary
+  ./benchmarks-jvm.sh vm-fast ran
+    2.45 ± 0.04 times faster than ./benchmarks-native.sh vm-fast
+    4.51 ± 0.08 times faster than ./benchmarks-node.sh vm-fast
+    4.69 ± 0.09 times faster than ./benchmarks-bun.sh vm-fast
+
+monkey.kt on  new-gradle via 🅶 v8.7 via ☕ v21.0.5 via 🅺 took 13m32s
+❯ hyperfine -w 3 './benchmarks-bun.sh eval-fast' './benchmarks-jvm.sh eval-fast' './benchmarks-native.sh eval-fast' './benchmarks-node.sh eval-fast' --export-json ../eval-fast.json
+Benchmark 1: ./benchmarks-bun.sh eval-fast
+  Time (mean ± σ):     34.869 s ±  0.285 s    [User: 35.092 s, System: 0.817 s]
+  Range (min … max):   34.315 s … 35.248 s    10 runs
+
+Benchmark 2: ./benchmarks-jvm.sh eval-fast
+  Time (mean ± σ):      3.929 s ±  0.289 s    [User: 4.201 s, System: 0.257 s]
+  Range (min … max):    3.527 s …  4.365 s    10 runs
+
+Benchmark 3: ./benchmarks-native.sh eval-fast
+  Time (mean ± σ):     15.132 s ±  0.099 s    [User: 14.905 s, System: 0.107 s]
+  Range (min … max):   15.011 s … 15.264 s    10 runs
+
+Benchmark 4: ./benchmarks-node.sh eval-fast
+  Time (mean ± σ):     31.162 s ±  0.544 s    [User: 31.209 s, System: 0.076 s]
+  Range (min … max):   30.459 s … 31.981 s    10 runs
+
+Summary
+  ./benchmarks-jvm.sh eval-fast ran
+    3.85 ± 0.28 times faster than ./benchmarks-native.sh eval-fast
+    7.93 ± 0.60 times faster than ./benchmarks-node.sh eval-fast
+    8.87 ± 0.66 times faster than ./benchmarks-bun.sh eval-fast
+```
+
+```
+❯ ruby --yjit plot.rb kotlin.json
+                                 ┌                                                                                                    ┐
+      ./benchmarks-bun.sh kotlin ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 1.7745110054200002
+      ./benchmarks-jvm.sh kotlin ┤■■■■■ 0.10239241954068967
+   ./benchmarks-native.sh kotlin ┤■ 0.02990045667510203
+     ./benchmarks-node.sh kotlin ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 1.87144943592
+                                 └                                                                                                    ┘
+
+~/repositories via 💎 v3.3.6
+❯ ruby --yjit plot.rb vm-fast.json
+                                  ┌                                                                                                    ┐
+      ./benchmarks-bun.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 23.2038023168
+      ./benchmarks-jvm.sh vm-fast ┤■■■■■■■■■■■■■■■■■■ 4.9508734608
+   ./benchmarks-native.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 12.111709727000001
+     ./benchmarks-node.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 22.323175457900003
+                                  └                                                                                                    ┘
+
+~/repositories via 💎 v3.3.6
+❯ ruby --yjit plot.rb eval-fast.json
+                                    ┌                                                                                                    ┐
+      ./benchmarks-bun.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 34.86919739186
+      ./benchmarks-jvm.sh eval-fast ┤■■■■■■■■■ 3.92911335406
+   ./benchmarks-native.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 15.13231887616
+     ./benchmarks-node.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 31.16230034386
+                                    └                                                                                                    ┘
+```
