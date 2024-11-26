@@ -1,37 +1,20 @@
 plugins {
-    kotlin("multiplatform")
+    alias(libs.plugins.kotlinMultiplatform)
 }
 
-group = "org.marioarias"
-version = "1.0-SNAPSHOT"
-
-repositories {
-    mavenCentral()
+dependencies {
+    commonMainImplementation(project(":monkey-common"))
 }
 
 kotlin {
-    val hostOs = System.getProperty("os.name")
-    val isMingwX64 = hostOs.startsWith("Windows")
-    val nativeTarget = when {
-        hostOs == "Mac OS X" -> macosX64("native")
-        hostOs == "Linux" -> linuxX64("native")
-        isMingwX64 -> mingwX64("native")
-        else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
-    }
 
-    nativeTarget.apply {
+    when (val hostOp = System.getProperty("os.name")) {
+        "Mac OS X" -> this.macosX64("native")
+        "Linux" -> this.linuxX64("native")
+        else -> throw GradleException("Host OS $hostOp is not supported")
+    }.apply {
         binaries {
-            executable {
-                entryPoint = "main"
-            }
+            executable()
         }
-    }
-    sourceSets {
-        val nativeMain by getting {
-            dependencies {
-                implementation(project(":monkey-common"))
-            }
-        }
-        val nativeTest by getting
     }
 }

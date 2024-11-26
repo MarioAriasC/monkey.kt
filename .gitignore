@@ -7,3 +7,4 @@ out
 **/monkey-graal.build_artifacts.txt
 fibonacci
 kotlin-js-store
+.kotlin

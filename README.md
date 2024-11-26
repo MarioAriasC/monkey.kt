@@ -8,6 +8,10 @@ https://medium.com/@mario.arias.c/comparing-kotlin-and-golang-implementations-of
 
 https://medium.com/@mario.arias.c/comparing-kotlin-and-go-implementations-of-the-monkey-language-ii-raiders-of-the-lost-performance-b9aa09945281
 
+https://medium.com/@mario.arias.c/comparing-kotlin-and-go-implementations-of-the-monkey-language-iii-dancing-with-segmentation-435a13c00fbd
+
+https://marioarias.hashnode.dev/comparing-implementations-of-the-monkey-language-xi-going-native-and-js-with-kotlin
+
 ## Status
 
 The two books ([Writing An Interpreter In Go](https://interpreterbook.com/)
@@ -31,13 +35,12 @@ branch [eval-macros](https://github.com/MarioAriasC/monkey.kt/tree/eval-macros)
 
 ## Execution
 
-There are four different executable environments, JVM, GraalVM Native Image, Native and JavaScript Each executable has 3 different
+There are three different executable environments, JVM, Native and JavaScript Each executable has 3 different
 shell scripts, `build`, `repl`, `benchmarks`
 
 | Executable environment | Build             | REPL             | Benchmarks                                  |
 |------------------------|-------------------|------------------|---------------------------------------------|
 | JVM                    | `build-jvm.sh`    | `repl-jvm.sh`    | `benchmarks-jvm.sh`                         |
-| Graal                  | `build-graal.sh`  | `repl-graal.sh`  | `benchmarks-graal.sh`                       |
 | Native                 | `build-native.sh` | `repl-native.sh` | `benchmarks-native.sh`                      |
 | JavaScript             | `build-js.sh`     | NA               | `benchmarks-node.sh` or `benchmarks-bun.sh` |
 
@@ -56,27 +59,6 @@ And then:
 ```shell
 $ ./repl-jvm.sh
 ```
-
-### GraalVM Native Image
-
-To run the application with [GraalVM](https://www.graalvm.org/) Native Image, you need to follow certain steps:
-
-- Install GraalVM, I recommend using [SDKMAN](https://sdkman.io/) (Not just for GraalVM but for any JVM tool in general)
-- Install the `native-image` [executable](https://www.graalvm.org/reference-manual/native-image/#install-native-image)
-- Create a GRAALVM_HOME environment variable. On *nix
-  systems `export GRAALVM_HOME="$HOME/.sdkman/candidates/java/21.2.0.r11-grl/` or your equivalent GraalVM location
-- Run the command
-
-```shell
-$ ./build-graal.sh
-```
-
-And then:
-
-```shell
-$ ./repl-graal.sh
-```
-                 
 ### Kotlin Native
 
 For *nix systems, run the following command:
@@ -99,7 +81,7 @@ For *nix systems, run the following command:
 $ ./build-js.sh
 ```
 
-The JS REPL is not working at the moment. But you can still run the benchmarks using [Node](https://nodejs.org/en/) or [Bun](https://bun.sh/) (Must be installed before hand)
+The JS REPL is not working at the moment. But you can still run the benchmarks using [Node](https://nodejs.org/en/) or [Bun](https://bun.sh/) (Must be installed beforehand)
 
 # Benchmarks
 
@@ -110,66 +92,89 @@ Example
 
 ```shell
 $ ./benchmarks-jvm.sh vm
-engine=vm, result=9227465, duration=7.516433414s
+```
+```text
+engine=vm, result=9227465, duration=5.797319458s
 ```
 
-```shell
-$ ./benchmarks-graal.sh eval  
-engine=eval, result=9227465, duration=22.173455585s
-```
  
-All the benchmarks tested on a MBP 15-inch 2019. Intel Core i9 2.3Ghz 8-Core, 32 GB 2400 MHZ DDR4
+All the benchmarks tested on a Pop!_OS Laptop AMD Ryzen 9 5900HX
  
 If you want to run proper benchmarks, I recommend [hyperfine](https://github.com/sharkdp/hyperfine)
 
 ```shell
-$ hyperfine --warmup 3 './benchmarks-jvm.sh vm' './benchmarks-jvm.sh vm-fast' './benchmarks-jvm.sh eval' './benchmarks-jvm.sh eval-fast'
-Benchmark 1: ./benchmarks-jvm.sh vm
-  Time (mean ± σ):      9.505 s ±  0.788 s    [User: 9.759 s, System: 0.262 s]
-  Range (min … max):    8.639 s … 10.745 s    10 runs
+$ hyperfine -w 3 './benchmarks-bun.sh vm-fast' './benchmarks-jvm.sh vm-fast' './benchmarks-native.sh vm-fast' './benchmarks-node.sh vm-fast' --export-json ../vm-fast.json
+```
+```text
+Benchmark 1: ./benchmarks-bun.sh vm-fast
+  Time (mean ± σ):     23.204 s ±  0.433 s    [User: 23.395 s, System: 0.291 s]
+  Range (min … max):   22.584 s … 23.896 s    10 runs
 
 Benchmark 2: ./benchmarks-jvm.sh vm-fast
-  Time (mean ± σ):      6.633 s ±  0.196 s    [User: 6.837 s, System: 0.206 s]
-  Range (min … max):    6.317 s …  6.908 s    10 runs
+  Time (mean ± σ):      4.951 s ±  0.027 s    [User: 4.930 s, System: 0.195 s]
+  Range (min … max):    4.910 s …  5.002 s    10 runs
 
-Benchmark 3: ./benchmarks-jvm.sh eval
-  Time (mean ± σ):     13.368 s ±  0.943 s    [User: 13.643 s, System: 0.261 s]
-  Range (min … max):   11.970 s … 14.961 s    10 runs
+Benchmark 3: ./benchmarks-native.sh vm-fast
+  Time (mean ± σ):     12.112 s ±  0.200 s    [User: 12.588 s, System: 0.056 s]
+  Range (min … max):   11.917 s … 12.538 s    10 runs
 
-Benchmark 4: ./benchmarks-jvm.sh eval-fast
-  Time (mean ± σ):     10.321 s ±  0.760 s    [User: 10.713 s, System: 0.256 s]
-  Range (min … max):    9.551 s … 11.455 s    10 runs
+Benchmark 4: ./benchmarks-node.sh vm-fast
+  Time (mean ± σ):     22.323 s ±  0.389 s    [User: 22.358 s, System: 0.080 s]
+  Range (min … max):   21.730 s … 23.067 s    10 runs
 
 Summary
-  './benchmarks-jvm.sh vm-fast' ran
-    1.43 ± 0.13 times faster than './benchmarks-jvm.sh vm'
-    1.56 ± 0.12 times faster than './benchmarks-jvm.sh eval-fast'
-    2.02 ± 0.15 times faster than './benchmarks-jvm.sh eval'
+  ./benchmarks-jvm.sh vm-fast ran
+    2.45 ± 0.04 times faster than ./benchmarks-native.sh vm-fast
+    4.51 ± 0.08 times faster than ./benchmarks-node.sh vm-fast
+    4.69 ± 0.09 times faster than ./benchmarks-bun.sh vm-fast
 ```
 ```shell
-$ hyperfine --warmup 3 './benchmarks-graal.sh vm' './benchmarks-graal.sh vm-fast' './benchmarks-graal.sh eval' './benchmarks-graal.sh eval-fast'
-Benchmark 1: ./benchmarks-graal.sh vm
-  Time (mean ± σ):     21.364 s ±  0.627 s    [User: 21.057 s, System: 0.165 s]
-  Range (min … max):   20.759 s … 22.628 s    10 runs
+$ hyperfine -w 3 './benchmarks-bun.sh eval-fast' './benchmarks-jvm.sh eval-fast' './benchmarks-native.sh eval-fast' './benchmarks-node.sh eval-fast' --export-json ../eval-fast.json
+```
+```text
+Benchmark 1: ./benchmarks-bun.sh eval-fast
+  Time (mean ± σ):     34.869 s ±  0.285 s    [User: 35.092 s, System: 0.817 s]
+  Range (min … max):   34.315 s … 35.248 s    10 runs
 
-Benchmark 2: ./benchmarks-graal.sh vm-fast
-  Time (mean ± σ):     16.955 s ±  0.534 s    [User: 16.740 s, System: 0.136 s]
-  Range (min … max):   16.158 s … 18.018 s    10 runs
+Benchmark 2: ./benchmarks-jvm.sh eval-fast
+  Time (mean ± σ):      3.929 s ±  0.289 s    [User: 4.201 s, System: 0.257 s]
+  Range (min … max):    3.527 s …  4.365 s    10 runs
 
-Benchmark 3: ./benchmarks-graal.sh eval
-  Time (mean ± σ):     20.561 s ±  0.270 s    [User: 20.321 s, System: 0.150 s]
-  Range (min … max):   20.119 s … 20.910 s    10 runs
+Benchmark 3: ./benchmarks-native.sh eval-fast
+  Time (mean ± σ):     15.132 s ±  0.099 s    [User: 14.905 s, System: 0.107 s]
+  Range (min … max):   15.011 s … 15.264 s    10 runs
 
-Benchmark 4: ./benchmarks-graal.sh eval-fast
-  Time (mean ± σ):     16.934 s ±  0.258 s    [User: 16.730 s, System: 0.135 s]
-  Range (min … max):   16.327 s … 17.206 s    10 runs
+Benchmark 4: ./benchmarks-node.sh eval-fast
+  Time (mean ± σ):     31.162 s ±  0.544 s    [User: 31.209 s, System: 0.076 s]
+  Range (min … max):   30.459 s … 31.981 s    10 runs
 
 Summary
-  './benchmarks-graal.sh eval-fast' ran
-    1.00 ± 0.04 times faster than './benchmarks-graal.sh vm-fast'
-    1.21 ± 0.02 times faster than './benchmarks-graal.sh eval'
-    1.26 ± 0.04 times faster than './benchmarks-graal.sh vm'
+  ./benchmarks-jvm.sh eval-fast ran
+    3.85 ± 0.28 times faster than ./benchmarks-native.sh eval-fast
+    7.93 ± 0.60 times faster than ./benchmarks-node.sh eval-fast
+    8.87 ± 0.66 times faster than ./benchmarks-bun.sh eval-fast
 ```
+
+You can plot the results with this [script](https://gist.github.com/MarioAriasC/599204342860a161d4fe12b12f0d3de9) 
+
+```text
+❯ ruby --yjit plot.rb vm-fast.json
+                                  ┌                                                                                                    ┐
+      ./benchmarks-bun.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 23.2038023168
+      ./benchmarks-jvm.sh vm-fast ┤■■■■■■■■■■■■■■■■■■ 4.9508734608
+   ./benchmarks-native.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 12.111709727000001
+     ./benchmarks-node.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 22.323175457900003
+                                  └                                                                                                    ┘
+
+❯ ruby --yjit plot.rb eval-fast.json
+                                    ┌                                                                                                    ┐
+      ./benchmarks-bun.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 34.86919739186
+      ./benchmarks-jvm.sh eval-fast ┤■■■■■■■■■ 3.92911335406
+   ./benchmarks-native.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 15.13231887616
+     ./benchmarks-node.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 31.16230034386
+                                    └                                                                                                    ┘
+```
+
 
 ## Test
 
