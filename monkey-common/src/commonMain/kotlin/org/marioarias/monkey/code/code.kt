@@ -182,7 +182,7 @@ fun make(op: Opcode, vararg operands: Int): Instructions {
             offset += width
         }
         instruction
-    } catch (e: IllegalArgumentException) {
+    } catch (_: IllegalArgumentException) {
         ubyteArrayOf()
     }
 }

@@ -13,13 +13,13 @@ fun main(args: Array<String>) {
     } else {
         when (args.first()) {
             "vm" -> Benchmarks.vm()
-            "vm-fast" -> Benchmarks.vm(Benchmarks.fastInput)
-            "vm-fast2" -> Benchmarks.vm(Benchmarks.fastInput2)
-            "vm-cached" -> Benchmarks.vm(Benchmarks.cached)
+            "vm-fast" -> Benchmarks.vm(Benchmarks.FAST_INPUT)
+            "vm-fast2" -> Benchmarks.vm(Benchmarks.FAST_INPUT_2)
+            "vm-cached" -> Benchmarks.vm(Benchmarks.CACHED)
             "eval" -> Benchmarks.eval()
-            "eval-fast" -> Benchmarks.eval(Benchmarks.fastInput)
-            "eval-fast2" -> Benchmarks.eval(Benchmarks.fastInput2)
-            "eval-cached" -> Benchmarks.eval(Benchmarks.cached)
+            "eval-fast" -> Benchmarks.eval(Benchmarks.FAST_INPUT)
+            "eval-fast2" -> Benchmarks.eval(Benchmarks.FAST_INPUT_2)
+            "eval-cached" -> Benchmarks.eval(Benchmarks.CACHED)
             "kotlin" -> Benchmarks.kotlin()
             "kotlin-cached" -> Benchmarks.kotlinRec()
         }
