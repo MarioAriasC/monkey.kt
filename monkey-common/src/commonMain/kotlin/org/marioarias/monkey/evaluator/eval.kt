@@ -117,17 +117,13 @@ object Evaluator {
 
         is BooleanLiteral -> expression.value.toMonkey()
         is IfExpression -> {
-            fun isTruthy(obj: MObject): Boolean {
-                return when (obj) {
-                    NULL -> false
-                    TRUE -> true
-                    FALSE -> false
-                    else -> true
-                }
-            }
             eval(expression.condition, env).ifNotError { condition ->
                 when {
-                    isTruthy(condition) -> evalBlockStatement(expression.consequence!!, env)
+                    when (condition) {
+                        NULL, FALSE -> false
+                        else -> true
+                    } -> evalBlockStatement(expression.consequence!!, env)
+
                     expression.alternative != null -> evalBlockStatement(expression.alternative, env)
                     else -> NULL
                 }
@@ -154,12 +150,11 @@ object Evaluator {
             } else {
                 when (function) {
                     is MFunction -> {
-                        val env = Environment.newEnclosedEnvironment(function.env)
+                        val innerEnv = Environment.newEnclosedEnvironment(function.env)
                         function.parameters?.forEachIndexed { i, identifier ->
-                            env[identifier.value] = args[i]!!
+                            innerEnv[identifier.value] = args[i]!!
                         }
-                        val extendEnv = env
-                        when (val evaluated = eval(function.body, extendEnv)) {
+                        when (val evaluated = eval(function.body, innerEnv)) {
                             is MReturnValue -> evaluated.value
                             else -> evaluated
                         }
