@@ -103,75 +103,71 @@ All the benchmarks tested on a Pop!_OS Laptop AMD Ryzen 9 5900HX
 If you want to run proper benchmarks, I recommend [hyperfine](https://github.com/sharkdp/hyperfine)
 
 ```shell
-$ hyperfine -w 3 './benchmarks-bun.sh vm-fast' './benchmarks-jvm.sh vm-fast' './benchmarks-native.sh vm-fast' './benchmarks-node.sh vm-fast' --export-json ../vm-fast.json
+$ hyperfine -w 3 './benchmarks-bun.sh vm-fast' './benchmarks-jvm.sh vm-fast' './benchmarks-native.sh vm-fast' './benchmarks-node.sh vm-fast' --export-json ../vm-fast-inline-last.json && hyperfine -w 3 './benchmarks-bun.sh eval-fast' './benchmarks-jvm.sh eval-fast' './benchmarks-native.sh eval-fast' './benchmarks-node.sh eval-fast' --export-json ../eval-fast-inline-last.json
 ```
 ```text
 Benchmark 1: ./benchmarks-bun.sh vm-fast
-  Time (mean ± σ):     23.204 s ±  0.433 s    [User: 23.395 s, System: 0.291 s]
-  Range (min … max):   22.584 s … 23.896 s    10 runs
+  Time (mean ± σ):     22.028 s ±  0.699 s    [User: 22.203 s, System: 0.252 s]
+  Range (min … max):   20.903 s … 22.970 s    10 runs
 
 Benchmark 2: ./benchmarks-jvm.sh vm-fast
-  Time (mean ± σ):      4.951 s ±  0.027 s    [User: 4.930 s, System: 0.195 s]
-  Range (min … max):    4.910 s …  5.002 s    10 runs
+  Time (mean ± σ):      4.958 s ±  0.021 s    [User: 4.953 s, System: 0.176 s]
+  Range (min … max):    4.929 s …  5.002 s    10 runs
 
 Benchmark 3: ./benchmarks-native.sh vm-fast
-  Time (mean ± σ):     12.112 s ±  0.200 s    [User: 12.588 s, System: 0.056 s]
-  Range (min … max):   11.917 s … 12.538 s    10 runs
+  Time (mean ± σ):      9.881 s ±  0.190 s    [User: 10.193 s, System: 0.064 s]
+  Range (min … max):    9.729 s … 10.401 s    10 runs
 
 Benchmark 4: ./benchmarks-node.sh vm-fast
-  Time (mean ± σ):     22.323 s ±  0.389 s    [User: 22.358 s, System: 0.080 s]
-  Range (min … max):   21.730 s … 23.067 s    10 runs
+  Time (mean ± σ):     21.782 s ±  0.178 s    [User: 21.806 s, System: 0.083 s]
+  Range (min … max):   21.447 s … 22.107 s    10 runs
 
 Summary
   ./benchmarks-jvm.sh vm-fast ran
-    2.45 ± 0.04 times faster than ./benchmarks-native.sh vm-fast
-    4.51 ± 0.08 times faster than ./benchmarks-node.sh vm-fast
-    4.69 ± 0.09 times faster than ./benchmarks-bun.sh vm-fast
-```
-```shell
-$ hyperfine -w 3 './benchmarks-bun.sh eval-fast' './benchmarks-jvm.sh eval-fast' './benchmarks-native.sh eval-fast' './benchmarks-node.sh eval-fast' --export-json ../eval-fast.json
-```
-```text
+    1.99 ± 0.04 times faster than ./benchmarks-native.sh vm-fast
+    4.39 ± 0.04 times faster than ./benchmarks-node.sh vm-fast
+    4.44 ± 0.14 times faster than ./benchmarks-bun.sh vm-fast
+
 Benchmark 1: ./benchmarks-bun.sh eval-fast
-  Time (mean ± σ):     34.869 s ±  0.285 s    [User: 35.092 s, System: 0.817 s]
-  Range (min … max):   34.315 s … 35.248 s    10 runs
+  Time (mean ± σ):     32.877 s ±  0.290 s    [User: 32.963 s, System: 0.628 s]
+  Range (min … max):   32.442 s … 33.363 s    10 runs
 
 Benchmark 2: ./benchmarks-jvm.sh eval-fast
-  Time (mean ± σ):      3.929 s ±  0.289 s    [User: 4.201 s, System: 0.257 s]
-  Range (min … max):    3.527 s …  4.365 s    10 runs
+  Time (mean ± σ):      3.396 s ±  0.075 s    [User: 3.407 s, System: 0.187 s]
+  Range (min … max):    3.317 s …  3.545 s    10 runs
 
 Benchmark 3: ./benchmarks-native.sh eval-fast
-  Time (mean ± σ):     15.132 s ±  0.099 s    [User: 14.905 s, System: 0.107 s]
-  Range (min … max):   15.011 s … 15.264 s    10 runs
+  Time (mean ± σ):     16.539 s ±  0.162 s    [User: 16.381 s, System: 0.110 s]
+  Range (min … max):   16.352 s … 16.883 s    10 runs
 
 Benchmark 4: ./benchmarks-node.sh eval-fast
-  Time (mean ± σ):     31.162 s ±  0.544 s    [User: 31.209 s, System: 0.076 s]
-  Range (min … max):   30.459 s … 31.981 s    10 runs
+  Time (mean ± σ):     32.029 s ±  0.474 s    [User: 32.071 s, System: 0.069 s]
+  Range (min … max):   31.235 s … 32.855 s    10 runs
 
 Summary
   ./benchmarks-jvm.sh eval-fast ran
-    3.85 ± 0.28 times faster than ./benchmarks-native.sh eval-fast
-    7.93 ± 0.60 times faster than ./benchmarks-node.sh eval-fast
-    8.87 ± 0.66 times faster than ./benchmarks-bun.sh eval-fast
+    4.87 ± 0.12 times faster than ./benchmarks-native.sh eval-fast
+    9.43 ± 0.25 times faster than ./benchmarks-node.sh eval-fast
+    9.68 ± 0.23 times faster than ./benchmarks-bun.sh eval-fast
 ```
 
 You can plot the results with this [script](https://gist.github.com/MarioAriasC/599204342860a161d4fe12b12f0d3de9) 
 
 ```text
-❯ ruby --yjit plot.rb vm-fast.json
+❯ ruby --yjit plot.rb vm-fast-inline-last.json
                                   ┌                                                                                                    ┐
-      ./benchmarks-bun.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 23.2038023168
-      ./benchmarks-jvm.sh vm-fast ┤■■■■■■■■■■■■■■■■■■ 4.9508734608
-   ./benchmarks-native.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 12.111709727000001
-     ./benchmarks-node.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 22.323175457900003
-                                  └                                                                                                    ┘
+      ./benchmarks-bun.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 22.02788957328
+      ./benchmarks-jvm.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■ 4.957949344579999
+   ./benchmarks-native.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 9.88136447028
+     ./benchmarks-node.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 21.782049139380003
+                                  └                                                                                                    ┘                                                                                                 ┘
 
-❯ ruby --yjit plot.rb eval-fast.json
+❯ ruby --yjit plot.rb eval-fast-inline-last.json
                                     ┌                                                                                                    ┐
-      ./benchmarks-bun.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 34.86919739186
-      ./benchmarks-jvm.sh eval-fast ┤■■■■■■■■■ 3.92911335406
-   ./benchmarks-native.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 15.13231887616
-     ./benchmarks-node.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 31.16230034386
+      ./benchmarks-bun.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 32.87707063506
+      ./benchmarks-jvm.sh eval-fast ┤■■■■■■■■■ 3.39647823516
+   ./benchmarks-native.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 16.539440131659997
+     ./benchmarks-node.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 32.02919512696
                                     └                                                                                                    ┘
 ```
 

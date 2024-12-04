@@ -14,7 +14,7 @@ import kotlin.time.measureTimedValue
 
 @OptIn(ExperimentalTime::class)
 object Benchmarks {
-    private const val slowInput = """
+    private const val SLOW_INPUT = """
 let fibonacci = fn(x) {    
 	if (x == 0) {
 		return 0;	
@@ -29,7 +29,7 @@ let fibonacci = fn(x) {
 fibonacci(35);        
     """
 
-    const val fastInput = """
+    const val FAST_INPUT = """
 let fibonacci = fn(x) {    	
     if (x < 2) {
     	return x;
@@ -40,7 +40,7 @@ let fibonacci = fn(x) {
 fibonacci(35);        
     """
 
-    const val fastInput2 = """
+    const val FAST_INPUT_2 = """
 let fibonacci = fn(x) {    	
     if (x < 2) {
     	return x;
@@ -50,7 +50,7 @@ let fibonacci = fn(x) {
 fibonacci(35);        
     """
 
-    const val cached = """
+    const val CACHED = """
     let fibRec = fn(n, buf) {
       if(n > 2) {
         let res = buf[0] + buf[1];
@@ -79,7 +79,7 @@ fibonacci(35);
         println("engine=$engine, result=${result.value.inspect()}, duration=${result.duration}")
     }
 
-    fun vm(input: String = this.slowInput) {
+    fun vm(input: String = this.SLOW_INPUT) {
         val compiler = MCompiler()
         compiler.compile(parse(input))
         val machine = VM(compiler.bytecode())
@@ -90,7 +90,7 @@ fibonacci(35);
     }
 
 
-    fun eval(input: String = this.slowInput) {
+    fun eval(input: String = this.SLOW_INPUT) {
         val end = Environment.newEnvironment()
         measure("eval") {
             eval(parse(input), end)!!

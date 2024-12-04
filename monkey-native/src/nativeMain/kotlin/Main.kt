@@ -7,13 +7,13 @@ fun main(args: Array<String>) {
         println("Hello, this is the monkey.kt programming language")
         println("Kotlin Native Implementation")
         println("Feel free to type any command")
-        start(::readLine, ::println)
+        start(::readlnOrNull, ::println)
     } else {
         when (args.first()) {
             "vm" -> Benchmarks.vm()
-            "vm-fast" -> Benchmarks.vm(Benchmarks.fastInput)
+            "vm-fast" -> Benchmarks.vm(Benchmarks.FAST_INPUT)
             "eval" -> Benchmarks.eval()
-            "eval-fast" -> Benchmarks.eval(Benchmarks.fastInput)
+            "eval-fast" -> Benchmarks.eval(Benchmarks.FAST_INPUT)
             "kotlin" -> Benchmarks.kotlin()
         }
     }
