@@ -7,7 +7,7 @@ fun main(args: Array<String>) {
         println("Hello, this is the monkey.kt programming language")
         println("Kotlin Native Implementation")
         println("Feel free to type any command")
-        start(::readLine, ::println)
+        start(::readlnOrNull, ::println)
     } else {
         when (args.first()) {
             "vm" -> Benchmarks.vm()

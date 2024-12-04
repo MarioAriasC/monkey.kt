@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-./gradlew monkey-common:assemble
+./gradlew monkey-js:assemble

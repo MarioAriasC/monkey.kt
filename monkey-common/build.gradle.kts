@@ -1,22 +1,15 @@
-import org.gradle.kotlin.dsl.support.kotlinCompilerOptions
-import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
-
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
 }
 
 kotlin {
-    jvm() {
+    jvm {
         java {
             version = "21"
         }
     }
-    js() {
+    js{
         nodejs()
-        binaries.executable()
-        compilerOptions {
-            target = "es2015"
-        }
     }
     macosX64()
     linuxX64()
