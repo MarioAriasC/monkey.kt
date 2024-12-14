@@ -13,10 +13,13 @@ kotlin {
             version = "21"
         }
     }
-    js{
+    js {
         nodejs()
     }
-    wasmWasi{
+    wasmWasi {
+        nodejs()
+    }
+    wasmJs() {
         nodejs()
     }
     macosX64()

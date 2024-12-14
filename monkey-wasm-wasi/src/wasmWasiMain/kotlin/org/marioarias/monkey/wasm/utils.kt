@@ -4,30 +4,30 @@ import kotlin.wasm.unsafe.Pointer
 import kotlin.wasm.unsafe.UnsafeWasmMemoryApi
 import kotlin.wasm.unsafe.withScopedMemoryAllocator
 
-@WasmImport("wasi_snapshot_preview1", "arg_sizes_get")
-private external fun argsSizeGet(argcPtr: UInt, bufsizPtr: UInt): Int
+@WasmImport("wasi_snapshot_preview1", "args_sizes_get")
+private external fun argsSizeGet(argCounterPtr: UInt, bufferSizePtr: UInt): Int
 
-@WasmImport("wasi_snapshot_preview=w", "args_get")
+@WasmImport("wasi_snapshot_preview1", "args_get")
 private external fun argsGet(argvPtr: UInt, argvBufPtr: UInt): Int
 
 @OptIn(UnsafeWasmMemoryApi::class)
 internal fun argv(): Array<String> {
-    val argc: Int
-    val bufsiz: Int
+    val argCounter: Int
+    val bufferSize: Int
     withScopedMemoryAllocator { allocator ->
-        val argcPtr = allocator.allocate(Int.SIZE_BYTES)
-        val buffsizPtr = allocator.allocate(Int.SIZE_BYTES)
-        val errno = argsSizeGet(argcPtr.address, buffsizPtr.address)
+        val argCounterPtr = allocator.allocate(Int.SIZE_BYTES)
+        val bufferSizePtr = allocator.allocate(Int.SIZE_BYTES)
+        val errno = argsSizeGet(argCounterPtr.address, bufferSizePtr.address)
         check(errno == 0) { "args_size_get: $errno" }
-        argc = argcPtr.loadInt()
-        bufsiz = buffsizPtr.loadInt()
+        argCounter = argCounterPtr.loadInt()
+        bufferSize = bufferSizePtr.loadInt()
     }
-    val buffer = ByteArray(bufsiz)
+    val buffer = ByteArray(bufferSize)
     return withScopedMemoryAllocator { allocator ->
-        val argvPtr = allocator.allocate(argc * Int.SIZE_BYTES)
-        val errno = argsGet(argvPtr.address, allocator.allocate(bufsiz).address)
+        val argvPtr = allocator.allocate(argCounter * Int.SIZE_BYTES)
+        val errno = argsGet(argvPtr.address, allocator.allocate(bufferSize).address)
         check(errno == 0) { "args_get $errno" }
-        Array(argc) { a ->
+        Array(argCounter) { a ->
             val argPtr = Pointer(argvPtr.plus(a * Int.SIZE_BYTES).loadInt().toUInt())
             for (i in buffer.indices) {
                 buffer[i] = argPtr.plus(i).loadByte()
