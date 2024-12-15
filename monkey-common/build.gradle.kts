@@ -1,5 +1,10 @@
+@file:OptIn(ExperimentalWasmDsl::class)
+
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
+
 }
 
 kotlin {
@@ -8,7 +13,13 @@ kotlin {
             version = "21"
         }
     }
-    js{
+    js {
+        nodejs()
+    }
+    wasmWasi {
+        nodejs()
+    }
+    wasmJs() {
         nodejs()
     }
     macosX64()
