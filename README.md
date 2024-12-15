@@ -35,8 +35,8 @@ branch [eval-macros](https://github.com/MarioAriasC/monkey.kt/tree/eval-macros)
 
 ## Execution
 
-There are three different executable environments, JVM, Native and JavaScript Each executable has 3 different
-shell scripts, `build`, `repl`, `benchmarks`
+There are five different executable environments, JVM, Native, JavaScript, WASM JS and WASM Wasi Each executable has 2
+different shell scripts, `build` and `benchmarks`. JVM and Native also have a proper Monkey REPL
 
 | Executable environment | Build                | REPL             | Benchmarks                                  |
 |------------------------|----------------------|------------------|---------------------------------------------|
@@ -45,7 +45,6 @@ shell scripts, `build`, `repl`, `benchmarks`
 | JavaScript             | `build-js.sh`        | NA               | `benchmarks-node.sh` or `benchmarks-bun.sh` |
 | WASM JS                | `build-wasm-js.sh`   | NA               | `benchmarks-wasm-js.sh`                     |
 | WASM Wasi              | `build-wasm-wasi.sh` | NA               | `benchmarks-wasm-wasi.sh`                   |
-
 
 You must run the `build-[ENV].sh` before running `repl-[ENV].sh` or `benchmarks-[ENV].sh`
 
@@ -62,6 +61,7 @@ And then:
 ```shell
 $ ./repl-jvm.sh
 ```
+
 ### Kotlin Native
 
 For *nix systems, run the following command:
@@ -84,7 +84,9 @@ For *nix systems, run the following command:
 $ ./build-js.sh
 ```
 
-The JS REPL is not working at the moment. But you can still run the benchmarks using [Node](https://nodejs.org/en/) or [Bun](https://bun.sh/) (Must be installed beforehand)
+The JS REPL is not working at the moment. But you can still run the benchmarks using [Node](https://nodejs.org/en/)
+or [Bun](https://bun.sh/) (Must be installed beforehand)
+
 ### Kotlin WASM JS
 
 For *nix systems, run the following command:
@@ -101,8 +103,8 @@ For *nix systems, run the following command:
 $ ./build-wasm-wasi.sh
 ```
 
-The WASM REPL are not working at the moment. But you can still run the benchmarks, you must have [Node](https://nodejs.org/en/) installed
-
+The WASM REPL are not working at the moment. But you can still run the benchmarks, you must
+have [Node](https://nodejs.org/en/) installed
 
 # Benchmarks
 
@@ -114,18 +116,19 @@ Example
 ```shell
 $ ./benchmarks-jvm.sh vm
 ```
+
 ```text
 engine=vm, result=9227465, duration=5.797319458s
 ```
 
- 
 All the benchmarks tested on a Pop!_OS Laptop AMD Ryzen 9 5900HX
- 
+
 If you want to run proper benchmarks, I recommend [hyperfine](https://github.com/sharkdp/hyperfine)
 
 ```shell
 $ hyperfine -w 3 './benchmarks-bun.sh vm-fast' './benchmarks-jvm.sh vm-fast' './benchmarks-native.sh vm-fast' './benchmarks-node.sh vm-fast' './benchmarks-wasm-wasi.sh vm-fast' './benchmarks-wasm-js.sh vm-fast' --export-json ../kotlin-wasm-vm-fast.json && hyperfine -w 3 './benchmarks-bun.sh eval-fast' './benchmarks-jvm.sh eval-fast' './benchmarks-native.sh eval-fast' './benchmarks-node.sh eval-fast' './benchmarks-wasm-wasi.sh eval-fast' './benchmarks-wasm-js.sh eval-fast'  --export-json ../kotlin-wasm-eval-fast.json
 ```
+
 ```text
 Benchmark 1: ./benchmarks-bun.sh vm-fast
   Time (mean ± σ):     22.705 s ±  0.570 s    [User: 22.841 s, System: 0.706 s]
@@ -158,6 +161,7 @@ Summary
     3.33 ± 0.08 times faster than ./benchmarks-wasm-js.sh vm-fast
     4.43 ± 0.11 times faster than ./benchmarks-bun.sh vm-fast
     4.46 ± 0.08 times faster than ./benchmarks-node.sh vm-fast
+    
 Benchmark 1: ./benchmarks-bun.sh eval-fast
   Time (mean ± σ):     34.566 s ±  0.502 s    [User: 34.681 s, System: 1.932 s]
   Range (min … max):   33.938 s … 35.627 s    10 runs
@@ -191,7 +195,7 @@ Summary
     9.55 ± 0.29 times faster than ./benchmarks-bun.sh eval-fast
 ```
 
-You can plot the results with this [script](https://gist.github.com/MarioAriasC/599204342860a161d4fe12b12f0d3de9) 
+You can plot the results with this [script](https://gist.github.com/MarioAriasC/599204342860a161d4fe12b12f0d3de9)
 
 ```text
 ❯ ruby --yjit plot.rb kotlin-wasm-vm-fast.json
@@ -214,7 +218,6 @@ You can plot the results with this [script](https://gist.github.com/MarioAriasC/
      ./benchmarks-wasm-js.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■ 11.3097880403
                                        └                                                                                                    ┘
 ```
-
 
 ## Test
 

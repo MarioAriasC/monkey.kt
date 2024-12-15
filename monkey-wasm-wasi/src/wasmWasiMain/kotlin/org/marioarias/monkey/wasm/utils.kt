@@ -1,5 +1,7 @@
 package org.marioarias.monkey.wasm
 
+
+//Copied from https://github.com/ephemient/aoc2024/blob/main/kt/aoc2024-exe/src/wasmWasiMain/kotlin/com/github/ephemient/aoc2024/exe/WasiArgv.kt
 import kotlin.wasm.unsafe.Pointer
 import kotlin.wasm.unsafe.UnsafeWasmMemoryApi
 import kotlin.wasm.unsafe.withScopedMemoryAllocator
