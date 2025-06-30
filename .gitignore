@@ -8,3 +8,4 @@ out
 fibonacci
 kotlin-js-store
 .kotlin
+*.kexe

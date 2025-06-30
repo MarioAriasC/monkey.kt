@@ -7,6 +7,9 @@ dependencies {
 }
 
 kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xbinary=preCodegenInlineThreshold=40")
+    }
 
     when (val hostOp = System.getProperty("os.name")) {
         "Mac OS X" -> this.macosX64("native")
