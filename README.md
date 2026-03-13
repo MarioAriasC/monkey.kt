@@ -217,7 +217,7 @@ Summary
     2.52 ± 0.23 times faster than ./benchmarks-wasm-js.sh eval-fast
     4.53 ± 0.39 times faster than ./benchmarks-bun.sh eval-fast
     5.25 ± 0.44 times faster than ./benchmarks-node.sh eval-fast
-    6.26 ± 0.57 times faster than ./benchmarks-native.sh eval-fast```
+    6.26 ± 0.57 times faster than ./benchmarks-native.sh eval-fast
 ```
 
 You can plot the results with this [script](https://gist.github.com/MarioAriasC/599204342860a161d4fe12b12f0d3de9)
