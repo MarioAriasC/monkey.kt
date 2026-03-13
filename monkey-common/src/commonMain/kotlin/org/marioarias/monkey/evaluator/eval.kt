@@ -238,7 +238,6 @@ object Evaluator {
                 result = eval(statement, env)
 
                 if (result != null) {
-                    //val type = (result as MObject)
                     if (result is MReturnValue || result is MError) {
                         return result
                     }

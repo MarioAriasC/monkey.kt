@@ -9,8 +9,11 @@ plugins {
 
 kotlin {
     jvm {
+        compilerOptions {
+//            freeCompilerArgs.add("-Xwhen-expressions=indy")
+        }
         java {
-            version = "21"
+            version = "25"
         }
     }
     js {
