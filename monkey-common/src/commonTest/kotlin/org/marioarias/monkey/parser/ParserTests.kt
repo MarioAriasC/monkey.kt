@@ -201,14 +201,7 @@ class ParserTests {
             countStatements(1, program)
 
             checkType(program.statements.first()) { statement: ExpressionStatement ->
-                checkType(statement.expression) { boolean: BooleanLiteral ->
-
-                    assertEquals(
-                        boolean.value,
-                        expectedBoolean,
-                        "value not $expectedBoolean, got=${boolean.value}"
-                    )
-                }
+                testBooleanLiteral(statement.expression, expectedBoolean)
             }
         }
     }
@@ -283,8 +276,9 @@ class ParserTests {
 
         checkType(program.statements.first()) { statement: ExpressionStatement ->
             checkType(statement.expression) { function: FunctionLiteral ->
-                testLiteralExpression(function.parameters?.get(0), "x")
-                testLiteralExpression(function.parameters?.get(1), "y")
+                val parameters = function.parameters
+                testLiteralExpression(parameters?.get(0), "x")
+                testLiteralExpression(parameters?.get(1), "y")
 
                 assertEquals(
                     function.body?.statements?.size,
@@ -374,8 +368,8 @@ class ParserTests {
         checkType(program.statements.first()) { statement: ExpressionStatement ->
             checkType(statement.expression) { array: ArrayLiteral ->
                 testLongLiteral(array.elements!!.first(), 1)
-                testInfixExpression(array.elements!![1], 2, "*", 2)
-                testInfixExpression(array.elements!![2], 3, "+", 3)
+                testInfixExpression(array.elements[1], 2, "*", 2)
+                testInfixExpression(array.elements[2], 3, "+", 3)
             }
 
         }

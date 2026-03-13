@@ -9,8 +9,6 @@ enum class TokenType(val value: String) {
     NOT_EQ("!="),
     IDENT("IDENT"),
     INT("INT"),
-
-
     PLUS("+"),
     COMMA(","),
     SEMICOLON(";"),
@@ -19,18 +17,14 @@ enum class TokenType(val value: String) {
     BANG("!"),
     SLASH("/"),
     ASTERISK("*"),
-
-
     LT("<"),
     GT(">"),
-
     LPAREN("("),
     RPAREN(")"),
     LBRACE("{"),
     RBRACE("}"),
     LBRACKET("["),
     RBRACKET("]"),
-
     FUNCTION("FUNCTION"),
     LET("LET"),
     TRUE("TRUE"),
@@ -39,23 +33,18 @@ enum class TokenType(val value: String) {
     ELSE("ELSE"),
     RETURN("RETURN"),
     STRING("STRING");
-
-    companion object {
-        val keywords = mapOf(
-            "fn" to FUNCTION,
-            "let" to LET,
-            "true" to TRUE,
-            "false" to FALSE,
-            "if" to IF,
-            "else" to ELSE,
-            "return" to RETURN,
-        )
-    }
 }
 
 
-fun String.lookupIdent(): TokenType {
-    return TokenType.keywords[this] ?: TokenType.IDENT
+fun String.lookupIdent(): TokenType = when (this) {
+    "fn" -> TokenType.FUNCTION
+    "let" -> TokenType.LET
+    "true" -> TokenType.TRUE
+    "false" -> TokenType.FALSE
+    "if" -> TokenType.IF
+    "else" -> TokenType.ELSE
+    "return" -> TokenType.RETURN
+    else -> TokenType.IDENT
 }
 
 data class Token(val type: TokenType, val literal: String) {

@@ -22,6 +22,7 @@ fun main(args: Array<String>) {
             "eval-cached" -> Benchmarks.eval(Benchmarks.CACHED)
             "kotlin" -> Benchmarks.kotlin()
             "kotlin-cached" -> Benchmarks.kotlinRec()
+            else -> println("invalid option: ${args.first()}")
         }
     }
 }

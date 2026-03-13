@@ -12,8 +12,8 @@ kotlin {
     }
 
     when (val hostOp = System.getProperty("os.name")) {
-        "Mac OS X" -> this.macosX64("native")
-        "Linux" -> this.linuxX64("native")
+        "Mac OS X" -> this.macosX64("monkey-native")
+        "Linux" -> this.linuxX64("monkey-native")
         else -> throw GradleException("Host OS $hostOp is not supported")
     }.apply {
         binaries {
