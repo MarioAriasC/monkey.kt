@@ -146,103 +146,102 @@ $ hyperfine -w 3 './benchmarks-bun.sh vm-fast' './benchmarks-jvm.sh vm-fast' './
 
 ```text
 Benchmark 1: ./benchmarks-bun.sh vm-fast
-  Time (mean ± σ):     11.268 s ±  0.069 s    [User: 11.353 s, System: 0.109 s]
-  Range (min … max):   11.196 s … 11.393 s    10 runs
+  Time (mean ± σ):     11.451 s ±  0.211 s    [User: 11.511 s, System: 0.120 s]
+  Range (min … max):   11.268 s … 11.939 s    10 runs
 
 Benchmark 2: ./benchmarks-jvm.sh vm-fast
-  Time (mean ± σ):      3.570 s ±  0.041 s    [User: 3.573 s, System: 0.075 s]
-  Range (min … max):    3.497 s …  3.612 s    10 runs
+  Time (mean ± σ):      3.635 s ±  0.042 s    [User: 3.626 s, System: 0.083 s]
+  Range (min … max):    3.577 s …  3.730 s    10 runs
 
 Benchmark 3: ./benchmarks-native.sh vm-fast
-  Time (mean ± σ):      7.904 s ±  0.049 s    [User: 8.124 s, System: 0.063 s]
-  Range (min … max):    7.843 s …  8.000 s    10 runs
+  Time (mean ± σ):      7.048 s ±  0.373 s    [User: 7.276 s, System: 0.063 s]
+  Range (min … max):    6.524 s …  7.785 s    10 runs
 
 Benchmark 4: ./benchmarks-node.sh vm-fast
-  Time (mean ± σ):     12.690 s ±  0.280 s    [User: 12.627 s, System: 0.051 s]
-  Range (min … max):   12.412 s … 13.089 s    10 runs
+  Time (mean ± σ):     13.293 s ±  0.475 s    [User: 13.165 s, System: 0.071 s]
+  Range (min … max):   12.802 s … 14.107 s    10 runs
 
 Benchmark 5: ./benchmarks-wasm-wasi.sh vm-fast
-  Time (mean ± σ):     11.006 s ±  0.376 s    [User: 10.940 s, System: 0.043 s]
-  Range (min … max):   10.537 s … 11.549 s    10 runs
+  Time (mean ± σ):     11.157 s ±  0.192 s    [User: 11.052 s, System: 0.059 s]
+  Range (min … max):   10.968 s … 11.557 s    10 runs
 
 Benchmark 6: ./benchmarks-wasm-js.sh vm-fast
-  Time (mean ± σ):     11.664 s ±  0.219 s    [User: 11.615 s, System: 0.037 s]
-  Range (min … max):   11.186 s … 11.865 s    10 runs
+  Time (mean ± σ):     11.458 s ±  0.318 s    [User: 11.345 s, System: 0.064 s]
+  Range (min … max):   11.107 s … 12.213 s    10 runs
 
 Benchmark 7: ./benchmarks-graal.sh vm-fast
-  Time (mean ± σ):      5.077 s ±  0.154 s    [User: 5.036 s, System: 0.034 s]
-  Range (min … max):    4.861 s …  5.331 s    10 runs
+  Time (mean ± σ):      5.100 s ±  0.099 s    [User: 5.022 s, System: 0.046 s]
+  Range (min … max):    5.018 s …  5.358 s    10 runs
 
 Summary
   ./benchmarks-jvm.sh vm-fast ran
-    1.42 ± 0.05 times faster than ./benchmarks-graal.sh vm-fast
-    2.21 ± 0.03 times faster than ./benchmarks-native.sh vm-fast
-    3.08 ± 0.11 times faster than ./benchmarks-wasm-wasi.sh vm-fast
-    3.16 ± 0.04 times faster than ./benchmarks-bun.sh vm-fast
-    3.27 ± 0.07 times faster than ./benchmarks-wasm-js.sh vm-fast
-    3.56 ± 0.09 times faster than ./benchmarks-node.sh vm-fast
+    1.40 ± 0.03 times faster than ./benchmarks-graal.sh vm-fast
+    1.94 ± 0.11 times faster than ./benchmarks-native.sh vm-fast
+    3.07 ± 0.06 times faster than ./benchmarks-wasm-wasi.sh vm-fast
+    3.15 ± 0.07 times faster than ./benchmarks-bun.sh vm-fast
+    3.15 ± 0.09 times faster than ./benchmarks-wasm-js.sh vm-fast
+    3.66 ± 0.14 times faster than ./benchmarks-node.sh vm-fast
 
 Benchmark 1: ./benchmarks-bun.sh eval-fast
-  Time (mean ± σ):     11.260 s ±  0.353 s    [User: 11.345 s, System: 0.240 s]
-  Range (min … max):   10.744 s … 11.699 s    10 runs
+  Time (mean ± σ):     11.933 s ±  0.328 s    [User: 11.959 s, System: 0.290 s]
+  Range (min … max):   11.580 s … 12.700 s    10 runs
 
 Benchmark 2: ./benchmarks-jvm.sh eval-fast
-  Time (mean ± σ):      2.410 s ±  0.094 s    [User: 2.418 s, System: 0.073 s]
-  Range (min … max):    2.216 s …  2.541 s    10 runs
+  Time (mean ± σ):      2.632 s ±  0.215 s    [User: 2.604 s, System: 0.088 s]
+  Range (min … max):    2.355 s …  3.048 s    10 runs
 
 Benchmark 3: ./benchmarks-native.sh eval-fast
-  Time (mean ± σ):     18.105 s ±  1.900 s    [User: 19.273 s, System: 0.122 s]
-  Range (min … max):   16.524 s … 22.622 s    10 runs
+  Time (mean ± σ):     16.477 s ±  0.671 s    [User: 17.210 s, System: 0.141 s]
+  Range (min … max):   15.843 s … 17.858 s    10 runs
 
 Benchmark 4: ./benchmarks-node.sh eval-fast
-  Time (mean ± σ):     13.757 s ±  0.267 s    [User: 13.704 s, System: 0.071 s]
-  Range (min … max):   13.383 s … 14.160 s    10 runs
+  Time (mean ± σ):     13.818 s ±  0.285 s    [User: 13.714 s, System: 0.092 s]
+  Range (min … max):   13.520 s … 14.405 s    10 runs
 
 Benchmark 5: ./benchmarks-wasm-wasi.sh eval-fast
-  Time (mean ± σ):      6.952 s ±  0.107 s    [User: 6.917 s, System: 0.042 s]
-  Range (min … max):    6.701 s …  7.050 s    10 runs
+  Time (mean ± σ):      6.604 s ±  0.107 s    [User: 6.540 s, System: 0.053 s]
+  Range (min … max):    6.478 s …  6.789 s    10 runs
 
 Benchmark 6: ./benchmarks-wasm-js.sh eval-fast
-  Time (mean ± σ):      6.542 s ±  0.166 s    [User: 6.494 s, System: 0.047 s]
-  Range (min … max):    6.402 s …  6.977 s    10 runs
+  Time (mean ± σ):      6.633 s ±  0.287 s    [User: 6.534 s, System: 0.061 s]
+  Range (min … max):    6.396 s …  7.345 s    10 runs
 
 Benchmark 7: ./benchmarks-graal.sh eval-fast
-  Time (mean ± σ):      4.780 s ±  0.088 s    [User: 4.696 s, System: 0.072 s]
-  Range (min … max):    4.678 s …  4.949 s    10 runs
+  Time (mean ± σ):      4.941 s ±  0.197 s    [User: 4.789 s, System: 0.089 s]
+  Range (min … max):    4.760 s …  5.266 s    10 runs
 
 Summary
   ./benchmarks-jvm.sh eval-fast ran
-    1.98 ± 0.09 times faster than ./benchmarks-graal.sh eval-fast
-    2.72 ± 0.13 times faster than ./benchmarks-wasm-js.sh eval-fast
-    2.89 ± 0.12 times faster than ./benchmarks-wasm-wasi.sh eval-fast
-    4.67 ± 0.23 times faster than ./benchmarks-bun.sh eval-fast
-    5.71 ± 0.25 times faster than ./benchmarks-node.sh eval-fast
-    7.51 ± 0.84 times faster than ./benchmarks-native.sh eval-fast
-```
+    1.88 ± 0.17 times faster than ./benchmarks-graal.sh eval-fast
+    2.51 ± 0.21 times faster than ./benchmarks-wasm-wasi.sh eval-fast
+    2.52 ± 0.23 times faster than ./benchmarks-wasm-js.sh eval-fast
+    4.53 ± 0.39 times faster than ./benchmarks-bun.sh eval-fast
+    5.25 ± 0.44 times faster than ./benchmarks-node.sh eval-fast
+    6.26 ± 0.57 times faster than ./benchmarks-native.sh eval-fast```
 
 You can plot the results with this [script](https://gist.github.com/MarioAriasC/599204342860a161d4fe12b12f0d3de9)
 
 ```text
 ❯ ruby --yjit plot.rb kotlin-all-vm-fast.json
                                      ┌                                                                                                    ┐
-         ./benchmarks-bun.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 11.268465726
-         ./benchmarks-jvm.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■ 3.5697412133
-      ./benchmarks-native.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 7.9041775258000015
-        ./benchmarks-node.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 12.690447451
-   ./benchmarks-wasm-wasi.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 11.0056405051
-     ./benchmarks-wasm-js.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 11.664382513300001
-       ./benchmarks-graal.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 5.0774031677
+         ./benchmarks-bun.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 11.45143038254
+         ./benchmarks-jvm.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■ 3.63499144484
+      ./benchmarks-native.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 7.048361003240001
+        ./benchmarks-node.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 13.292569690840002
+   ./benchmarks-wasm-wasi.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 11.156858049240002
+     ./benchmarks-wasm-js.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 11.45819161164
+       ./benchmarks-graal.sh vm-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 5.10002622004
                                      └                                                                                                    ┘
 
-❯ ruby --yjit plot.rb kotlin-all-eval-fast.json
+ruby --yjit plot.rb kotlin-all-eval-fast.json
                                        ┌                                                                                                    ┐
-         ./benchmarks-bun.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 11.259901410020001
-         ./benchmarks-jvm.sh eval-fast ┤■■■■■■■■■■■ 2.40950986012
-      ./benchmarks-native.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 18.105055101819996
-        ./benchmarks-node.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 13.757043997519997
-   ./benchmarks-wasm-wasi.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 6.95244012262
-     ./benchmarks-wasm-js.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 6.541953114020001
-       ./benchmarks-graal.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■ 4.7802565682200004
+         ./benchmarks-bun.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 11.93287168418
+         ./benchmarks-jvm.sh eval-fast ┤■■■■■■■■■■■■■ 2.63199487578
+      ./benchmarks-native.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 16.477025800979998
+        ./benchmarks-node.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 13.81827043408
+   ./benchmarks-wasm-wasi.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 6.60442814258
+     ./benchmarks-wasm-js.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 6.63338047598
+       ./benchmarks-graal.sh eval-fast ┤■■■■■■■■■■■■■■■■■■■■■■■■ 4.94059325088
                                        └                                                                                                    ┘
 ```
 
