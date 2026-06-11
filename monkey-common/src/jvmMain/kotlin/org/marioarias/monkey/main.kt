@@ -9,7 +9,7 @@ fun main(args: Array<String>) {
         println("Hello, this is the monkey.kt programming language")
         println("JVM implementation " + System.getProperty("java.version"))
         println("Feel free to type any command")
-        start(::readLine, ::println)
+        start(::readlnOrNull, ::println)
     } else {
         when (args.first()) {
             "vm" -> Benchmarks.vm()

@@ -13,28 +13,32 @@ object Evaluator {
 
     fun eval(program: Program, env: Environment): MObject? {
         var result: MObject? = null
-        for (statement in program.statements) {
-            result = eval(statement, env)
+        context(env) {
+            for (statement in program.statements) {
+                result = eval(statement)
 
-            when (result) {
-                is MReturnValue -> return result.value
-                is MError -> return result
+                when (result) {
+                    is MReturnValue -> return result.value
+                    is MError -> return result
+                }
             }
         }
+
         return result
     }
 
 //    private fun eval(statement: ExpressionStatement, env: Environment) = eval(statement.expression, env)
 
 
-    private fun eval(expression: IndexExpression, env: Environment): MObject? {
-        val left = eval(expression.left, env)
+    context(env: Environment)
+    private fun eval(expression: IndexExpression): MObject? {
+        val left = eval(expression.left)
 
         if (left.isError()) {
             return left
         }
 
-        val index = eval(expression.index, env)
+        val index = eval(expression.index)
 
         if (index.isError()) {
             return index
@@ -60,19 +64,20 @@ object Evaluator {
     }
 
 
-    private fun eval(expression: Expression?, env: Environment): MObject? = when (expression) {
-        is ExpressionStatement -> eval(expression.expression, env)
-        is LetStatement -> eval(expression.value, env).ifNotError { value ->
+    context(env: Environment)
+    private fun eval(expression: Expression?): MObject? = when (expression) {
+        is ExpressionStatement -> eval(expression.expression)
+        is LetStatement -> eval(expression.value).ifNotError { value ->
             env.put(expression.name.value, value)
         }
 
-        is BlockStatement -> evalBlockStatement(expression, env)
-        is ReturnStatement -> eval(expression.returnValue, env).ifNotError { value ->
+        is BlockStatement -> evalBlockStatement(expression)
+        is ReturnStatement -> eval(expression.returnValue).ifNotError { value ->
             MReturnValue(value)
         }
 
         is IntegerLiteral -> MInteger(expression.value)
-        is PrefixExpression -> eval(expression.right, env).ifNotError { right ->
+        is PrefixExpression -> eval(expression.right).ifNotError { right ->
             when (expression.operator) {
                 "!" -> when (right) {
                     TRUE -> FALSE
@@ -91,8 +96,8 @@ object Evaluator {
             }
         }
 
-        is InfixExpression -> eval(expression.left, env).ifNotError { left ->
-            eval(expression.right, env).ifNotError { right ->
+        is InfixExpression -> eval(expression.left).ifNotError { left ->
+            eval(expression.right).ifNotError { right ->
                 when {
                     left is MInteger && right is MInteger -> when (expression.operator) {
                         "+" -> left + right
@@ -117,14 +122,14 @@ object Evaluator {
 
         is BooleanLiteral -> expression.value.toMonkey()
         is IfExpression -> {
-            eval(expression.condition, env).ifNotError { condition ->
+            eval(expression.condition).ifNotError { condition ->
                 when {
                     when (condition) {
                         NULL, FALSE -> false
                         else -> true
-                    } -> evalBlockStatement(expression.consequence!!, env)
+                    } -> evalBlockStatement(expression.consequence!!)
 
-                    expression.alternative != null -> evalBlockStatement(expression.alternative, env)
+                    expression.alternative != null -> evalBlockStatement(expression.alternative)
                     else -> NULL
                 }
             }
@@ -143,8 +148,8 @@ object Evaluator {
 
         is StringLiteral -> MString(expression.value)
         is FunctionLiteral -> MFunction(expression.parameters, expression.body, env)
-        is CallExpression -> eval(expression.function, env).ifNotError { function ->
-            val args = evalExpressions(expression.arguments, env)
+        is CallExpression -> eval(expression.function).ifNotError { function ->
+            val args = evalExpressions(expression.arguments)
             if (args.size == 1 && args.first().isError()) {
                 args.first()
             } else {
@@ -154,7 +159,7 @@ object Evaluator {
                         function.parameters?.forEachIndexed { i, identifier ->
                             innerEnv[identifier.value] = args[i]!!
                         }
-                        when (val evaluated = eval(function.body, innerEnv)) {
+                        when (val evaluated = context(innerEnv) { eval(function.body) }) {
                             is MReturnValue -> evaluated.value
                             else -> evaluated
                         }
@@ -168,7 +173,7 @@ object Evaluator {
         }
 
         is ArrayLiteral -> {
-            val elements = evalExpressions(expression.elements, env)
+            val elements = evalExpressions(expression.elements)
             if (elements.size == 1 && elements.first().isError()) {
                 elements.first()
             } else {
@@ -176,17 +181,17 @@ object Evaluator {
             }
         }
 
-        is IndexExpression -> eval(expression, env)
+        is IndexExpression -> eval(expression)
         is HashLiteral -> {
             val pairs = mutableMapOf<HashKey, HashPair>()
             expression.pairs.forEach { (keyNode, valueNode) ->
-                val key = eval(keyNode, env)
+                val key = eval(keyNode)
                 if (key.isError()) {
                     return key
                 }
                 when (key) {
                     is Hashable<*> -> {
-                        val value = eval(valueNode, env)
+                        val value = eval(valueNode)
                         if (value.isError()) {
                             return value
                         }
@@ -221,21 +226,23 @@ object Evaluator {
         false
     }
 
-    private fun evalExpressions(arguments: List<Expression?>?, env: Environment): List<MObject?> =
+    context(env: Environment)
+    private fun evalExpressions(arguments: List<Expression?>?): List<MObject?> =
         arguments!!.map { argument ->
-            val evaluated = eval(argument, env)
+            val evaluated = eval(argument)
             if (evaluated.isError()) {
                 return listOf(evaluated)
             }
             evaluated
         }
 
-    private fun evalBlockStatement(node: BlockStatement, env: Environment): MObject? {
+    context(env: Environment)
+    private fun evalBlockStatement(node: BlockStatement): MObject? {
         var result: MObject? = null
 
         if (node.statements != null) {
             for (statement in node.statements) {
-                result = eval(statement, env)
+                result = eval(statement)
 
                 if (result != null) {
                     if (result is MReturnValue || result is MError) {

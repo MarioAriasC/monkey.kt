@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalWasmInterop::class)
+
 package org.marioarias.monkey.wasm
 
 

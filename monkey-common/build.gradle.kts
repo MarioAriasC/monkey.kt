@@ -10,7 +10,7 @@ plugins {
 kotlin {
     jvm {
         compilerOptions {
-//            freeCompilerArgs.add("-Xwhen-expressions=indy")
+            freeCompilerArgs.add("-Xwhen-expressions=indy")
         }
         java {
             version = "25"
@@ -22,10 +22,10 @@ kotlin {
     wasmWasi {
         nodejs()
     }
-    wasmJs() {
+    wasmJs {
         nodejs()
     }
-    macosX64()
+    macosArm64()
     linuxX64()
     sourceSets {
         val commonMain by getting {}
