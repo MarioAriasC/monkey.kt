@@ -334,7 +334,7 @@ class ParserTests {
                 testIdentifier(exp.function, "add")
 
                 val arguments = exp.arguments
-                assertEquals(arguments!!.size, 3, "wrong length of arguments. got=${exp.arguments?.size}")
+                assertEquals(arguments!!.size, 3, "wrong length of arguments. got=${exp.arguments.size}")
 
                 testLiteralExpression(arguments[0], 1)
                 testInfixExpression(arguments[1], 2, "*", 3)

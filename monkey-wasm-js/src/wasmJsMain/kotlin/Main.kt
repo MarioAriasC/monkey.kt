@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalWasmJsInterop::class)
+
 import org.marioarias.monkey.benchmark.Benchmarks
 import kotlin.js.JsString
 
