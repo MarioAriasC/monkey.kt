@@ -40,13 +40,13 @@ object Evaluator {
             return index
         }
 
-        return when {
-            left is MArray && index is MInteger -> evalArrayIndexExpression(
+        return when (left) {
+            is MArray if index is MInteger -> evalArrayIndexExpression(
                 left,
                 index
             )
 
-            left is MHash -> when (index!!) {
+            is MHash -> when (index!!) {
                 is Hashable<*> -> {
                     val pair = left.pairs[index.hashKey()]
                     pair?.value ?: NULL
@@ -207,7 +207,7 @@ object Evaluator {
         val i = index.value
         val max = elements.size - 1
 
-        if (i < 0 || i > max) {
+        if (i !in 0..max) {
             return NULL
         }
 

@@ -90,27 +90,26 @@ class VM(bytecode: Bytecode, private val globals: MutableList<MObject> = mutable
 
                 OpAdd, OpSub, OpMul, OpDiv -> {
                     val right = pop()
-                    val left1 = pop()
-                    when {
-                        left1 is MInteger && right is MInteger -> {
+                    when (val left = pop()) {
+                        is MInteger if right is MInteger -> {
                             val result = when (op) {
-                                OpAdd -> left1 + right
-                                OpSub -> left1 - right
-                                OpMul -> left1 * right
-                                OpDiv -> left1 / right
+                                OpAdd -> left + right
+                                OpSub -> left - right
+                                OpMul -> left * right
+                                OpDiv -> left / right
                                 else -> throw VMException("unknown integer operator $op")
                             }
                             push(result)
                         }
 
-                        left1 is MString && right is MString -> {
+                        is MString if right is MString -> {
                             when (op) {
-                                OpAdd -> push(MString(left1.value + right.value))
+                                OpAdd -> push(MString(left.value + right.value))
                                 else -> throw VMException("unknown string operator: $op")
                             }
                         }
 
-                        else -> throw VMException("unsupported types for binary operation: ${left1.typeDesc()} ${right.typeDesc()}")
+                        else -> throw VMException("unsupported types for binary operation: ${left.typeDesc()} ${right.typeDesc()}")
                     }
                 }
 
@@ -118,12 +117,12 @@ class VM(bytecode: Bytecode, private val globals: MutableList<MObject> = mutable
                 OpFalse -> push(False)
                 OpPop -> pop()
                 OpEqual, OpNotEqual, OpGreaterThan -> {
-                    val right1 = pop()
-                    val left1 = pop()
+                    val right = pop()
+                    val left = pop()
                     when {
-                        left1 is MInteger && right1 is MInteger -> {
-                            val leftValue = left1.value
-                            val rightValue = right1.value
+                        left is MInteger && right is MInteger -> {
+                            val leftValue = left.value
+                            val rightValue = right.value
                             val bool = when (op) {
                                 OpEqual -> (leftValue == rightValue).toMBoolean()
                                 OpNotEqual -> (leftValue != rightValue).toMBoolean()
@@ -134,17 +133,15 @@ class VM(bytecode: Bytecode, private val globals: MutableList<MObject> = mutable
                         }
 
                         else -> when (op) {
-                            OpEqual -> push((left1 == right1).toMBoolean())
-                            OpNotEqual -> push((left1 != right1).toMBoolean())
-                            else -> throw VMException("unknown operator $op (${left1.typeDesc()} ${right1.typeDesc()})")
+                            OpEqual -> push((left == right).toMBoolean())
+                            OpNotEqual -> push((left != right).toMBoolean())
+                            else -> throw VMException("unknown operator $op (${left.typeDesc()} ${right.typeDesc()})")
                         }
                     }
                 }
 
                 OpBang -> when (pop()) {
-                    True -> push(False)
-                    False -> push(True)
-                    Null -> push(True)
+                    False, Null -> push(True)
                     else -> push(False)
                 }
 
@@ -217,7 +214,7 @@ class VM(bytecode: Bytecode, private val globals: MutableList<MObject> = mutable
                         left!! is MArray && index!! is MInteger -> {
                             val i = index.value
                             val max = left.elements.size - 1L
-                            if (i < 0 || i > max) {
+                            if (i !in 0..max) {
                                 push(Null)
                             } else {
                                 push(left.elements[i.toInt()]!!)
